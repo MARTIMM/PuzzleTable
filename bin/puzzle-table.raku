@@ -1,0 +1,25 @@
+#!/usr/bin/env rakudo
+
+use v6.d;
+use lib
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-native/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-glib/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gobject/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gio/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gdkpixbuf/lib",
+#  "/gnome-pango/lib",
+#  "/gnome-cairo/lib",
+#  "/gnome-atk/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gtk4/lib",
+#  "$api2/gnome-gdk4/lib",
+#  "$api2/gnome-gsk4/lib"
+  ;
+
+use YAMLish;
+
+use PuzzleTable::Types;
+use PuzzleTable::Gui::MainWindow;
+
+# Show puzzle table. return only when finished
+my PuzzleTable::Gui::MainWindow $puzzles .= new;
+$puzzles.go-ahead;
