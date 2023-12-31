@@ -1,0 +1,25 @@
+{
+  "description": "",
+  "name": "Gnome::PuzzleTable",
+  "version": "0.1.0",
+  "auth": "cpan:MARTIMM",
+  "author": "Marcel Timmerman",
+  "tags": [ ""],
+
+  "raku-version": "6.d",
+  "license": "Artistic-2.0",
+
+  "provides": {
+  },
+
+  "source-url": "git://github.com/MARTIMM/.git",
+
+  "depends": [
+    "Gnome::N::NativeLib",
+    "XML", "XML::Actions", "XML::XPath",
+    "META6", "Getopt::Long"
+  ],
+  "test-depends": [ ],
+  "build-depends": [ ],
+  "resources": [ ]
+}
