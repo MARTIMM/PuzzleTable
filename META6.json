@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -15,9 +15,7 @@
   "source-url": "git://github.com/MARTIMM/.git",
 
   "depends": [
-    "Gnome::N::NativeLib",
-    "XML", "XML::Actions", "XML::XPath",
-    "META6", "Getopt::Long"
+    "Gnome::Gtk4:api<2>", "Archive::Libarchive"
   ],
   "test-depends": [ ],
   "build-depends": [ ],
