@@ -11,8 +11,8 @@ use lib
 #  "/gnome-cairo/lib",
 #  "/gnome-atk/lib",
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gtk4/lib",
-#  "$api2/gnome-gdk4/lib",
-#  "$api2/gnome-gsk4/lib"
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gdk4/lib",
+#  "/gnome-gsk4/lib"
   ;
 
 use YAMLish;
