@@ -2,13 +2,13 @@
 use v6.d;
 use NativeCall;
 
+use PuzzleTable::Gui::Category:api<2>;
+
 #use Gnome::Glib::N-VariantType:api<2>;
 
 use Gnome::Gio::Menu:api<2>;
 use Gnome::Gio::MenuItem:api<2>;
 use Gnome::Gio::SimpleAction:api<2>;
-
-use Gnome::Gtk4::Application:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -17,18 +17,19 @@ use Gnome::N::N-Object:api<2>;
 unit class PuzzleTable::Gui::MenuBar:auth<github:MARTIMM>;
 
 has Gnome::Gio::Menu $.bar;
-has Gnome::Gtk4::Application $!application;
+has $!application is required;
+has $!main is required;
 
 has Array $!menus;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$main-window ) {
-  $!application = $main-window.application;
+submethod BUILD ( :$!main ) {
+  $!application = $!main.application;
+
   $!bar .= new-menu;
   $!menus = [
     self.make-menu(:menu-name<File>),
     self.make-menu(:menu-name<Category>),
-    self.make-menu(:menu-name('')),
     self.make-menu(:menu-name<Help>),
   ];
 }
@@ -37,22 +38,24 @@ submethod BUILD ( :$main-window ) {
 method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
   my Gnome::Gio::Menu $menu .= new-menu;
   $!bar.append-submenu( $menu-name, $menu);
+  
 
   with $menu-name {
     when 'File' {
-      self.add-entry( $menu, $menu-name, 'Open', 'app.open');
-      self.add-entry( $menu, $menu-name, 'Quit', 'app.quit');
+#      self.add-entry( $menu, $menu-name, self, 'Open', 'app.open');
+      self.add-entry( $menu, $menu-name, self, 'Quit', 'app.quit');
     }
 
     when 'Category' {
-      self.add-entry( $menu, $menu-name, 'Add', 'app.add');
-      self.add-entry( $menu, $menu-name, 'Rename', 'app.rename');
-      self.add-entry( $menu, $menu-name, 'Remove', 'app.remove');
+      my PuzzleTable::Gui::Category $cat .= new(:$!main);
+      self.add-entry( $menu, $menu-name, $cat, 'Add', 'app.add');
+      self.add-entry( $menu, $menu-name, $cat, 'Rename', 'app.rename');
+      self.add-entry( $menu, $menu-name, $cat, 'Remove', 'app.remove');
     }
 
-    when '' {
-      my Gnome::Gio::Menu $m .= new-menu;
-      $menu.append-item($m);
+    when 'Help' {
+      self.add-entry( $menu, $menu-name, self, 'About', 'app.about');
+      #self.add-entry( $menu, $menu-name, self, '', '');
     }
   }
 
@@ -61,7 +64,7 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
 
 #-------------------------------------------------------------------------------
 method add-entry (
-  Gnome::Gio::Menu $menu, Str $menu-name, Str $name, Str $action-name
+  Gnome::Gio::Menu $menu, Str $menu-name, $object, Str $name, Str $action-name
 ) {
   my Gnome::Gio::MenuItem $menu-item .= new-menuitem( $name, $action-name);
   $menu.append-item($menu-item);
@@ -71,13 +74,15 @@ method add-entry (
   $!application.add-action($action);
 
   my Str $method = [~] $menu-name.lc, '-', $name.lc;
-  $action.register-signal( self, $method, 'activate');
+  $action.register-signal( $object, $method, 'activate');
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method file-open ( N-Object $parameter ) {
   say 'file open';
 }
+}}
 
 #-------------------------------------------------------------------------------
 method file-quit ( N-Object $parameter ) {
@@ -86,16 +91,11 @@ method file-quit ( N-Object $parameter ) {
 }
 
 #-------------------------------------------------------------------------------
-method category-add ( N-Object $parameter ) {
-  say 'category add';
+method help-about ( N-Object $parameter ) {
+  say 'help about';
 }
 
 #-------------------------------------------------------------------------------
-method category-rename ( N-Object $parameter ) {
-  say 'category rename';
-}
-
-#-------------------------------------------------------------------------------
-method category-remove ( N-Object $parameter ) {
-  say 'category remove';
+method set-category ( GEnum $response-id ) {
+  say 'response: ', $response-id;
 }
