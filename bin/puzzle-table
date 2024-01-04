@@ -7,7 +7,7 @@ use lib
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gobject/lib",
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gio/lib",
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gdkpixbuf/lib",
-#  "/gnome-pango/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-pango/lib",
 #  "/gnome-cairo/lib",
 #  "/gnome-atk/lib",
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gtk4/lib",
@@ -20,6 +20,12 @@ use YAMLish;
 use PuzzleTable::Types;
 use PuzzleTable::Gui::MainWindow;
 
+#-------------------------------------------------------------------------------
+# Load puzzle data in global Hash
+my Hash $*puzzle-data = %();
+$*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
+
+#-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
 my PuzzleTable::Gui::MainWindow $puzzles .= new;
 $puzzles.go-ahead;
