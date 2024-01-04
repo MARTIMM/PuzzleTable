@@ -24,13 +24,15 @@ use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
+use YAMLish;
+
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
 
 has PuzzleTable::Init $!table-init;
 
 has Gnome::Gtk4::Application $.application;
-has Gnome::Gtk4::ApplicationWindow $!application-window;
+has Gnome::Gtk4::ApplicationWindow $.application-window;
 
 has Gnome::Gtk4::CssProvider $!css-provider;
 has Gnome::Gtk4::Grid ( $!top-grid, $!puzzle-grid );
@@ -112,7 +114,7 @@ say 'open a file';
 #-----------------------------------------------------------------------------
 method app-shutdown ( ) {
 say 'shutdown';
-
+  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
 }
 
 #-----------------------------------------------------------------------------
@@ -141,11 +143,10 @@ say 'display table';
     .set-child($!puzzle-grid);
   }
 
-  my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main-window(self));
-  $!application.set-menubar($menu-bar.bar);
+  with $!application-window .= new-applicationwindow($!application) {
+    my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
+    $!application.set-menubar($menu-bar.bar);
 
-  my Gnome::Gtk4::ApplicationWindow $window;
-  with $window .= new-applicationwindow($!application) {
     self.set-css(.get-style-context);
 
     .set-show-menubar(True);
