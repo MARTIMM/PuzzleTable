@@ -40,9 +40,9 @@ What the new program should do
 ## Description
 
 When the program is started for the first time, there will be nothing to show. From the menu you will be able to select a Palapeli collection. To give an idea where to find the collections of several types of installations;
-* the snap installation at: `$home/snap/palapeli/current/.local/share/palapeli/collection`;
-* the flatpack installation at: `/home/marcel/.var/app/org.kde.palapeli/data/palapeli/collection`
-* the standard installation at: `/home/marcel/.local/share/palapeli/collection/`
+* the snap installation at: `$*HOME/snap/palapeli/current/.local/share/palapeli/collection`;
+* the flatpack installation at: `$*HOME/.var/app/org.kde.palapeli/data/palapeli/collection`
+* the standard installation at: `$*HOME/.local/share/palapeli/collection/`
 
 These are paths at my Fedora OS but you may get a hint where to find them on your computer.
 
