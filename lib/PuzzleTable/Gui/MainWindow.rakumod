@@ -2,8 +2,9 @@ use v6.d;
 use NativeCall;
 
 use PuzzleTable::Types;
-use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Init;
+use PuzzleTable::Gui::MenuBar;
+use PuzzleTable::Gui::Category;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
@@ -16,7 +17,6 @@ use Gnome::Gtk4::CssProvider:api<2>;
 use Gnome::Gtk4::StyleContext:api<2>;
 use Gnome::Gtk4::T-StyleProvider:api<2>;
 
-#use Gnome::Glib::N-MainLoop:api<2>;
 use Gnome::Glib::N-Error;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
@@ -37,13 +37,7 @@ has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::CssProvider $!css-provider;
 has Gnome::Gtk4::Grid ( $!top-grid, $!puzzle-grid );
 
-#`{{
-#-------------------------------------------------------------------------------
-method new ( ) {
-note self.^mro;
-  self.new-application( $application-id, G_APPLICATION_DEFAULT_FLAGS);
-}
-}}
+has PuzzleTable::Gui::Category $.combobox;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -78,13 +72,13 @@ submethod BUILD ( ) {
   die $e[0].message if ?$e[0];
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method app-startup ( ) {
 say 'startup';
 
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method local-options ( N-Object $n-variant-dict --> Int ) {
 say 'local opts';
 
@@ -96,7 +90,7 @@ say 'local opts';
   $exit-code
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method remote-options ( N-Object $n-command-line --> Int ) {
 say 'remote opts';
 
@@ -105,42 +99,52 @@ say 'remote opts';
   $exit-code
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method app-open-file ( ) {
 say 'open a file';
 
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method app-shutdown ( ) {
 say 'shutdown';
   PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
-#  my Gnome::Glib::N-MainLoop $main-loop .= new-mainloop;
 say 'display table';
 
   # Load the style sheet for the application
   $!css-provider .= new-cssprovider;
   $!css-provider.load-from-path(PUZZLE_CSS);
 
-  #---------------------------------------------------------------------------
-#  my PuzzleTable::Gui::Helpers $helpers .= new;
-
-  $!top-grid .= new-grid;
+  #-----------------------------------------------------------------------------
   $!puzzle-grid .= new-grid;
 
   with my Gnome::Gtk4::Frame $frame .= new-frame('Current Puzzle Table') {
     self.set-css( .get-style-context, :css-class<puzzle-table-frame>);
-
     .set-label-align(0.03);
+    .set-child($!puzzle-grid);
+    .set-hexpand(True);
+    .set-vexpand(True);
+  }
+
+  with $!combobox.= new-comboboxtext(:main(self)) {
+    for $*puzzle-data<category>.keys.sort -> $key {
+      .append-text($key);
+    }
+    .set-active(0);
+  }
+
+  with $!top-grid .= new-grid {
+    self.set-css( .get-style-context, :css-class<main-view>);
     .set-margin-top(10);
     .set-margin-bottom(10);
     .set-margin-start(10);
     .set-margin-end(10);
-    .set-child($!puzzle-grid);
+    .attach( $!combobox, 0, 0, 1, 1);
+    .attach( $frame, 0, 1, 1, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {
@@ -152,12 +156,12 @@ say 'display table';
     .set-show-menubar(True);
     .set-title('Puzzle Table Display');
     .set-size-request( 1000, 700);
-    .set-child($frame);
+    .set-child($!top-grid);
     .show;
   }
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method go-ahead ( ) {
   my Int $argc = 1 + @*ARGS.elems;
 
@@ -173,7 +177,7 @@ method go-ahead ( ) {
   $!application.run( $argc, $argv);
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 method set-css ( N-Object $context, Str :$css-class = '' ) {
 
   my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
