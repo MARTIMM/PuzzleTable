@@ -1,5 +1,8 @@
 # Puzzle table display
 
+### Notice
+The program cannot be run yet because the Raku libraries, where this repository depends, on are not available. These libraries are still in development.
+
 ## Purpose
 
 Display a table of puzzles made by Palapeli, a linux puzzle game.
