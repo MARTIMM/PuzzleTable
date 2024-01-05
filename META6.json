@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -10,6 +10,13 @@
   "license": "Artistic-2.0",
 
   "provides": {
+    "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
+    "PuzzleTable::Gui::MainWindow": "lib/PuzzleTable/Gui/MainWindow.rakumod",
+    "PuzzleTable::Gui::MenuBar": "lib/PuzzleTable/Gui/MenuBar.rakumod",
+    "PuzzleTable::Gui::Statusbar": "lib/PuzzleTable/Gui/Statusbar.rakumod",
+    "PuzzleTable::ExtractDataFromPuzzle": "lib/PuzzleTable/Gui/Statusbar.rakumod",
+    "PuzzleTable::Init": "lib/PuzzleTable/Init.rakumod",
+    "PuzzleTable::Types": "lib/PuzzleTable/Types.rakumod"
   },
 
   "source-url": "git://github.com/MARTIMM/.git",
