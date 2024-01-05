@@ -1,6 +1,8 @@
 #!/usr/bin/env rakudo
 
 use v6.d;
+
+# Setup temporary paths to Gtk4 development area
 use lib
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-native/lib",
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-glib/lib",
@@ -24,6 +26,8 @@ use PuzzleTable::Gui::MainWindow;
 # Load puzzle data in global Hash
 my Hash $*puzzle-data = %();
 $*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
+$*puzzle-data<category><Default> = %()
+  unless $*puzzle-data<category><Default>:exists;
 
 #-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
