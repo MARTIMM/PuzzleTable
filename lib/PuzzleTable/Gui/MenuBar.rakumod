@@ -42,20 +42,20 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
 
   with $menu-name {
     when 'File' {
-#      self.add-entry( $menu, $menu-name, self, 'Open', 'app.open');
-      self.add-entry( $menu, $menu-name, self, 'Quit', 'app.quit');
+#      self.bind-action( $menu, $menu-name, self, 'Open', 'app.open');
+      self.bind-action( $menu, $menu-name, self, 'Quit', 'app.quit');
     }
 
     when 'Category' {
-      my PuzzleTable::Gui::Category $cat .= new(:$!main);
-      self.add-entry( $menu, $menu-name, $cat, 'Add', 'app.add');
-      self.add-entry( $menu, $menu-name, $cat, 'Rename', 'app.rename');
-      self.add-entry( $menu, $menu-name, $cat, 'Remove', 'app.remove');
+      my PuzzleTable::Gui::Category $cat = $!main.combobox;
+      self.bind-action( $menu, $menu-name, $cat, 'Add', 'app.add');
+      self.bind-action( $menu, $menu-name, $cat, 'Rename', 'app.rename');
+      self.bind-action( $menu, $menu-name, $cat, 'Remove', 'app.remove');
     }
 
     when 'Help' {
-      self.add-entry( $menu, $menu-name, self, 'About', 'app.about');
-      #self.add-entry( $menu, $menu-name, self, '', '');
+      self.bind-action( $menu, $menu-name, self, 'About', 'app.about');
+#      self.bind-action( $menu, $menu-name, self, '', '');
     }
   }
 
@@ -63,8 +63,9 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
 }
 
 #-------------------------------------------------------------------------------
-method add-entry (
-  Gnome::Gio::Menu $menu, Str $menu-name, $object, Str $name, Str $action-name
+method bind-action (
+  Gnome::Gio::Menu $menu, Str $menu-name, Mu $object,
+  Str $name, Str $action-name
 ) {
   my Gnome::Gio::MenuItem $menu-item .= new-menuitem( $name, $action-name);
   $menu.append-item($menu-item);
@@ -95,7 +96,3 @@ method help-about ( N-Object $parameter ) {
   say 'help about';
 }
 
-#-------------------------------------------------------------------------------
-method set-category ( GEnum $response-id ) {
-  say 'response: ', $response-id;
-}
