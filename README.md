@@ -36,10 +36,10 @@ What the new program should do
 * Show on the same picture how much is finished.
 * Add newly created and exported puzzles.
 
-
+<!--
 ## Description
 
-When the program is started for the first time, there will be nothing to show. From the menu you will be able to select the Palapeli collection. To give an idea these are at
+When the program is started for the first time, there will be nothing to show. From the menu you will be able to select a Palapeli collection. To give an idea where to find the collections of several types of installations;
 * the snap installation at: `$home/snap/palapeli/current/.local/share/palapeli/collection`;
 * the flatpack installation at: `/home/marcel/.var/app/org.kde.palapeli/data/palapeli/collection`
 * the standard installation at: `/home/marcel/.local/share/palapeli/collection/`
@@ -47,3 +47,4 @@ When the program is started for the first time, there will be nothing to show. F
 These are paths at my Fedora OS but you may get a hint where to find them on your computer.
 
 You can point to directories where you have stored exported puzzles.
+-->
