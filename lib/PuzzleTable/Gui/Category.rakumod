@@ -1,5 +1,7 @@
 use v6.d;
 
+use PuzzleTable::Gui::Statusbar;
+
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::Box:api<2>;
@@ -19,10 +21,15 @@ unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
 #-------------------------------------------------------------------------------
 has $!application is required;
 has $!main is required;
+has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
   $!application = $!main.application;
+
+  # Must be done later when dialog is created. It gets invalidated when
+  # dialog is destroyed.
+  #$!statusbar .= new-statusbar(:context<category>);
 }
 
 #-------------------------------------------------------------------------------
@@ -31,11 +38,11 @@ method category-add ( N-Object $parameter ) {
 
   my Gnome::Gtk4::Label $label .= new-label('Specify a new category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
-  my Gnome::Gtk4::Statusbar $statusbar .= new-statusbar;
+  $!statusbar .= new-statusbar(:context<category>);
 
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
     'Add Category dialog', $!main.application-window,
-    GTK_DIALOG_MODAL,
+    GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
     'Add', GEnum, GTK_RESPONSE_ACCEPT, Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
   );
 
@@ -49,12 +56,12 @@ method category-add ( N-Object $parameter ) {
     .set-margin-end(10);
     .append($label);
     .append($entry);
-    .append($statusbar);
+    .append($!statusbar.get-native-object);
   }
 
   with $dialog {
     .set-size-request( 400, 200);
-    .register-signal( self, 'do-category-add', 'response', :$entry, :$statusbar);
+    .register-signal( self, 'do-category-add', 'response', :$entry);
     my $r = .show;
   }
 }
@@ -62,13 +69,14 @@ method category-add ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-add (
   Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
-  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::Statusbar :$statusbar
+  Gnome::Gtk4::Entry :$entry
 ) {
   my Bool $sts-ok = False;
-  $statusbar.remove-all;
+  $!statusbar.remove-message;
 
-  my GtkResponseType() $response-type = $response-id;
-  note 'return code: ', $response-id, ', ', $response-type;
+  my GtkResponseType() $response-type = $response-id;  
+
+note 'return code: ', $response-id, ', ', $response-type;
   given $response-type {
     when GTK_RESPONSE_DELETE_EVENT {
       #ignore
@@ -77,20 +85,19 @@ method do-category-add (
 
     when GTK_RESPONSE_ACCEPT {
       my Str $cat-text = $entry.get-text;
-note "New cat: $cat-text";
 
       if !$cat-text {
-        self.set-status('No category name specified');
+        $!statusbar.set-status('No category name specified');
       }
 
       elsif $cat-text.lc eq 'default' {
-        self.set-status(
+        $!statusbar.set-status(
           'Category \'default\' is fixed in any form of text-case'
         );
       }
 
       elsif $*puzzle-data<category>{$cat-text}:exists {
-        self.set-status('Category already defined');
+        $!statusbar.set-status('Category already defined');
       }
 
       else {
@@ -114,8 +121,8 @@ method category-rename ( N-Object $parameter ) {
   my Gnome::Gtk4::Label $label1 .= new-label('Select category from list');
   my Gnome::Gtk4::Label $label2 .= new-label('Text to rename category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
-  my Gnome::Gtk4::Statusbar $statusbar .= new-statusbar;
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
+  $!statusbar .= new-statusbar(:context<category>);
 
   for $*puzzle-data<category>.keys -> $key {
     $combobox.append-text($key);
@@ -124,7 +131,7 @@ method category-rename ( N-Object $parameter ) {
 
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
     'Add Category dialog', $!main.application-window,
-    GTK_DIALOG_MODAL,
+    GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
          'Rename', GEnum, GTK_RESPONSE_ACCEPT,
     Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
   );
@@ -141,13 +148,13 @@ method category-rename ( N-Object $parameter ) {
     .append($combobox);
     .append($label2);
     .append($entry);
-    .append($statusbar);
+    .append($!statusbar);
   }
 
   with $dialog {
     .set-size-request( 400, 200);
     .register-signal(
-      self, 'do-category-rename', 'response', :$entry, :$combobox, :$statusbar
+      self, 'do-category-rename', 'response', :$entry, :$combobox
     );
     .show;
   }
@@ -157,40 +164,38 @@ method category-rename ( N-Object $parameter ) {
 method do-category-rename (
   Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
-  Gnome::Gtk4::Statusbar :$statusbar
 ) {
   my Bool $sts-ok = False;
-  $statusbar.remove-all;
-
+  $!statusbar.remove-message;
 
   my GtkResponseType() $response-type = $response-id;
-  note 'return code: ', $response-id, ', ', $response-type;
+
   given $response-type {
     when GTK_RESPONSE_DELETE_EVENT {
+      note 'deleted';
       #ignore
       $sts-ok = True;
     }
 
     when GTK_RESPONSE_ACCEPT {
       my Str $cat-text = $entry.get-text;
-note "New cat: $cat-text";
 
       if !$cat-text {
-        self.set-status( $statusbar, 'No category name specified');
+        $!statusbar.set-status('No category name specified');
       }
 
       elsif $cat-text.lc eq 'default' {
-        self.set-status(
-           $statusbar, 'Category \'default\' is fixed in any form of text-case'
+        $!statusbar.set-status(
+           'Category \'default\' is fixed in any form of text-case'
         );
       }
 
       elsif $*puzzle-data<category>{$cat-text}:exists {
-        self.set-status( $statusbar, 'Category already defined');
+        $!statusbar.set-status('Category already defined');
       }
 
       elsif $cat-text eq $combobox.get-active-text {
-        self.set-status( $statusbar, 'Category text same as selected');
+        $!statusbar.set-status('Category text same as selected');
       }
 
       else {
@@ -214,7 +219,3 @@ method category-remove ( N-Object $parameter ) {
   say 'category remove';
 }
 
-#-------------------------------------------------------------------------------
-method set-status ( Gnome::Gtk4::Statusbar $statusbar, Str $text ) {
-  $statusbar.push( $statusbar.get-context-id('category'), $text);
-}
