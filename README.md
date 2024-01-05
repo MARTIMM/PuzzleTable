@@ -1,7 +1,7 @@
 # Puzzle table display
 
 ### Notice
-The program cannot be run yet because the Raku libraries, where this repository depends, on are not available. These libraries are still in development.
+The program cannot be run yet because the Raku libraries, where this repository depends on, are not available. These libraries are still in development. For more info about that repo [please look here](https://github.com/MARTIMM/gnome-source-skim-tool).
 
 ## Purpose
 
