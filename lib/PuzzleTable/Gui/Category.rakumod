@@ -1,3 +1,10 @@
+#`{{
+Combobox widget to display the categories of puzzles. The widget is shown on
+the main window. The actions to change the list are triggered from the
+'category' menu. All changes are directly visible in the combobox on the main
+page.
+}}
+
 use v6.d;
 
 use PuzzleTable::Gui::Statusbar;
@@ -8,15 +15,14 @@ use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
-#use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
-use Gnome::Gtk4::Statusbar:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
+also is Gnome::Gtk4::ComboBoxText;
 
 #-------------------------------------------------------------------------------
 has $!application is required;
@@ -24,15 +30,14 @@ has $!main is required;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
+# Initialize from main page
 submethod BUILD ( :$!main ) {
   $!application = $!main.application;
-
-  # Must be done later when dialog is created. It gets invalidated when
-  # dialog is destroyed.
-  #$!statusbar .= new-statusbar(:context<category>);
+  self.register-signal( self, 'cat-selected', 'changed');
 }
 
 #-------------------------------------------------------------------------------
+# Select from menu to add a category
 method category-add ( N-Object $parameter ) {
   say 'category add';
 
@@ -56,12 +61,13 @@ method category-add ( N-Object $parameter ) {
     .set-margin-end(10);
     .append($label);
     .append($entry);
-    .append($!statusbar.get-native-object);
+    .append($!statusbar);
   }
 
   with $dialog {
     .set-size-request( 400, 200);
     .register-signal( self, 'do-category-add', 'response', :$entry);
+    .register-signal( self, 'destroy-dialog', 'destroy');
     my $r = .show;
   }
 }
@@ -76,7 +82,6 @@ method do-category-add (
 
   my GtkResponseType() $response-type = $response-id;  
 
-note 'return code: ', $response-id, ', ', $response-type;
   given $response-type {
     when GTK_RESPONSE_DELETE_EVENT {
       #ignore
@@ -84,7 +89,7 @@ note 'return code: ', $response-id, ', ', $response-type;
     }
 
     when GTK_RESPONSE_ACCEPT {
-      my Str $cat-text = $entry.get-text;
+      my Str $cat-text = $entry.get-text.tc;
 
       if !$cat-text {
         $!statusbar.set-status('No category name specified');
@@ -96,12 +101,25 @@ note 'return code: ', $response-id, ', ', $response-type;
         );
       }
 
+#      elsif $cat-text ~~ m/ \s / {
+#        $!statusbar.set-status('Spaces not allowed in name');
+#      }
+
       elsif $*puzzle-data<category>{$cat-text}:exists {
         $!statusbar.set-status('Category already defined');
       }
 
       else {
+        # Add category to list
         $*puzzle-data<category>{$cat-text} = %();
+
+        # Empty list and fill with new item
+        self.remove-all;
+        for $*puzzle-data<category>.keys.sort -> $key {
+          self.append-text($key);
+        }
+        self.set-active(0);
+
         $sts-ok = True;
       }
     }
@@ -115,6 +133,7 @@ note 'return code: ', $response-id, ', ', $response-type;
 }
 
 #-------------------------------------------------------------------------------
+# Select from menu to rename a category
 method category-rename ( N-Object $parameter ) {
   say 'category rename';
 
@@ -124,7 +143,8 @@ method category-rename ( N-Object $parameter ) {
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
   $!statusbar .= new-statusbar(:context<category>);
 
-  for $*puzzle-data<category>.keys -> $key {
+  for $*puzzle-data<category>.keys.sort -> $key {
+    next if $key.lc eq 'default';
     $combobox.append-text($key);
   }
   $combobox.set-active(0);
@@ -156,6 +176,7 @@ method category-rename ( N-Object $parameter ) {
     .register-signal(
       self, 'do-category-rename', 'response', :$entry, :$combobox
     );
+    .register-signal( self, 'destroy-dialog', 'destroy');
     .show;
   }
 }
@@ -178,7 +199,7 @@ method do-category-rename (
     }
 
     when GTK_RESPONSE_ACCEPT {
-      my Str $cat-text = $entry.get-text;
+      my Str $cat-text = $entry.get-text.tc;
 
       if !$cat-text {
         $!statusbar.set-status('No category name specified');
@@ -186,8 +207,12 @@ method do-category-rename (
 
       elsif $cat-text.lc eq 'default' {
         $!statusbar.set-status(
-           'Category \'default\' is fixed in any form of text-case'
+          'Category \'default\' is fixed in any form of text-case'
         );
+      }
+
+      elsif $cat-text ~~ m/ \s / {
+        $!statusbar.set-status('Spaces not allowed in name');
       }
 
       elsif $*puzzle-data<category>{$cat-text}:exists {
@@ -199,9 +224,11 @@ method do-category-rename (
       }
 
       else {
+        # move members to other category
+        # $cat-text -> $combobox.get-active-text
         $*puzzle-data<category>{$cat-text} =
           $*puzzle-data<category>{$combobox.get-active-text}:delete;
-        
+
         $sts-ok = True;
       }
     }
@@ -215,7 +242,25 @@ method do-category-rename (
 }
 
 #-------------------------------------------------------------------------------
+# Select from menu to remove a category
 method category-remove ( N-Object $parameter ) {
   say 'category remove';
 }
 
+#-------------------------------------------------------------------------------
+method do-category-remove (
+  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
+) {
+}
+
+#-------------------------------------------------------------------------------
+method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
+  say 'destroy';
+  $dialog.destroy;
+}
+
+#-------------------------------------------------------------------------------
+method cat-selected ( ) {
+  say 'selected';
+}
