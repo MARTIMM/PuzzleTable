@@ -4,25 +4,22 @@ use Archive::Libarchive;
 use Archive::Libarchive::Constants;
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::ExtractImageFromPuzzle:auth<github:MARTIMM>;
-
+unit class PuzzleTable::ExtractDataFromPuzzle:auth<github:MARTIMM>;
 
 my Str $puzzle-file;
 my regex extract-regex {^ [ image \. | pala \. desktop ] };
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str $store-path ) {
+submethod BUILD ( ) {
   
 }
 
 #-------------------------------------------------------------------------------
-method extract ( Str:D $puzzle-file:D, Str:D $category ) {
+method extract ( Str:D $store-path, Str:D $puzzle-file ) {
   die "file '$puzzle-file' not found" unless $puzzle-file.IO.r;
 
-  my Str $parent = $puzzle-file.IO.parent.Str;
-#say $puzzle-file;
-  chdir($parent);
-#say $*CWD;
+#  my Str $parent = $puzzle-file.IO.parent.Str;
+#  chdir($parent);
 
   my Archive::Libarchive $a .= new(
     operation => LibarchiveExtract,
@@ -34,7 +31,7 @@ method extract ( Str:D $puzzle-file:D, Str:D $category ) {
   );
 
   try {
-    $a.extract( &extract, $parent);
+    $a.extract( &extract, $store-path);
     CATCH {
       say "Can't extract files: $_";
     }
