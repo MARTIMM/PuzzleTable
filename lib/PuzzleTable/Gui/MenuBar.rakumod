@@ -2,7 +2,8 @@
 use v6.d;
 use NativeCall;
 
-use PuzzleTable::Gui::Category:api<2>;
+use PuzzleTable::Config;
+use PuzzleTable::Gui::Category;
 
 #use Gnome::Glib::N-VariantType:api<2>;
 
@@ -38,16 +39,17 @@ submethod BUILD ( :$!main ) {
 method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
   my Gnome::Gio::Menu $menu .= new-menu;
   $!bar.append-submenu( $menu-name, $menu);
-  
+
+  my PuzzleTable::Config $config = $!main.config;
+  my PuzzleTable::Gui::Category $cat = $!main.combobox;
 
   with $menu-name {
     when 'File' {
-#      self.bind-action( $menu, $menu-name, self, 'Open', 'app.open');
+      self.bind-action( $menu, $menu-name, $config, 'Import', 'app.import');
       self.bind-action( $menu, $menu-name, self, 'Quit', 'app.quit');
     }
 
     when 'Category' {
-      my PuzzleTable::Gui::Category $cat = $!main.combobox;
       self.bind-action( $menu, $menu-name, $cat, 'Add', 'app.add');
       self.bind-action( $menu, $menu-name, $cat, 'Rename', 'app.rename');
       self.bind-action( $menu, $menu-name, $cat, 'Remove', 'app.remove');
@@ -77,13 +79,6 @@ method bind-action (
   my Str $method = [~] $menu-name.lc, '-', $name.lc;
   $action.register-signal( $object, $method, 'activate');
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method file-open ( N-Object $parameter ) {
-  say 'file open';
-}
-}}
 
 #-------------------------------------------------------------------------------
 method file-quit ( N-Object $parameter ) {
