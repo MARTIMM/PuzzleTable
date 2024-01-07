@@ -3,6 +3,7 @@ use NativeCall;
 
 use PuzzleTable::Types;
 use PuzzleTable::Init;
+use PuzzleTable::Config;
 use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Table;
@@ -11,12 +12,8 @@ use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
 
 use Gnome::Gtk4::Application:api<2>;
-#use Gnome::Gtk4::Frame:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::ApplicationWindow:api<2>;
-#use Gnome::Gtk4::CssProvider:api<2>;
-#use Gnome::Gtk4::StyleContext:api<2>;
-#use Gnome::Gtk4::T-StyleProvider:api<2>;
 
 use Gnome::Glib::N-Error;
 
@@ -34,12 +31,11 @@ has PuzzleTable::Init $!table-init;
 
 has Gnome::Gtk4::Application $.application;
 has Gnome::Gtk4::ApplicationWindow $.application-window;
-
-#has Gnome::Gtk4::CssProvider $!css-provider;
-#has Gnome::Gtk4::Grid ( $!top-grid, $!puzzle-grid );
 has Gnome::Gtk4::Grid $!top-grid;
 
+has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Category $.combobox;
+has PuzzleTable::Config $.config;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -86,6 +82,7 @@ say 'local opts';
 
   # Might need this already when processing arguments
   $!table-init .= new;
+  $!config .= new;
 
   my Int $exit-code = -1;
   
@@ -117,27 +114,7 @@ say 'shutdown';
 method puzzle-table-display ( ) {
 say 'display table';
 
-  # Load the style sheet for the application
-#  $!css-provider .= new-cssprovider;
-#  $!css-provider.load-from-path(PUZZLE_CSS);
-
-  #-----------------------------------------------------------------------------
-#  $!puzzle-grid .= new-grid;
-
-#`{{
-  with my Gnome::Gtk4::Frame $frame .= new-frame('Current Puzzle Table') {
-    self.set-css( .get-style-context, :css-class<puzzle-table-frame>);
-    .set-label-align(0.03);
-    .set-child($!puzzle-grid);
-    .set-hexpand(True);
-    .set-vexpand(True);
-  }
-}}
-Gnome::N::debug(:on);
-
-  my PuzzleTable::Gui::Table $table .= new-frame('Current Puzzle Table');
-  $table.add-object-to-table('/home/marcel/Pictures/Puzzles/steam punk/114130.jpg');
-Gnome::N::debug(:off);
+  $!table .= new-scrolledwindow;
 
   with $!combobox.= new-comboboxtext(:main(self)) {
     for $*puzzle-data<category>.keys.sort -> $key {
@@ -153,8 +130,7 @@ Gnome::N::debug(:off);
     .set-margin-start(10);
     .set-margin-end(10);
     .attach( $!combobox, 0, 0, 1, 1);
-#    .attach( $frame, 0, 1, 1, 1);
-    .attach( $table, 0, 1, 1, 1);
+    .attach( $!table, 0, 1, 1, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {
@@ -185,15 +161,4 @@ method go-ahead ( ) {
   my $argv = CArray[Str].new($arg_arr);
 
   $!application.run( $argc, $argv);
-}
-
-=finish
-#-------------------------------------------------------------------------------
-method set-css ( N-Object $context, Str :$css-class = '' ) {
-
-  my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
-  $style-context.add-provider(
-    $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
-  );
-  $style-context.add-class($css-class) if ?$css-class;
 }
