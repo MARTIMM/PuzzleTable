@@ -1,5 +1,9 @@
 ### TODO list
 
+* 2024-01-07 0.3.0
+  * Got the puzzle table working using a StringList. Found an important [tutorial link](https://github.com/ToshioCP/Gtk4-tutorial/blob/main/gfm/sec29.md).
+  * Modules Table added to manage the puzzletable.
+
 * 2024-01-05 0.2.0
   * New modules for many and category manipulations and a statusbar
   * Actions to add and rename a category.
