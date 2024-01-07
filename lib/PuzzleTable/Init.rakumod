@@ -25,22 +25,27 @@ submethod BUILD ( ) {
       window {
       }
 
-      .puzzle-table-frame {
+      .puzzle-table {
         border-width: 3px;
         border-style: outset;
         border-color: #ffee00;
-        padding: 3px;
+        padding: 5px;
       /*	border-style: inset; */
       /*	border-style: solid; */
       /*	border-style: none; */
       }
 
+      .puzzle-grid {
+        padding: 2px;
+      }
+
       .puzzle-grid child {
-        border-width: 1px;
+        border-width: 4px;
         border-style: inset;
         border-color: #8800ff;
-        padding: 0px;
+        padding: 3px;
       /*
+        margin: 4px;
         min-width: 300px;
         min-height: 300px;
         max-width: 300px;
