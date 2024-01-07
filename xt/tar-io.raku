@@ -9,10 +9,7 @@ my regex extract-regex {^ [ image \. | pala \. desktop ] };
 sub MAIN( $f! where { .IO.r // die "file '$puzzle-file' not found" } ) {
   $puzzle-file = $f;
   my Str $parent = $puzzle-file.IO.parent.Str;
-#  $puzzle-file = $f.IO.basename;
-say $puzzle-file;
   chdir($parent);
-say $*CWD;
 
   my Archive::Libarchive $a .= new(
     operation => LibarchiveExtract,
