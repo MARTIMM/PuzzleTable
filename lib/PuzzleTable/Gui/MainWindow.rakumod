@@ -10,6 +10,7 @@ use PuzzleTable::Gui::Table;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
+use Gnome::Gio::ApplicationCommandLine:api<2>;
 
 use Gnome::Gtk4::Application:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
@@ -23,6 +24,7 @@ use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
 use YAMLish;
+use Getopt::Long;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
@@ -40,7 +42,9 @@ has PuzzleTable::Config $.config;
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
 
-  $!application .= new-application( APP_ID, G_APPLICATION_DEFAULT_FLAGS);
+  $!application .= new-application(
+    APP_ID, G_APPLICATION_HANDLES_COMMAND_LINE
+  );
 
   # Load the gtk resource file and register resource to make data global to app
 #  my Gnome::Gio::Resource $r .= new(:load(%?RESOURCES<library.gresource>.Str));
@@ -61,8 +65,10 @@ submethod BUILD ( ) {
   # Fired after g_application_run
   $!application.register-signal( self, 'puzzle-table-display', 'activate');
 
+#`{{
   # Fired after detecting a file on commandline
   $!application.register-signal( self, 'app-open-file', 'open');
+}}
 
   # Now we can register the application.
   my $e = CArray[N-Error].new(N-Error);
@@ -72,56 +78,103 @@ submethod BUILD ( ) {
 
 #-------------------------------------------------------------------------------
 method app-startup ( ) {
-say 'startup';
-
+#say 'startup';
 }
 
 #-------------------------------------------------------------------------------
 method local-options ( N-Object $n-variant-dict --> Int ) {
-say 'local opts';
+#say 'local opts';
+
+  # Management and admin
+  $!config .= new;
 
   # Might need this already when processing arguments
   $!table-init .= new;
-  $!config .= new;
 
   my Int $exit-code = -1;
-  
+
+  # All faulty and wrong arguments thrown by Getopt::Long are caught here.
+  CATCH {
+    default {
+      .message.note;
+      self.usage;
+
+      $exit-code = 1;
+      return $exit-code;
+    }
+  }
+
+  my Capture $o = get-options(|$!config.options);
+
+  # Handle the simple options here which do not require the primary instance
+  if $o<version> {
+    note "Version of puzzle table; $!config.version()";
+    $exit-code = 0;
+  }
+
+  if $o<h> or $o<help> {
+    self.usage;
+    $exit-code = 0;
+  }
+
   $exit-code
 }
 
 #-------------------------------------------------------------------------------
 method remote-options ( N-Object $n-command-line --> Int ) {
-say 'remote opts';
+#say 'remote opts';
+
+  # We need the combobox management here already
+  $!combobox .= new-comboboxtext(:main(self));
 
   my Int $exit-code = 0;
-  
+  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
+    :native-object($n-command-line)
+  );
+  my @args = |$command-line.get-arguments;
+#note "$?LINE ", @args.gist;
+
+
+
+  my Capture $o = get-options-from( @args, |$!config.options);
+#note "$?LINE opts = $o.gist()";
+  $!config.add-category($o<category>) if $o<category>:exists;
+
+  if $o<import>:exists {
+  }
+
+  if $o<puzzle>:exists {
+  }
+
+  if $o<pala-export>:exists {
+  }
+
+  $!application.activate unless $command-line.get-is-remote;
+  $command-line.clear-object;
+
+  $!combobox.renew;
+
   $exit-code
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method app-open-file ( ) {
 say 'open a file';
-
 }
+}}
 
 #-------------------------------------------------------------------------------
 method app-shutdown ( ) {
-say 'shutdown';
+#  say 'shutdown, saving configuration';
   PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
 }
 
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
-say 'display table';
+#say 'display table';
 
   $!table .= new-scrolledwindow;
-
-  with $!combobox.= new-comboboxtext(:main(self)) {
-    for $*puzzle-data<category>.keys.sort -> $key {
-      .append-text($key);
-    }
-    .set-active(0);
-  }
 
   with $!top-grid .= new-grid {
     $!table-init.set-css( .get-style-context, :css-class<main-view>);
@@ -161,4 +214,33 @@ method go-ahead ( ) {
   my $argv = CArray[Str].new($arg_arr);
 
   $!application.run( $argc, $argv);
+}
+
+#-------------------------------------------------------------------------------
+method usage ( ) {
+  say qq:to/EOUSAGE/;
+
+  Program to show a puzzle table.
+
+  Usage:
+    puzzle-table [options]
+
+  Options:
+    --import <path to users puzzle directory>. Import puzzles from a directory
+      exported from Palapeli.
+
+    --category <name>. By default `Default`. Select the category to work with.
+      The category is created if not available. When `--import` or `--puzzle`
+      is used, the imported puzzles are placed in that category.
+
+    -h --help. Show this information.
+
+    --pala-import <path to palapeli collection>. Import puzzles from a Palapeli
+      collection into a category.
+
+    --puzzle <path to user puzzle>. Import a single puzzle.
+
+    --version. Show current version of distribution.
+
+  EOUSAGE
 }
