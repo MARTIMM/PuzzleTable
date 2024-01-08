@@ -1,5 +1,13 @@
 ### TODO list
 
+* 2024-01-08 0.3.1
+  * Add commandline options
+    * **--version**. Show current version of distribution.
+    * **--import \<puzzles path>**. Import users exported puzzles.
+    * **--puzzle \<user puzzle>**. Import a single puzzle.
+    * **--category \<name>**. By default `Default`. Created if not available. When `--import` or `--puzzle` is used, the imported puzzles are placed in that category.
+    * **--pala-export \<path to palapeli collection>**. Export puzzles from a Palapeli collection into a category.
+
 * 2024-01-07 0.3.0
   * Got the puzzle table working using a StringList. Found an important [tutorial link](https://github.com/ToshioCP/Gtk4-tutorial/blob/main/gfm/sec29.md).
   * Modules Table added to manage the puzzletable.
