@@ -25,14 +25,14 @@ unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ComboBoxText;
 
 #-------------------------------------------------------------------------------
-has $!application is required;
 has $!main is required;
+#has $!application;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( :$!main ) {
-  $!application = $!main.application;
+#  $!application = $!main.application;
   self.register-signal( self, 'cat-selected', 'changed');
 }
 
@@ -112,14 +112,8 @@ method do-category-add (
       else {
         # Add category to list
         $*puzzle-data<category>{$cat-text} = %();
-
-        # Empty list and fill with new item
-        self.remove-all;
-        for $*puzzle-data<category>.keys.sort -> $key {
-          self.append-text($key);
-        }
-        self.set-active(0);
-
+        $!main.config.add-category($cat-text);
+        self.renew;
         $sts-ok = True;
       }
     }
@@ -228,7 +222,7 @@ method do-category-rename (
         # $cat-text -> $combobox.get-active-text
         $*puzzle-data<category>{$cat-text} =
           $*puzzle-data<category>{$combobox.get-active-text}:delete;
-
+#......
         $sts-ok = True;
       }
     }
@@ -263,4 +257,14 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
 #-------------------------------------------------------------------------------
 method cat-selected ( ) {
   say 'selected';
+}
+
+#-------------------------------------------------------------------------------
+method renew ( ) {
+  # Empty list and fill with new item
+  self.remove-all;
+  for $*puzzle-data<category>.keys.sort -> $key {
+    self.append-text($key);
+  }
+  self.set-active(0);
 }
