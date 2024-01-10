@@ -39,7 +39,7 @@ submethod BUILD ( :$!main ) {
 #-------------------------------------------------------------------------------
 # Select from menu to add a category
 method category-add ( N-Object $parameter ) {
-  say 'category add';
+#  say 'category add';
 
   my Gnome::Gtk4::Label $label .= new-label('Specify a new category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
@@ -105,13 +105,13 @@ method do-category-add (
 #        $!statusbar.set-status('Spaces not allowed in name');
 #      }
 
-      elsif $*puzzle-data<category>{$cat-text}:exists {
+      elsif $*puzzle-data<categories>{$cat-text}:exists {
         $!statusbar.set-status('Category already defined');
       }
 
       else {
         # Add category to list
-        $*puzzle-data<category>{$cat-text} = %();
+#        $*puzzle-data<categories>{$cat-text} = %(members => %());
         $!main.config.add-category($cat-text);
         self.renew;
         $sts-ok = True;
@@ -129,15 +129,15 @@ method do-category-add (
 #-------------------------------------------------------------------------------
 # Select from menu to rename a category
 method category-rename ( N-Object $parameter ) {
-  say 'category rename';
+#  say 'category rename';
 
   my Gnome::Gtk4::Label $label1 .= new-label('Select category from list');
   my Gnome::Gtk4::Label $label2 .= new-label('Text to rename category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
-  $!statusbar .= new-statusbar(:context<category>);
+  $!statusbar .= new-statusbar(:context<categories>);
 
-  for $*puzzle-data<category>.keys.sort -> $key {
+  for $*puzzle-data<categories>.keys.sort -> $key {
     next if $key.lc eq 'default';
     $combobox.append-text($key);
   }
@@ -209,7 +209,7 @@ method do-category-rename (
         $!statusbar.set-status('Spaces not allowed in name');
       }
 
-      elsif $*puzzle-data<category>{$cat-text}:exists {
+      elsif $*puzzle-data<categories>{$cat-text}:exists {
         $!statusbar.set-status('Category already defined');
       }
 
@@ -220,9 +220,10 @@ method do-category-rename (
       else {
         # move members to other category
         # $cat-text -> $combobox.get-active-text
-        $*puzzle-data<category>{$cat-text} =
-          $*puzzle-data<category>{$combobox.get-active-text}:delete;
-#......
+        $*puzzle-data<categories>{$cat-text} =
+          $*puzzle-data<categories>{$combobox.get-active-text}:delete;
+#move files too......
+        self.renew;
         $sts-ok = True;
       }
     }
@@ -263,7 +264,7 @@ method cat-selected ( ) {
 method renew ( ) {
   # Empty list and fill with new item
   self.remove-all;
-  for $*puzzle-data<category>.keys.sort -> $key {
+  for $*puzzle-data<categories>.keys.sort -> $key {
     self.append-text($key);
   }
   self.set-active(0);
