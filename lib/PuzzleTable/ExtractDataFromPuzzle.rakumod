@@ -10,24 +10,20 @@ my Str $puzzle-file;
 my regex extract-regex {^ [ image \. | pala \. desktop ] };
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( ) {
-  
-}
+#submethod BUILD ( ) { }
 
 #-------------------------------------------------------------------------------
 method extract ( Str:D $store-path, Str:D $puzzle-file ) {
-  die "file '$puzzle-file' not found" unless $puzzle-file.IO.r;
-
-#  my Str $parent = $puzzle-file.IO.parent.Str;
-#  chdir($parent);
+  unless $puzzle-file.IO.r {
+    note "file '$puzzle-file' not found";
+    return;
+  }
 
   my Archive::Libarchive $a .= new(
     operation => LibarchiveExtract,
     file => $puzzle-file,
-    flags => ARCHIVE_EXTRACT_TIME +|
-             ARCHIVE_EXTRACT_PERM +|
-             ARCHIVE_EXTRACT_ACL +|
-             ARCHIVE_EXTRACT_FFLAGS
+    flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
+             ARCHIVE_EXTRACT_ACL +|  ARCHIVE_EXTRACT_FFLAGS
   );
 
   try {
@@ -42,7 +38,40 @@ method extract ( Str:D $store-path, Str:D $puzzle-file ) {
 
 #-------------------------------------------------------------------------------
 sub extract ( Archive::Libarchive::Entry $e --> Bool ) {
-  say "$e.pathname(), eq: ",
-       $e.pathname ~~ m/ <extract-regex> /.Bool;
   $e.pathname ~~ m/ <extract-regex> /.Bool
+}
+
+#-------------------------------------------------------------------------------
+method palapeli-info( Str:D $store-path --> Hash ) {
+#note "$?LINE extract from $store-path/pala.desktop";
+
+  my Hash $h = %();
+  for "$store-path/pala.desktop".IO.slurp.lines -> $line {
+    next unless $line ~~ m/ '=' /;
+    my ( $name, $val) = $line.split('=');
+
+    given $name {
+      when 'Comment' {
+        $h<Comment> = $val // '';
+      }
+
+      when 'Name' {
+        $h<Name> = $val // '';
+      }
+
+      when 'ImageSize' {
+        my $size = $val // '';
+        my ( $width, $height) = $size.split(',');
+        $h<Width> = $width.Int;
+        $h<Height> = $height.Int;
+      }
+
+      when / PieceCount / {
+        $h<PieceCount> = $val.Int;
+      }
+    }
+  }
+
+#note "$?LINE $h.gist()";
+  $h
 }
