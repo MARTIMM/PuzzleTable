@@ -22,12 +22,13 @@ use YAMLish;
 use PuzzleTable::Types;
 use PuzzleTable::Gui::MainWindow;
 
+
 #-------------------------------------------------------------------------------
 # Load puzzle data in global Hash
 my Hash $*puzzle-data = %();
 $*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
-$*puzzle-data<category><Default> = %()
-  unless $*puzzle-data<category><Default>:exists;
+$*puzzle-data<categories><Default> = %(members => %())
+  unless $*puzzle-data<categories><Default>:exists;
 
 #-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
