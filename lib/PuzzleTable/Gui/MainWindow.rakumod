@@ -2,7 +2,6 @@ use v6.d;
 use NativeCall;
 
 use PuzzleTable::Types;
-use PuzzleTable::Init;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Category;
@@ -23,13 +22,10 @@ use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
-use YAMLish;
 use Getopt::Long;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
-
-has PuzzleTable::Init $!table-init;
 
 has Gnome::Gtk4::Application $.application;
 has Gnome::Gtk4::ApplicationWindow $.application-window;
@@ -88,9 +84,6 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
   # Management and admin
   $!config .= new;
 
-  # Might need this already when processing arguments
-  $!table-init .= new;
-
   my Int $exit-code = -1;
 
   # All faulty and wrong arguments thrown by Getopt::Long are caught here.
@@ -124,26 +117,34 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 method remote-options ( N-Object $n-command-line --> Int ) {
 #say 'remote opts';
 
-  # We need the combobox management here already
-  $!combobox .= new-comboboxtext(:main(self));
+  # We need the table and combobox management here already
+  $!table .= new-scrolledwindow(:$!config);
+  $!combobox .= new-comboboxtext( :main(self), :$!config, :$!table);
 
   my Int $exit-code = 0;
   my Gnome::Gio::ApplicationCommandLine $command-line .= new(
     :native-object($n-command-line)
   );
-  my @args = |$command-line.get-arguments;
-#note "$?LINE ", @args.gist;
 
+  my Capture $o = get-options-from(
+    $command-line.get-arguments(Pointer), |$!config.options
+  );
+  my @args = $o.list;
 
-
-  my Capture $o = get-options-from( @args, |$!config.options);
-#note "$?LINE opts = $o.gist()";
-  $!config.add-category($o<category>) if $o<category>:exists;
+  my Str $category = 'Default';
+  if $o<category>:exists {
+    $category = $o<category>;
+    $!config.add-category($category);
+  }
 
   if $o<import>:exists {
   }
 
-  if $o<puzzle>:exists {
+  if $o<puzzles>:exists {
+    for @args[1..*-1] -> $puzzle-path {
+      next unless $puzzle-path ~~ m/ \. puzzle $/;
+      $!config.add-puzzle( $category, $puzzle-path);
+    }
   }
 
   if $o<pala-export>:exists {
@@ -167,17 +168,16 @@ say 'open a file';
 #-------------------------------------------------------------------------------
 method app-shutdown ( ) {
 #  say 'shutdown, saving configuration';
-  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
+#  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
+  $!config.save-puzzle-admin;
 }
 
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
 #say 'display table';
 
-  $!table .= new-scrolledwindow;
-
   with $!top-grid .= new-grid {
-    $!table-init.set-css( .get-style-context, :css-class<main-view>);
+    $!config.set-css( .get-style-context, :css-class<main-view>);
     .set-margin-top(10);
     .set-margin-bottom(10);
     .set-margin-start(10);
@@ -190,7 +190,7 @@ method puzzle-table-display ( ) {
     my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
     $!application.set-menubar($menu-bar.bar);
 
-    $!table-init.set-css(.get-style-context);
+    $!config.set-css(.get-style-context);
 
     .set-show-menubar(True);
     .set-title('Puzzle Table Display');
@@ -238,7 +238,8 @@ method usage ( ) {
     --pala-import <path to palapeli collection>. Import puzzles from a Palapeli
       collection into a category.
 
-    --puzzle <path to user puzzle>. Import a single puzzle.
+    --puzzles. Import one or more puzzles. The paths to the puzzles are given
+      as the arguments.
 
     --version. Show current version of distribution.
 

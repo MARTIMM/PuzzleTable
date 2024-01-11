@@ -7,7 +7,9 @@ page.
 
 use v6.d;
 
+use PuzzleTable::Config;
 use PuzzleTable::Gui::Statusbar;
+use PuzzleTable::Gui::Table;
 
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Entry:api<2>;
@@ -26,13 +28,15 @@ also is Gnome::Gtk4::ComboBoxText;
 
 #-------------------------------------------------------------------------------
 has $!main is required;
-#has $!application;
+has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Statusbar $!statusbar;
+has PuzzleTable::Gui::Table $!table;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
-submethod BUILD ( :$!main ) {
-#  $!application = $!main.application;
+submethod BUILD (
+  :$!main, PuzzleTable::Config :$!config, PuzzleTable::Gui::Table :$!table
+) {
   self.register-signal( self, 'cat-selected', 'changed');
 }
 
@@ -256,11 +260,6 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
 }
 
 #-------------------------------------------------------------------------------
-method cat-selected ( ) {
-  say 'selected';
-}
-
-#-------------------------------------------------------------------------------
 method renew ( ) {
   # Empty list and fill with new item
   self.remove-all;
@@ -268,4 +267,16 @@ method renew ( ) {
     self.append-text($key);
   }
   self.set-active(0);
+}
+
+#-------------------------------------------------------------------------------
+method cat-selected ( ) {
+#say 'selected: ', self.get-active-text();
+
+  $!table.clear-table;
+  my Array $puzzles = $!config.get-puzzles(self.get-active-text);
+  for @$puzzles -> $p {
+#note "$?LINE add puzzle from data $p.gist()";
+    $!table.add-object-to-table($p);
+  }
 }

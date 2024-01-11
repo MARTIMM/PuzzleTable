@@ -44,22 +44,37 @@ submethod BUILD ( ) {
       }
 
       .puzzle-grid {
-        padding: 2px;
+        padding: 5px;
       }
 
-      .puzzle-grid child {
-        border-width: 4px;
-        border-style: inset;
-        border-color: #8800ff;
-        padding: 3px;
-      /*
-        margin: 4px;
-        min-width: 300px;
-        min-height: 300px;
-        max-width: 300px;
-        max-height: 300px;
-      */
+      .puzzle-object {
+        padding: 5px;
+        background-color: #c0c0c0;
+        color: white;
+        border-width: 3px;
+        border-style: outset;
+        border-color: #ffee00;
       }
+
+      .puzzle-object label {
+        background-color: #606060;
+        color: #202020;
+        padding: 0px;
+        padding-left: 10px;
+      }
+
+      .puzzle-object-comment {
+        background-color: #606060;
+        color: #202020;
+        padding-left: 0px;
+        padding-bottom: 5px;
+      }
+
+      .puzzle-object picture {
+        background-color: #a0a0a0;
+        padding: 10px;
+      }
+
 
       EOCSS
 
@@ -133,7 +148,6 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
 
   # Get number of keys to get count for next puzzle
   my Int $count = $cat.elems + 1;
-
   my Str $puzzle-count = $count.fmt('p%03d');
   my Str $destination = PUZZLE_TABLE_DATA ~ $category ~ "/$puzzle-count";
   mkdir $destination, 0o700;
@@ -180,3 +194,21 @@ method save-puzzle-admin ( ) {
   PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
 }
 
+#-------------------------------------------------------------------------------
+method get-puzzles ( Str $category --> Array ) {
+
+  my Str $pi;
+  my Hash $cat := $*puzzle-data<categories>{$category}<members>;
+  my Int $count = $cat.elems;
+  my Array $cat-puzzle-data = [];
+  loop ( my Int $i = 0; $i < $count; $i++ ) {
+    $pi = ($i+1).fmt('p%03d');
+    $cat-puzzle-data.push: %(
+      :Puzzle-index($pi),
+      :Image(PUZZLE_TABLE_DATA ~ "$category/$pi/image400.jpg"),
+      |$cat{$pi}
+    );
+  }
+
+  $cat-puzzle-data
+}
