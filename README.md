@@ -36,8 +36,9 @@ What the new program should do
 * Show on the same picture how much is finished.
 * Add newly created and exported puzzles.
 
-<!--
+
 ## Description
+<!--
 
 When the program is started for the first time, there will be nothing to show. From the menu you will be able to select a Palapeli collection. To give an idea where to find the collections of several types of installations;
 * the snap installation at: `$*HOME/snap/palapeli/current/.local/share/palapeli/collection`;
@@ -47,4 +48,31 @@ When the program is started for the first time, there will be nothing to show. F
 These are paths at my Fedora OS but you may get a hint where to find them on your computer.
 
 You can point to directories where you have stored exported puzzles.
+-->
+
+## Dependencies
+
+Working on the Linux OS the use of the programs and libraries are oriented to that OS. Most libraries and programs might be available on Windows or Apple systems but I do not have any experience on the locations of the software or any way to install them.
+
+### Programs and libraries
+
+* Palapeli
+* ImageMagick
+* Gtk4, Gio, GObject, Glib, Pango libraries
+
+### External modules used
+
+* Gnome::Gtk4:api<2>
+* Gnome::Gdk4:api<2>
+* Gnome::Gio:api<2>
+* Gnome::GObject:api<2>
+* Gnome::Glib:api<2>
+* Gnome::Pango:api<2>
+* Digest::SHA1::Native
+* Archive::Libarchive
+* Getopt::Long
+<!--
+* Gnome::Cairo:api<2>
+* Gnome::Gsk4:api<2>
+* Gnome::Atk:api<2>
 -->

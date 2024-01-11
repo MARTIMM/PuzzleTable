@@ -17,14 +17,14 @@
     "PuzzleTable::Gui::Table": "lib/PuzzleTable/Gui/Table.rakumod",
     "PuzzleTable::Config": "lib/PuzzleTable/Config.rakumod",
     "PuzzleTable::ExtractDataFromPuzzle": "lib/PuzzleTable/Gui/Statusbar.rakumod",
-    "PuzzleTable::Init": "lib/PuzzleTable/Init.rakumod",
     "PuzzleTable::Types": "lib/PuzzleTable/Types.rakumod"
   },
 
   "source-url": "git://github.com/MARTIMM/.git",
 
   "depends": [
-    "Gnome::Gtk4:api<2>", "Archive::Libarchive", "Getopt::Long"
+    "Gnome::Gtk4:api<2>", "Archive::Libarchive", "Getopt::Long",
+    "Digest::SHA1::Native"
   ],
   "test-depends": [ ],
   "build-depends": [ ],
