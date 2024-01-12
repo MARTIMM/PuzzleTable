@@ -22,7 +22,7 @@ unit class PuzzleTable::Config:auth<github:MARTIMM>;
 my Gnome::Gtk4::CssProvider $css-provider;
 
 has Version $.version = v0.3.1; 
-has Array $.options = [<category=s import=s puzzles h help version>];
+has Array $.options = [<category=s pala-export=s puzzles h help version>];
 has PuzzleTable::ExtractDataFromPuzzle $!extracter;
 
 #-------------------------------------------------------------------------------
@@ -50,28 +50,28 @@ submethod BUILD ( ) {
       .puzzle-object {
         padding: 5px;
         background-color: #c0c0c0;
-        color: white;
         border-width: 3px;
         border-style: outset;
         border-color: #ffee00;
       }
 
       .puzzle-object label {
-        background-color: #606060;
+        /*background-color: #606060;*/
         color: #202020;
         padding: 0px;
         padding-left: 10px;
       }
 
       .puzzle-object-comment {
-        background-color: #606060;
-        color: #202020;
-        padding-left: 0px;
-        padding-bottom: 5px;
+        /*background-color: #606060;*/
+        color: white;
+        padding: 0px;
+        margin-left: 0px;
+        margin-bottom: 5px;
       }
 
       .puzzle-object picture {
-        background-color: #a0a0a0;
+        /*background-color: #a0a0a0;*/
         padding: 10px;
       }
 
@@ -81,7 +81,7 @@ submethod BUILD ( ) {
     $css-provider .= new-cssprovider;
     $css-provider.load-from-path(PUZZLE_CSS);
   }
-  
+
   $!extracter .= new;
 }
 
@@ -93,6 +93,11 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
     $css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
   );
   $style-context.add-class($css-class) if ?$css-class;
+}
+
+#-------------------------------------------------------------------------------
+method find-palapeli-info ( ) {
+
 }
 
 #-------------------------------------------------------------------------------
@@ -167,11 +172,13 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
   $cat{$puzzle-count} = %(
     :Filename($unique-name),
     :SourceFile($puzzle-path),
+    :Source(''),
     :Comment($info<Comment>),
     :Name($info<Name>),
     :Width($info<Width>),
     :Height($info<Height>),
     :PieceCount($info<PieceCount>),
+    :!Locked,
   );
 
   # Save admin
@@ -211,4 +218,15 @@ method get-puzzles ( Str $category --> Array ) {
   }
 
   $cat-puzzle-data
+}
+#-------------------------------------------------------------------------------
+method export-pala-puzzles ( Str $category, Str $pala-collection-path) {
+  for $pala-collection-path.IO.dir -> $collection-file {
+    next if $collection-file.d;
+
+    # The puzzle is started from outside the Palapeli. This is only a saved file
+    # to keep track of progress of puzzle. Ends always in '.save'. Must be
+    # checked when --puzzles option is used.
+    next if $collection-file.Str ~~ m/^ __FSC_ /;
+  }
 }

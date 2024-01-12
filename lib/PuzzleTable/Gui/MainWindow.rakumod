@@ -137,9 +137,6 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     $!config.add-category($category);
   }
 
-  if $o<import>:exists {
-  }
-
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
       next unless $puzzle-path ~~ m/ \. puzzle $/;
@@ -148,6 +145,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   }
 
   if $o<pala-export>:exists {
+    $!config.export-pala-puzzles( $category, $o<pala-export>);
   }
 
   $!application.activate unless $command-line.get-is-remote;
@@ -223,23 +221,25 @@ method usage ( ) {
   Program to show a puzzle table.
 
   Usage:
-    puzzle-table [options]
+    puzzle-table --version
+    puzzle-table --help
+    puzzle-table --puzzles <puzzle-path> …
+    puzzle-table --pala-export <collection-path>
 
   Options:
-    --import <path to users puzzle directory>. Import puzzles from a directory
-      exported from Palapeli.
+    --category <name>. By default `Default`. Select the category to work
+      with. The category is created if not available. When `--import` or
+      `--puzzle` is used, the imported puzzles are placed in that category.
 
-    --category <name>. By default `Default`. Select the category to work with.
-      The category is created if not available. When `--import` or `--puzzle`
-      is used, the imported puzzles are placed in that category.
+    -h --help. Show this information. This is also shown, with an error,
+      when there are faulty arguments or options.
 
-    -h --help. Show this information.
+    --pala-export <path to palapeli collection>. Export puzzles from a
+      Palapeli collection into a category. The puzzles in Palapeli
+      collection are removed.
 
-    --pala-import <path to palapeli collection>. Import puzzles from a Palapeli
-      collection into a category.
-
-    --puzzles. Import one or more puzzles. The paths to the puzzles are given
-      as the arguments.
+    --puzzles. Import one or more puzzles. The paths to the puzzles are
+      given as the arguments.
 
     --version. Show current version of distribution.
 

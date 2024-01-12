@@ -27,7 +27,6 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 has PuzzleTable::Config $!config;
 
-#has Gnome::Gio::ListStore $!puzzle-objects;
 has Gnome::Gtk4::StringList $!puzzle-objects;
 has Gnome::Gtk4::MultiSelection $!multi-select;
 #has Gnome::Gtk4::SingleSelection $!single-select;
@@ -35,10 +34,12 @@ has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
 has Gnome::Gtk4::GridView $!puzzle-grid;
 has Gnome::Gtk4::StringList $!string-list;
 
+#| The objects from the current selected category
 has Hash $!current-table-objects;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( PuzzleTable::Config :$!config ) {
+
   $!current-table-objects = %();
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
@@ -124,8 +125,7 @@ method setup-object ( N-Object $n-list-item ) {
     .set-halign(GTK_ALIGN_START);
   }
 
-Gnome::N::debug(:on);
-  with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 5) {
+  with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
     .append($image);
     .append($label-comment);
     .append($label-size);
@@ -134,7 +134,6 @@ Gnome::N::debug(:on);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-object>);
   }
-Gnome::N::debug(:off);
 
   $list-item.set-child($box);
 }
