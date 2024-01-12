@@ -3,9 +3,8 @@
 * 2024-01-08 0.3.1
   * Add commandline options
     * **--version**. Show current version of distribution.
-    * **--import \<puzzles path>**. Import users exported puzzles.
-    * **--puzzle \<user puzzle>**. Import a single puzzle.
-    * **--category \<name>**. By default `Default`. Created if not available. When `--import` or `--puzzle` is used, the imported puzzles are placed in that category.
+    * **--puzzles \<user puzzle>**. Import exported puzzles.
+    * **--category \<name>**. By default `Default`. Created if not available. When `--puzzle` is used, the imported puzzles are placed in that category.
     * **--pala-export \<path to palapeli collection>**. Export puzzles from a Palapeli collection into a category.
 
 * 2024-01-07 0.3.0
