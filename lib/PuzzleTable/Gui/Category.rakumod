@@ -29,14 +29,15 @@ also is Gnome::Gtk4::ComboBoxText;
 #-------------------------------------------------------------------------------
 has $!main is required;
 has PuzzleTable::Config $!config;
-has PuzzleTable::Gui::Statusbar $!statusbar;
 has PuzzleTable::Gui::Table $!table;
+has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
-submethod BUILD (
-  :$!main, PuzzleTable::Config :$!config, PuzzleTable::Gui::Table :$!table
-) {
+submethod BUILD ( :$!main ) {
+  $!config = $!main.config;
+  $!table = $!main.table;
+
   self.register-signal( self, 'cat-selected', 'changed');
 }
 
@@ -107,18 +108,14 @@ method do-category-add (
         );
       }
 
-#      elsif $cat-text ~~ m/ \s / {
-#        $!statusbar.set-status('Spaces not allowed in name');
-#      }
-
-      elsif $*puzzle-data<categories>{$cat-text}:exists {
+      elsif $!config.check-category($cat-text.tc) {
         $!statusbar.set-status('Category already defined');
       }
 
       else {
         # Add category to list
-#        $*puzzle-data<categories>{$cat-text} = %(members => %());
-        $!main.config.add-category($cat-text);
+# .... locked ....
+        $!main.config.add-category($cat-text.tc);
         self.renew;
         $sts-ok = True;
       }
@@ -215,22 +212,24 @@ method do-category-rename (
         );
       }
 
+#`{{
       elsif $cat-text ~~ m/ \s / {
         $!statusbar.set-status('Spaces not allowed in name');
       }
+}}
 
-      elsif $*puzzle-data<categories>{$cat-text}:exists {
+      elsif $*puzzle-data<categories>{$cat-text.tc}:exists {
         $!statusbar.set-status('Category already defined');
       }
 
-      elsif $cat-text eq $combobox.get-active-text {
+      elsif $cat-text.tc eq $combobox.get-active-text {
         $!statusbar.set-status('Category text same as selected');
       }
 
       else {
         # move members to other category
         # $cat-text -> $combobox.get-active-text
-        $*puzzle-data<categories>{$cat-text} =
+        $*puzzle-data<categories>{$cat-text.tc} =
           $*puzzle-data<categories>{$combobox.get-active-text}:delete;
 #move files too......
         self.renew;
@@ -269,18 +268,29 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
 method renew ( ) {
   # Empty list and fill with new item
   self.remove-all;
+  my Int ( $idx, $idx-default ) = ( 0, 0);
+  my Bool $not-locked = !$!config.is-locked;
   for $*puzzle-data<categories>.keys.sort -> $key {
-    self.append-text($key);
+    # Add to combobox unless locking is on and category is lockable
+    if $not-locked or !$!config.is-category-lockable($key) {
+      self.append-text($key);
+      $idx-default = $idx if $key eq 'Default';
+      $idx++;
+    }
+note "$?LINE $key, $idx, $idx-default, $!config.is-locked() $!config.is-category-lockable($key)";
   }
-  self.set-active(0);
+
+  self.set-active($idx-default);
 }
 
 #-------------------------------------------------------------------------------
 method cat-selected ( ) {
-#say 'selected: ', self.get-active-text();
+  my Str $cat = self.get-active-text // '';
+say 'selected: ', $cat;
 
+  return unless ?$cat;
   $!table.clear-table;
-  my Array $puzzles = $!config.get-puzzles(self.get-active-text);
+  my Array $puzzles = $!config.get-puzzles($cat);
   for @$puzzles -> $p {
 #note "$?LINE add puzzle from data $p.gist()";
     $!table.add-object-to-table($p);
