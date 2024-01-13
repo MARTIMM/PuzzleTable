@@ -28,9 +28,11 @@ use PuzzleTable::Gui::MainWindow;
 my Hash $*puzzle-data = %();
 $*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
 
-# Check some fields
+# Check categories
 $*puzzle-data<categories> = %() unless $*puzzle-data<categories>:exists;
-$*puzzle-data<categories><Default> = %(members => %())
+
+# Check for the Default category and set lockable to False
+$*puzzle-data<categories><Default> = %( members => %(), :!lockable)
   unless $*puzzle-data<categories><Default>:exists;
 
 $*puzzle-data<settings> = %() unless $*puzzle-data<settings>:exists;
