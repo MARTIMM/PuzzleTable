@@ -92,7 +92,7 @@ method clear-table ( ) {
 
 #-------------------------------------------------------------------------------
 method setup-object ( N-Object $n-list-item ) {
-  say 'setup-object';
+#say 'setup-object';
   my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
@@ -140,7 +140,7 @@ method setup-object ( N-Object $n-list-item ) {
 
 #-------------------------------------------------------------------------------
 method bind-object ( N-Object $n-list-item ) {
-  say 'bind-object';
+#say 'bind-object';
   my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
 
   my Gnome::Gtk4::StringObject $string-object .= new(
@@ -181,7 +181,7 @@ method bind-object ( N-Object $n-list-item ) {
 
 #-------------------------------------------------------------------------------
 method unbind-object ( N-Object $n-list-item ) {
-  say 'unbind-object';
+#say 'unbind-object';
 }
 
 #-------------------------------------------------------------------------------
