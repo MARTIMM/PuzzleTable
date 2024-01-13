@@ -27,8 +27,16 @@ use PuzzleTable::Gui::MainWindow;
 # Load puzzle data in global Hash
 my Hash $*puzzle-data = %();
 $*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
+
+# Check some fields
+$*puzzle-data<categories> = %() unless $*puzzle-data<categories>:exists;
 $*puzzle-data<categories><Default> = %(members => %())
   unless $*puzzle-data<categories><Default>:exists;
+
+$*puzzle-data<settings> = %() unless $*puzzle-data<settings>:exists;
+
+# Force lockable categories locked at the start of the program
+$*puzzle-data<settings><locked> = True;
 
 #-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
