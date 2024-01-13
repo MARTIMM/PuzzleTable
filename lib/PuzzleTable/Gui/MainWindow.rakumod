@@ -31,7 +31,7 @@ has Gnome::Gtk4::Application $.application;
 has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::Grid $!top-grid;
 
-has PuzzleTable::Gui::Table $!table;
+has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Category $.combobox;
 has PuzzleTable::Config $.config;
 
@@ -131,10 +131,15 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   );
   my @args = $o.list;
 
+  my Bool $lock = False;
+  if $o<lock>:exists {
+    $lock = $o<lock>;
+  }
+
   my Str $category = 'Default';
   if $o<category>:exists {
     $category = $o<category>;
-    $!config.add-category($category);
+    $!config.add-category( $category, $lock);
   }
 
   if $o<puzzles>:exists {
