@@ -43,7 +43,7 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
   $!bar.append-submenu( $menu-name, $menu);
 
   my PuzzleTable::Config $config = $!main.config;
-  my PuzzleTable::Gui::Category $cat = $!main.combobox;
+  my PuzzleTable::Gui::Category $cat = $!main.category;
   my PuzzleTable::Gui::Settings $set .= new(:$!main);
 
   with $menu-name {

@@ -32,7 +32,7 @@ has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::Grid $!top-grid;
 
 has PuzzleTable::Gui::Table $.table;
-has PuzzleTable::Gui::Category $.combobox;
+has PuzzleTable::Gui::Category $.category;
 has PuzzleTable::Config $.config;
 
 #-------------------------------------------------------------------------------
@@ -117,9 +117,9 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 method remote-options ( N-Object $n-command-line --> Int ) {
 #say 'remote opts';
 
-  # We need the table and combobox management here already
+  # We need the table and category management here already
   $!table .= new-scrolledwindow(:$!config);
-  $!combobox .= new-comboboxtext( :main(self), :$!config, :$!table);
+  $!category .= new-comboboxtext(:main(self));
 
   my Int $exit-code = 0;
   my Gnome::Gio::ApplicationCommandLine $command-line .= new(
@@ -136,27 +136,27 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     $lock = $o<lock>;
   }
 
-  my Str $category = 'Default';
+  my Str $opt-category = 'Default';
   if $o<category>:exists {
-    $category = $o<category>;
-    $!config.add-category( $category, $lock);
+    $opt-category = $o<category>;
+    $!config.add-category( $opt-category, $lock);
   }
 
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
       next unless $puzzle-path ~~ m/ \. puzzle $/;
-      $!config.add-puzzle( $category, $puzzle-path);
+      $!config.add-puzzle( $opt-category, $puzzle-path);
     }
   }
 
   if $o<pala-export>:exists {
-    $!config.export-pala-puzzles( $category, $o<pala-export>);
+    $!config.export-pala-puzzles( $opt-category, $o<pala-export>);
   }
 
   $!application.activate unless $command-line.get-is-remote;
   $command-line.clear-object;
 
-  $!combobox.renew;
+  $!category.renew;
 
   $exit-code
 }
@@ -185,7 +185,7 @@ method puzzle-table-display ( ) {
     .set-margin-bottom(10);
     .set-margin-start(10);
     .set-margin-end(10);
-    .attach( $!combobox, 0, 0, 1, 1);
+    .attach( $!category, 0, 0, 1, 1);
     .attach( $!table, 0, 1, 1, 1);
   }
 
