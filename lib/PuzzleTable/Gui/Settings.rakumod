@@ -5,6 +5,7 @@ use PuzzleTable::Config;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::DialogLabel;
+use PuzzleTable::Gui::Category;
 
 use Gnome::Gtk4::PasswordEntry:api<2>;
 use Gnome::Gtk4::Box:api<2>;
@@ -23,11 +24,13 @@ has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Statusbar $!statusbar;
+has PuzzleTable::Gui::Category $!category;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
   $!table = $!main.table;
+  $!category = $!main.category;
 }
 
 #-------------------------------------------------------------------------------
@@ -314,6 +317,8 @@ method do-password-unlock-check (
       # If returned True, the password is accepted
       else {
         $sts-ok = True;
+        $!config.unlock;
+        $!category.renew;
       }
     }
 
