@@ -10,8 +10,8 @@ use v6.d;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::Table;
+use PuzzleTable::Gui::DialogLabel;
 
-use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
@@ -45,12 +45,13 @@ submethod BUILD (
 method category-add ( N-Object $parameter ) {
 #  say 'category add';
 
-  my Gnome::Gtk4::Label $label .= new-label('Specify a new category');
+  my PuzzleTable::Gui::DialogLabel $label .=
+    new-label('Specify a new category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
   $!statusbar .= new-statusbar(:context<category>);
 
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
-    'Add Category dialog', $!main.application-window,
+    'Add Category Dialog', $!main.application-window,
     GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
     'Add', GEnum, GTK_RESPONSE_ACCEPT, Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
   );
@@ -72,6 +73,8 @@ method category-add ( N-Object $parameter ) {
     .set-size-request( 400, 200);
     .register-signal( self, 'do-category-add', 'response', :$entry);
     .register-signal( self, 'destroy-dialog', 'destroy');
+    $!config.set-css( .get-style-context, :css-class<dialog>);
+    .set-name('category-dialog');
     my $r = .show;
   }
 }
@@ -85,7 +88,6 @@ method do-category-add (
   $!statusbar.remove-message;
 
   my GtkResponseType() $response-type = $response-id;  
-
   given $response-type {
     when GTK_RESPONSE_DELETE_EVENT {
       #ignore
@@ -135,8 +137,10 @@ method do-category-add (
 method category-rename ( N-Object $parameter ) {
 #  say 'category rename';
 
-  my Gnome::Gtk4::Label $label1 .= new-label('Select category from list');
-  my Gnome::Gtk4::Label $label2 .= new-label('Text to rename category');
+  my PuzzleTable::Gui::DialogLabel $label1 .=
+    new-label('Select category from list');
+  my PuzzleTable::Gui::DialogLabel $label2 .=
+    new-label('Text to rename category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
   $!statusbar .= new-statusbar(:context<categories>);
@@ -175,6 +179,8 @@ method category-rename ( N-Object $parameter ) {
       self, 'do-category-rename', 'response', :$entry, :$combobox
     );
     .register-signal( self, 'destroy-dialog', 'destroy');
+    $!config.set-css( .get-style-context, :css-class<dialog>);
+    .set-name('category-dialog');
     .show;
   }
 }
@@ -255,7 +261,7 @@ method do-category-remove (
 
 #-------------------------------------------------------------------------------
 method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
-  say 'destroy';
+#  say 'destroy cat dialog';
   $dialog.destroy;
 }
 
