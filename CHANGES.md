@@ -1,5 +1,9 @@
 ### TODO list
 
+* 2024-01-13 0.3.2
+  * Add password handling
+  * Add category locking
+
 * 2024-01-08 0.3.1
   * Add commandline options
     * **--version**. Show current version of distribution.
