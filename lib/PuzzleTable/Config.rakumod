@@ -112,18 +112,6 @@ method find-palapeli-info ( ) {
 
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method file-import ( N-Object $parameter ) {
-  say 'file import';
-}
-
-#-------------------------------------------------------------------------------
-method check-category ( Str $category ) {
-  say 'check category';
-}
-}}
-
 #-------------------------------------------------------------------------------
 method get-password ( --> Str ) {
   $*puzzle-data<settings><password> // '';
@@ -161,6 +149,11 @@ method is-locked ( --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
+method is-category-lockable ( Str:D $category --> Bool ) {
+  $*puzzle-data<categories>{$category}<lockable>.Bool
+}
+
+#-------------------------------------------------------------------------------
 method lock ( ) {
   $*puzzle-data<settings><locked> = True;
 }
@@ -194,6 +187,12 @@ method rename-category ( Str:D $category-from, Str:D $category-to ) {
 #-------------------------------------------------------------------------------
 method remove-category ( Str:D $category ) {
   say 'remove category';
+}
+
+#-------------------------------------------------------------------------------
+method check-category ( Str:D $category --> Bool ) {
+  say 'check category';
+  $*puzzle-data<categories>{$category}:exists
 }
 
 #-------------------------------------------------------------------------------
