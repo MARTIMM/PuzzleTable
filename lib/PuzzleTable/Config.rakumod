@@ -21,16 +21,28 @@ unit class PuzzleTable::Config:auth<github:MARTIMM>;
 
 my Gnome::Gtk4::CssProvider $css-provider;
 
-has Version $.version = v0.3.1; 
-has Array $.options = [<category=s pala-export=s puzzles h help version>];
 has PuzzleTable::ExtractDataFromPuzzle $!extracter;
+has Version $.version = v0.3.1; 
+has Array $.options = [<
+  category=s pala-export=s puzzles lock h help version
+>];
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
   unless ?$css-provider {
     # Create css file
     (PUZZLE_CSS).IO.spurt(q:to/EOCSS/);
-      window {
+      #password-dialog {
+        background-color: #b0b0b0;
+      }
+
+      #dialog-label {
+        color: black;
+      }
+
+      #category-dialog {
+        background-color: #b0b0b0;
+        color: black;
       }
 
       .puzzle-table {
@@ -100,6 +112,7 @@ method find-palapeli-info ( ) {
 
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method file-import ( N-Object $parameter ) {
   say 'file import';
@@ -109,9 +122,56 @@ method file-import ( N-Object $parameter ) {
 method check-category ( Str $category ) {
   say 'check category';
 }
+}}
 
 #-------------------------------------------------------------------------------
-method add-category ( Str:D $category ) {
+method get-password ( --> Str ) {
+  $*puzzle-data<settings><password> // '';
+}
+
+#-------------------------------------------------------------------------------
+method check-password ( Str $old-password --> Bool ) {
+  my Bool $ok = True;
+  $ok = (sha1-hex($old-password) eq $*puzzle-data<settings><password>).Bool
+    if $*puzzle-data<settings><password>:exists;
+
+  $ok
+}
+
+#-------------------------------------------------------------------------------
+method set-password ( Str $old-password, Str $new-password --> Bool ) {
+  my Bool $is-set;
+
+  # Throw an error if called with an empty string while there is a password set
+  die 'Coding error, password is available yet old password is empty'
+    if $old-password eq '' and ?self.get-password;
+
+  # Check if old password matches before a new one is set
+  $*puzzle-data<settings><password> = sha1-hex($new-password)
+    if $is-set = self.check-password($old-password);
+
+  self.save-puzzle-admin;
+
+  $is-set
+}
+
+#-------------------------------------------------------------------------------
+method is-locked ( --> Bool ) {
+  ?$*puzzle-data<settings><locked>.Bool;
+}
+
+#-------------------------------------------------------------------------------
+method lock ( ) {
+  $*puzzle-data<settings><locked> = True;
+}
+
+#-------------------------------------------------------------------------------
+method unlock ( ) {
+  $*puzzle-data<settings><locked> = False;
+}
+
+#-------------------------------------------------------------------------------
+method add-category ( Str:D $category, Bool $lock ) {
 #say 'add category';
   # Add category to list if not available
   unless $*puzzle-data<categories>{$category}:exists {
@@ -123,6 +183,7 @@ method add-category ( Str:D $category ) {
     self.save-puzzle-admin;
   }
 
+  $*puzzle-data<categories>{$category}<lockable> = $lock;
 }
 
 #-------------------------------------------------------------------------------
@@ -159,7 +220,7 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
 
   # Store the puzzle using a unique filename. It is possible that
   # puzzle name is the same found in other directories.
-  my $unique-name = sha1-hex($puzzle-path) ~ ".puzzle";
+  my Str $unique-name = sha1-hex($puzzle-path) ~ ".puzzle";
   $puzzle-path.IO.copy( "$destination/$unique-name", :createonly);
 
   # Get the image and desktop file from the puzzle file, a tar archive.
@@ -178,7 +239,6 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
     :Width($info<Width>),
     :Height($info<Height>),
     :PieceCount($info<PieceCount>),
-    :!Locked,
   );
 
   # Save admin
@@ -198,6 +258,7 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
 
 #-------------------------------------------------------------------------------
 method save-puzzle-admin ( ) {
+say 'save puzzle admin in ', PUZZLE_DATA;
   PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
 }
 
