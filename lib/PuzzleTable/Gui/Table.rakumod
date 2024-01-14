@@ -91,9 +91,10 @@ method clear-table ( ) {
 }
 
 #-------------------------------------------------------------------------------
-method setup-object ( N-Object $n-list-item ) {
+method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
+#method setup-object ( N-Object $n-list-item ) {
 #say 'setup-object';
-  my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
+#  my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
     .set-size-request( 300, 300);
@@ -120,6 +121,11 @@ method setup-object ( N-Object $n-list-item ) {
     .set-halign(GTK_ALIGN_START);
   }
 
+  with my Gnome::Gtk4::Label $label-source .= new-label(Str) {
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_START);
+  }
+
   with my Gnome::Gtk4::Label $label-progress .= new-label(Str) {
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_START);
@@ -130,6 +136,7 @@ method setup-object ( N-Object $n-list-item ) {
     .append($label-comment);
     .append($label-size);
     .append($label-npieces);
+    .append($label-source);
     .append($label-progress);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-object>);
@@ -139,28 +146,19 @@ method setup-object ( N-Object $n-list-item ) {
 }
 
 #-------------------------------------------------------------------------------
-method bind-object ( N-Object $n-list-item ) {
-#say 'bind-object';
-  my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
+method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
   my Gnome::Gtk4::StringObject $string-object .= new(
     :native-object($list-item.get-item)
   );
 
-  my Gnome::Gtk4::Box $box .= new(:native-object($list-item.get-child));
-  my Gnome::Gtk4::Picture $image .= new(:native-object($box.get-first-child));
-  my Gnome::Gtk4::Label $label-comment .= new(
-    :native-object($image.get-next-sibling)
-  );
-  my Gnome::Gtk4::Label $label-size .= new(
-    :native-object($label-comment.get-next-sibling)
-  );
-  my Gnome::Gtk4::Label $label-npieces .= new(
-    :native-object($label-size.get-next-sibling)
-  );
-  my Gnome::Gtk4::Label $label-progress .= new(
-    :native-object($label-npieces.get-next-sibling)
-  );
+  my Gnome::Gtk4::Box() $box = $list-item.get-child;
+  my Gnome::Gtk4::Picture() $image = $box.get-first-child;
+  my Gnome::Gtk4::Label() $label-comment = $image.get-next-sibling;
+  my Gnome::Gtk4::Label() $label-size = $label-comment.get-next-sibling;
+  my Gnome::Gtk4::Label() $label-npieces = $label-size.get-next-sibling;
+  my Gnome::Gtk4::Label() $label-source = $label-npieces.get-next-sibling;
+  my Gnome::Gtk4::Label() $label-progress = $label-source.get-next-sibling;
 
   my Hash $object = $!current-table-objects{$string-object.get-string};
   $image.set-filename($object<Image>);
@@ -169,27 +167,18 @@ method bind-object ( N-Object $n-list-item ) {
     [~] 'Picture size: ', $object<Width>, ' x ', $object<Height>
   );
   $label-npieces.set-text('Nbr pieces: ' ~ $object<PieceCount>);
+  $label-source.set-text('Source: ' ~ $object<Source>);
   $label-progress.set-text('Progress: ' ~ $object<Progess> ~ ' %');
-
-#`{{
-  my Gnome::Gtk4::Picture $image .= new(:native-object($list-item.get-child));
-
-}}
 
   $string-object.clear-object;
 }
 
 #-------------------------------------------------------------------------------
-method unbind-object ( N-Object $n-list-item ) {
-#say 'unbind-object';
+method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 }
 
 #-------------------------------------------------------------------------------
-method destroy-object ( N-Object $n-list-item ) {
-  say 'destroy-object';
-  my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
-  my Gnome::Gtk4::Box $box .= new(:native-object($list-item.get-child));
+method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
+  my Gnome::Gtk4::Box() $box = $list-item.get-child;
   $box.clear-object;
-#  my Gnome::Gtk4::Picture $image .= new(:native-object($list-item.get-child));
-#  $image.clear-object;
 }
