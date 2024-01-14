@@ -20,6 +20,8 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Settings:auth<github:MARTIMM>;
 
+#constant \DialogLabel = PuzzleTable::Gui::DialogLabel;
+
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
@@ -59,17 +61,15 @@ method settings-unlock-categories ( N-Object $parameter ) {
 method settings-lock-categories ( N-Object $parameter ) {
   say 'lock';
   $!config.lock;
+  $!category.renew;
 }
 
 #-------------------------------------------------------------------------------
 method show-dialog-with-old-entry ( ) {
 
-  my PuzzleTable::Gui::DialogLabel $label-oldpw .=
-    new-label(:lbl('Type old password'));
-  my PuzzleTable::Gui::DialogLabel $label-newpw .=
-    new-label(:lbl('Type new password'));
-  my PuzzleTable::Gui::DialogLabel $label-reppw .=
-    new-label(:lbl('Repeat new password'));
+  my PuzzleTable::Gui::DialogLabel $label-oldpw .= new('Type old password');
+  my PuzzleTable::Gui::DialogLabel $label-newpw .= new('Type new password');
+  my PuzzleTable::Gui::DialogLabel $label-reppw .= new('Repeat new password');
 
   my Gnome::Gtk4::PasswordEntry $entry-oldpw .= new-passwordentry;
   my Gnome::Gtk4::PasswordEntry $entry-newpw .= new-passwordentry;
@@ -105,7 +105,7 @@ method show-dialog-with-old-entry ( ) {
   }
 
   with $dialog {
-    .set-size-request( 400, 200);
+    .set-size-request( 400, 100);
     .register-signal(
       self, 'do-password-check-with-old', 'response', :$entry-oldpw,
       :$entry-newpw, :$entry-reppw
@@ -164,10 +164,8 @@ method do-password-check-with-old (
 #-------------------------------------------------------------------------------
 method show-dialog-first-entry ( ) {
 
-  my PuzzleTable::Gui::DialogLabel $label-newpw .=
-    new-label(:lbl('Type password'));
-  my PuzzleTable::Gui::DialogLabel $label-reppw .=
-    new-label(:lbl('Repeat password'));
+  my DialogLabel $label-newpw .= new('Type password');
+  my DialogLabel $label-reppw .= new('Repeat password');
 
   my Gnome::Gtk4::PasswordEntry $entry-newpw .= new-passwordentry;
   my Gnome::Gtk4::PasswordEntry $entry-reppw .= new-passwordentry;
@@ -200,7 +198,7 @@ method show-dialog-first-entry ( ) {
   }
 
   with $dialog {
-    .set-size-request( 400, 200);
+    .set-size-request( 400, 100);
     .register-signal(
       self, 'do-password-check', 'response',
       :$entry-newpw, :$entry-reppw
@@ -254,8 +252,7 @@ method do-password-check (
 #-------------------------------------------------------------------------------
 method show-dialog-password ( ) {
 
-  my PuzzleTable::Gui::DialogLabel $label-pw .=
-    new-label(:lbl('Type password'));
+  my DialogLabel $label-pw .= new('Type password');
 
   my Gnome::Gtk4::PasswordEntry $entry-pw .= new-passwordentry;
 
@@ -285,7 +282,7 @@ method show-dialog-password ( ) {
   }
 
   with $dialog {
-    .set-size-request( 400, 200);
+    .set-size-request( 400, 100);
     .register-signal( self, 'do-password-unlock-check', 'response', :$entry-pw);
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
