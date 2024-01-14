@@ -26,7 +26,8 @@ use Gnome::N::N-Object:api<2>;
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ComboBoxText;
 
-#-------------------------------------------------------------------------------
+#constant \DialogLabel = PuzzleTable::Gui::DialogLabel;
+
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
@@ -37,6 +38,7 @@ has PuzzleTable::Gui::Statusbar $!statusbar;
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
   $!table = $!main.table;
+  self.set-active(0);
 
   self.register-signal( self, 'cat-selected', 'changed');
 }
@@ -46,8 +48,8 @@ submethod BUILD ( :$!main ) {
 method category-add ( N-Object $parameter ) {
 #  say 'category add';
 
-  my PuzzleTable::Gui::DialogLabel $label .=
-    new-label('Specify a new category');
+  my DialogLabel $label .= new('Specify a new category');
+  my $no = $label.get-native-object-no-reffing;
   my Gnome::Gtk4::Entry $entry .= new-entry;
   $!statusbar .= new-statusbar(:context<category>);
 
@@ -71,7 +73,7 @@ method category-add ( N-Object $parameter ) {
   }
 
   with $dialog {
-    .set-size-request( 400, 200);
+    .set-size-request( 400, 100);
     .register-signal( self, 'do-category-add', 'response', :$entry);
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
@@ -115,7 +117,7 @@ method do-category-add (
       else {
         # Add category to list
 # .... locked ....
-        $!main.config.add-category($cat-text.tc);
+        $!main.config.add-category( $cat-text.tc, False);
         self.renew;
         $sts-ok = True;
       }
@@ -134,17 +136,16 @@ method do-category-add (
 method category-rename ( N-Object $parameter ) {
 #  say 'category rename';
 
-  my PuzzleTable::Gui::DialogLabel $label1 .=
-    new-label('Select category from list');
-  my PuzzleTable::Gui::DialogLabel $label2 .=
-    new-label('Text to rename category');
+  my DialogLabel $label1 .= new('Select category from list');
+  my DialogLabel $label2 .= new('Text to rename category');
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
   $!statusbar .= new-statusbar(:context<categories>);
 
-  for $*puzzle-data<categories>.keys.sort -> $key {
-    next if $key.lc eq 'default';
-    $combobox.append-text($key);
+  # Fill the combobox in the dialog
+  for @$!config.get-categories -> $category {
+    next if $category.lc eq 'default';
+    $combobox.append-text($category);
   }
   $combobox.set-active(0);
 
@@ -171,7 +172,7 @@ method category-rename ( N-Object $parameter ) {
   }
 
   with $dialog {
-    .set-size-request( 400, 200);
+    .set-size-request( 400, 100);
     .register-signal(
       self, 'do-category-rename', 'response', :$entry, :$combobox
     );
@@ -266,27 +267,32 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
 
 #-------------------------------------------------------------------------------
 method renew ( ) {
-  # Empty list and fill with new item
+  # Get current setting first
+  my Str $current-cat = self.get-active-text // '';
+
+  # Empty list and then refill
   self.remove-all;
-  my Int ( $idx, $idx-default ) = ( 0, 0);
+
+  my Int ( $idx, $idx-default, $idx-current ) = ( 0, 0, -1);
   my Bool $not-locked = !$!config.is-locked;
   for $*puzzle-data<categories>.keys.sort -> $key {
     # Add to combobox unless locking is on and category is lockable
     if $not-locked or !$!config.is-category-lockable($key) {
       self.append-text($key);
       $idx-default = $idx if $key eq 'Default';
+      $idx-current = $idx if $key eq $current-cat;
       $idx++;
     }
 note "$?LINE $key, $idx, $idx-default, $!config.is-locked() $!config.is-category-lockable($key)";
   }
 
-  self.set-active($idx-default);
+  self.set-active($idx-current == -1 ?? $idx-default !! $idx-current);
 }
 
 #-------------------------------------------------------------------------------
 method cat-selected ( ) {
   my Str $cat = self.get-active-text // '';
-say 'selected: ', $cat;
+#say 'selected: ', $cat;
 
   return unless ?$cat;
   $!table.clear-table;

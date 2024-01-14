@@ -196,6 +196,11 @@ method check-category ( Str:D $category --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-categories ( --> Array ) {
+  $*puzzle-data<categories>.keys.sort;
+}
+
+#-------------------------------------------------------------------------------
 method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
 #say 'add puzzle';
   # Get source file info
