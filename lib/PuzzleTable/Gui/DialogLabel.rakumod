@@ -17,7 +17,6 @@ method new ( Str $text ) {
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$text ) {
   self.set-label($text);
-  my $no = self.get-native-object-no-reffing;
   self.set-hexpand(True);
   self.set-halign(GTK_ALIGN_START);
   self.set-name('dialog-label');
