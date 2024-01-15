@@ -3,6 +3,7 @@ use NativeCall;
 
 use PuzzleTable::Types;
 use PuzzleTable::Config;
+use PuzzleTable::Gui::TableItemLabel;
 
 use Gnome::Gtk4::GridView:api<2>;
 use Gnome::Gtk4::MultiSelection:api<2>;
@@ -11,9 +12,10 @@ use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::ListItem:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
 use Gnome::Gtk4::StringObject:api<2>;
-use Gnome::Gtk4::Box:api<2>;
+use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Picture:api<2>;
+use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
@@ -104,45 +106,25 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .set-margin-end(3);
   }
 
-  with my Gnome::Gtk4::Label $label-comment .= new-label(Str) {
-    .set-hexpand(True);
-#    .set-halign(GTK_ALIGN_START);
+#    $!config.set-css( .get-style-context, :css-class<puzzle-object-comment>);
+  my TableItemLabel $label-comment .= new( :!align, :css<comment>);
+  my TableItemLabel $label-size .= new;
+  my TableItemLabel $label-npieces .= new;
+  my TableItemLabel $label-source .= new;
+  my TableItemLabel $label-progress .= new;
 
-    $!config.set-css( .get-style-context, :css-class<puzzle-object-comment>);
-  }
-
-  with my Gnome::Gtk4::Label $label-npieces .= new-label(Str) {
-    .set-hexpand(True);
-    .set-halign(GTK_ALIGN_START);
-  }
-
-  with my Gnome::Gtk4::Label $label-size .= new-label(Str) {
-    .set-hexpand(True);
-    .set-halign(GTK_ALIGN_START);
-  }
-
-  with my Gnome::Gtk4::Label $label-source .= new-label(Str) {
-    .set-hexpand(True);
-    .set-halign(GTK_ALIGN_START);
-  }
-
-  with my Gnome::Gtk4::Label $label-progress .= new-label(Str) {
-    .set-hexpand(True);
-    .set-halign(GTK_ALIGN_START);
-  }
-
-  with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
-    .append($image);
-    .append($label-comment);
-    .append($label-size);
-    .append($label-npieces);
-    .append($label-source);
-    .append($label-progress);
+  with my Gnome::Gtk4::Grid $grid .= new-grid {
+    .attach( $image, 0, 0, 1, 1);
+    .attach( $label-comment, 0, 1, 1, 1);
+    .attach( $label-size, 0, 2, 1, 1);
+    .attach( $label-npieces, 0, 3, 1, 1);
+    .attach( $label-source, 0, 4, 1, 1);
+    .attach( $label-progress, 0, 5, 1, 1);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-object>);
   }
 
-  $list-item.set-child($box);
+  $list-item.set-child($grid);
 }
 
 #-------------------------------------------------------------------------------
@@ -152,13 +134,21 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     :native-object($list-item.get-item)
   );
 
-  my Gnome::Gtk4::Box() $box = $list-item.get-child;
-  my Gnome::Gtk4::Picture() $image = $box.get-first-child;
-  my Gnome::Gtk4::Label() $label-comment = $image.get-next-sibling;
-  my Gnome::Gtk4::Label() $label-size = $label-comment.get-next-sibling;
-  my Gnome::Gtk4::Label() $label-npieces = $label-size.get-next-sibling;
-  my Gnome::Gtk4::Label() $label-source = $label-npieces.get-next-sibling;
-  my Gnome::Gtk4::Label() $label-progress = $label-source.get-next-sibling;
+  with my Gnome::Gtk4::Button $run-snap .= new-button {
+    .set-icon-name('application-x-executable');
+    .register-signal( self, 'run-snap', 'clicked');
+  }
+
+  with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
+    .attach( $run-snap, 1, 0, 1, 1);
+  }
+
+  my Gnome::Gtk4::Picture() $image = $grid.get-child-at( 0, 0);
+  my Gnome::Gtk4::Label() $label-comment = $grid.get-child-at( 0, 1);
+  my Gnome::Gtk4::Label() $label-size = $grid.get-child-at( 0, 2);
+  my Gnome::Gtk4::Label() $label-npieces = $grid.get-child-at( 0, 3);
+  my Gnome::Gtk4::Label() $label-source = $grid.get-child-at( 0, 4);
+  my Gnome::Gtk4::Label() $label-progress = $grid.get-child-at( 0, 5);
 
   my Hash $object = $!current-table-objects{$string-object.get-string};
   $image.set-filename($object<Image>);
@@ -179,6 +169,10 @@ method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
-  my Gnome::Gtk4::Box() $box = $list-item.get-child;
-  $box.clear-object;
+  my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
+  $grid.clear-object;
+}
+
+#-------------------------------------------------------------------------------
+method run-snap ( ) {
 }
