@@ -138,7 +138,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
   my Str $opt-category = 'Default';
   if $o<category>:exists {
-    $opt-category = $o<category>;
+    $opt-category = $o<category>.tc;
     $!config.add-category( $opt-category, $lock);
   }
 
