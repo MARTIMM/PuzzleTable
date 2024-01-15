@@ -62,19 +62,32 @@ submethod BUILD ( ) {
       .puzzle-object {
         padding: 5px;
         background-color: #c0c0c0;
+        /*color: white;*/
         border-width: 3px;
         border-style: outset;
         border-color: #ffee00;
       }
 
-      .puzzle-object label {
+      .puzzle-object:hover {
+        background-color: #a0a0a0;
+        color: white;
+      }
+
+      /*
+      .puzzle-object:selected {
+        background-color: #f0a080;
+        color: white;
+      }
+      */
+
+      #puzzle-item-label {
         /*background-color: #606060;*/
         color: #202020;
         padding: 0px;
         padding-left: 10px;
       }
 
-      .puzzle-object-comment {
+      #puzzle-item-comment {
         /*background-color: #606060;*/
         color: white;
         padding: 0px;
@@ -191,13 +204,23 @@ method remove-category ( Str:D $category ) {
 
 #-------------------------------------------------------------------------------
 method check-category ( Str:D $category --> Bool ) {
-  say 'check category';
+#  say 'check category';
   $*puzzle-data<categories>{$category}:exists
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( --> Array ) {
+method get-categories ( --> Seq ) {
   $*puzzle-data<categories>.keys.sort;
+}
+
+#-------------------------------------------------------------------------------
+method move-category ( $cat-from, $cat-to ) {
+  $*puzzle-data<categories>{$cat-to} =
+    $*puzzle-data<categories>{$cat-from}:delete;
+
+  my Str $dir-from = PUZZLE_TABLE_DATA ~ $cat-from;
+  my Str $dir-to = PUZZLE_TABLE_DATA ~ $cat-to;
+  $dir-from.IO.rename( $dir-to, :createonly);
 }
 
 #-------------------------------------------------------------------------------
@@ -209,9 +232,13 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
 
   # Check if source file is copied before
   my Hash $cat := $*puzzle-data<categories>{$category}<members>;
-  for $cat.keys -> $p {
-    if $puzzle-path eq $cat{$p}<SourceFile> {
+  for $cat.keys -> $puzzle-count {
+    if $puzzle-path eq $cat{$puzzle-count}<SourceFile> {
       note "Puzzle '$basename' already added in category '$category'";
+      self.check-pala-progress-file(
+        $basename, sha1-hex($puzzle-path) ~ ".puzzle", $cat{$puzzle-count}
+      );
+      self.save-puzzle-admin;
       return;
     }
   }
@@ -245,17 +272,49 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
     :PieceCount($info<PieceCount>),
   );
 
-  # Save admin
-  self.save-puzzle-admin;
-
   # Convert the image into a smaller one to be displayed on the puzzle table
   run '/usr/bin/convert', "$destination/image.jpg",
       '-resize', '400x400', "$destination/image400.jpg";
+
+  self.check-pala-progress-file(
+    $basename, sha1-hex($puzzle-path), $cat{$puzzle-count}
+  );
+
+  # Save admin
+  self.save-puzzle-admin;
 
   CATCH {
     default {
       .message.note;
       .resume;
+    }
+  }
+}
+
+#-------------------------------------------------------------------------------
+method check-pala-progress-file (
+  Str $basename, Str $unique-name, Hash $puzzle-info
+) {
+  my Str $col-unique-path = '';
+  my Hash $collections := $*puzzle-data<palapeli><collections>;
+
+  # Check in pala collections for this name
+  my Str $collection-name = [~] '__FSC_', $basename, '_0_.save';
+
+  for $collections.keys -> $col-key {
+    my Str $col-path = [~] $collections{$col-key}, '/', $collection-name;
+    if $col-path.IO.r {
+      say "$collection-name found in $col-key collection";
+
+      # Check for the name it must become
+      my Str $collection-unique = [~] '__FSC_', $unique-name, '_0_.save';
+      $col-unique-path = [~] $collections{$col-key}, '/', $collection-unique;
+
+say "Copy $col-path to $col-unique-path, ", $col-unique-path.IO.e;
+     $col-path.IO.copy( $col-unique-path, :createonly)
+       unless $col-unique-path.IO.e;
+
+      $puzzle-info<progress>{$col-key} = $col-unique-path;
     }
   }
 }
@@ -284,6 +343,7 @@ method get-puzzles ( Str $category --> Array ) {
 
   $cat-puzzle-data
 }
+
 #-------------------------------------------------------------------------------
 method export-pala-puzzles ( Str $category, Str $pala-collection-path) {
   for $pala-collection-path.IO.dir -> $collection-file {

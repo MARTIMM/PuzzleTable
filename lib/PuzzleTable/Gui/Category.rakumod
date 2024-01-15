@@ -143,7 +143,8 @@ method category-rename ( N-Object $parameter ) {
   $!statusbar .= new-statusbar(:context<categories>);
 
   # Fill the combobox in the dialog
-  for @$!config.get-categories -> $category {
+  for $!config.get-categories -> $category {
+    # Don't let default be changed
     next if $category.lc eq 'default';
     $combobox.append-text($category);
   }
@@ -213,13 +214,7 @@ method do-category-rename (
         );
       }
 
-#`{{
-      elsif $cat-text ~~ m/ \s / {
-        $!statusbar.set-status('Spaces not allowed in name');
-      }
-}}
-
-      elsif $*puzzle-data<categories>{$cat-text.tc}:exists {
+      elsif $!config.check-category($cat-text.tc) {
         $!statusbar.set-status('Category already defined');
       }
 
@@ -228,11 +223,8 @@ method do-category-rename (
       }
 
       else {
-        # move members to other category
-        # $cat-text -> $combobox.get-active-text
-        $*puzzle-data<categories>{$cat-text.tc} =
-          $*puzzle-data<categories>{$combobox.get-active-text}:delete;
-#move files too......
+        # Move members to other category
+        $!config.move-category( $combobox.get-active-text, $cat-text.tc);
         self.renew;
         $sts-ok = True;
       }
