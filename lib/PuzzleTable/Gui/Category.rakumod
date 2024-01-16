@@ -282,15 +282,19 @@ note "$?LINE $key, $idx, $idx-default, $!config.is-locked() $!config.is-category
 }
 
 #-------------------------------------------------------------------------------
+# Callback to handle selection of a combobox entry.
 method cat-selected ( ) {
-  my Str $cat = self.get-active-text // '';
-#say 'selected: ', $cat;
 
+  # Get the selected category
+  my Str $cat = self.get-active-text // '';
   return unless ?$cat;
+
+  # Clear the puzzletable before showing the puzzles of this category
   $!table.clear-table;
+
+  # Get the puzzles and send them to the table
   my Array $puzzles = $!config.get-puzzles($cat);
   for @$puzzles -> $p {
-#note "$?LINE add puzzle from data $p.gist()";
-    $!table.add-object-to-table($p);
+    $!table.add-puzzle-to-table($p);
   }
 }

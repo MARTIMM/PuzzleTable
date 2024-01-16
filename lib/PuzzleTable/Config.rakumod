@@ -326,6 +326,8 @@ say 'save puzzle admin in ', PUZZLE_DATA;
 }
 
 #-------------------------------------------------------------------------------
+# Return an array of hashes. Basic info comes from
+# $*puzzle-data<categories>{$category}<members> where 
 method get-puzzles ( Str $category --> Array ) {
 
   my Str $pi;
