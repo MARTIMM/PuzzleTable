@@ -50,14 +50,14 @@ submethod BUILD ( ) {
         border-style: outset;
         border-color: #ffee00;
         padding: 5px;
-      /*	border-style: inset; */
-      /*	border-style: solid; */
-      /*	border-style: none; */
+      	border-style: inset;
       }
 
+      /*
       .puzzle-grid {
         padding: 5px;
       }
+      */
 
       .puzzle-object {
         padding: 5px;
@@ -79,6 +79,16 @@ submethod BUILD ( ) {
         color: white;
       }
       */
+
+      #puzzle-image {
+        /*
+        border-width: 30px;
+        border-radius: 5px;
+        border-style: solid;
+        border-color: #ffee00;
+        */
+        background-color: #f0a080;
+      }
 
       #puzzle-item-label {
         /*background-color: #606060;*/
@@ -174,6 +184,55 @@ method lock ( ) {
 #-------------------------------------------------------------------------------
 method unlock ( ) {
   $*puzzle-data<settings><locked> = False;
+}
+
+#-------------------------------------------------------------------------------
+method get-pala-collection ( InstallType $type --> Str ) {
+  my Str $collection = '';
+  given $type {
+    when FlatPak {
+      $collection = $*puzzle-data<palapeli><collections><flatpak>;
+    }
+
+    when Snap {
+      $collection = $*puzzle-data<palapeli><collections><snap>;
+    }
+
+    when Standard {
+      $collection = $*puzzle-data<palapeli><collections><standard>;
+    }
+  }
+  
+  [~] $*HOME, '/', $collection, '/'
+}
+
+#-------------------------------------------------------------------------------
+method get-pala-executable ( InstallType $type --> Str ) {
+  my Str $exec = '';
+  my Hash $h;
+  given $type {
+    when FlatPak {
+      note "Sorry, does not seem to work!";
+      $h = %();
+    }
+
+    when Snap {
+      $h = $*puzzle-data<palapeli><execute><snap>;
+    }
+
+    when Standard {
+      $h = $*puzzle-data<palapeli><execute><standard>;
+    }
+  }
+
+  $exec = $h<exec>;
+  if $h<env>:exists {
+    for $h<env>.keys -> $k {
+      %*ENV{$k} = $h<env>{$k};
+    }
+  }
+
+  $exec
 }
 
 #-------------------------------------------------------------------------------
@@ -310,13 +369,55 @@ method check-pala-progress-file (
       my Str $collection-unique = [~] '__FSC_', $unique-name, '_0_.save';
       $col-unique-path = [~] $collections{$col-key}, '/', $collection-unique;
 
-say "Copy $col-path to $col-unique-path, ", $col-unique-path.IO.e;
-     $col-path.IO.copy( $col-unique-path, :createonly)
-       unless $col-unique-path.IO.e;
+      say "Copy $col-path to $col-unique-path, ", $col-unique-path.IO.e;
+      $col-path.IO.copy( $col-unique-path, :createonly)
+        unless $col-unique-path.IO.e;
 
-      $puzzle-info<progress>{$col-key} = $col-unique-path;
+#      $puzzle-info<progress-files>{$col-key} = $col-unique-path;
     }
   }
+}
+
+#-------------------------------------------------------------------------------
+# Called from call-back in Table after playing a puzzle.
+# The object holds most of the fields of
+# $*puzzle-data<categories>{$category}<members><some puzzle index> added with
+# the following fields: Puzzle-index,
+# Category and Image (see get-puzzles() below) while Name and SourceFile are
+# removed (see add-puzzle-to-table() in Table).
+method calculate-progress ( Hash $object, InstallType $type --> Str) {
+note "$?LINE $object.gist()";
+
+  my Hash $puzzle :=
+    $*puzzle-data<palapeli><collections><members>{$object<Puzzle-index>};
+
+  my Str $filename = $puzzle<Filename>;
+  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
+  my Str $collection-path = [~] self.get-pala-collection($type),
+         '/', $collection-filename;
+
+  my $nbr-pieces = $puzzle<PieceCount>;
+  my Bool $get-lines = False;
+  my Hash $piece-coordinates = %();
+  for $collection-path.IO.slurp.lines -> $line {
+    if $line eq '[XYCo-ordinates]' {
+      $get-lines = True;
+      next;
+    }
+
+    if $get-lines {
+      my Str ( $, $piece-coordinate ) = $line.split('=');
+      $piece-coordinates{$piece-coordinate} = 1;
+    }
+  }
+
+  my Str $progress = ($piece-coordinates.elems / $nbr-pieces * 100.0).Str;
+  $*puzzle-data<Progress>{$type ~~ Snap ?? 'Snap' !! 'Standard'} = $progress;
+
+  # Save admin
+  self.save-puzzle-admin;
+
+  $progress
 }
 
 #-------------------------------------------------------------------------------
@@ -327,7 +428,8 @@ say 'save puzzle admin in ', PUZZLE_DATA;
 
 #-------------------------------------------------------------------------------
 # Return an array of hashes. Basic info comes from
-# $*puzzle-data<categories>{$category}<members> where 
+# $*puzzle-data<categories>{$category}<members> where info of Image and the
+# index of the puzzle is added.
 method get-puzzles ( Str $category --> Array ) {
 
   my Str $pi;
@@ -338,6 +440,7 @@ method get-puzzles ( Str $category --> Array ) {
     $pi = ($i+1).fmt('p%03d');
     $cat-puzzle-data.push: %(
       :Puzzle-index($pi),
+      :Category($category),
       :Image(PUZZLE_TABLE_DATA ~ "$category/$pi/image400.jpg"),
       |$cat{$pi}
     );

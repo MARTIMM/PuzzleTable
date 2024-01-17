@@ -16,6 +16,7 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Button:api<2>;
+use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 
@@ -75,10 +76,11 @@ submethod BUILD ( PuzzleTable::Config :$!config ) {
 # Add puzzle to the table
 method add-puzzle-to-table ( Hash $object ) {
 
-  # Save the index and drop some other field to save memory
-  my Str $index = $object<Puzzle-index>:delete;
+  # Save the index and drop some other fields to save memory
+  my Str $index = $object<Puzzle-index>;
   $object<Name>:delete;
   $object<SourceFile>:delete;
+
   $object<Progess> = 0;
   $!current-table-objects{$index} = $object;
   $!puzzle-objects.append($index);
@@ -102,6 +104,7 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
     .set-size-request( 300, 300);
+    .set-name('puzzle-image');
     .set-margin-top(3);
     .set-margin-bottom(3);
     .set-margin-start(3);
@@ -116,12 +119,12 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
   my TableItemLabel $label-progress .= new;
 
   with my Gnome::Gtk4::Grid $grid .= new-grid {
-    .attach( $image, 0, 0, 1, 4);
-    .attach( $label-comment, 0, 5, 1, 1);
-    .attach( $label-size, 0, 6, 1, 1);
-    .attach( $label-npieces, 0, 7, 1, 1);
-    .attach( $label-source, 0, 8, 1, 1);
-    .attach( $label-progress, 0, 9, 1, 1);
+    .attach( $image, 0, 0, 1, 1);
+    .attach( $label-comment, 0, 1, 1, 1);
+    .attach( $label-size, 0, 2, 1, 1);
+    .attach( $label-npieces, 0, 3, 1, 1);
+    .attach( $label-source, 0, 4, 1, 1);
+    .attach( $label-progress, 0, 5, 1, 1);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-object>);
   }
@@ -135,13 +138,20 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   my Gnome::Gtk4::StringObject $string-object .= new(
     :native-object($list-item.get-item)
   );
+  my Hash $object = $!current-table-objects{$string-object.get-string};
 
+  my Gnome::Gtk4::Label() $label-progress;
   with my Gnome::Gtk4::Button $run-snap .= new-button {
-    .set-icon-name('application-x-executable');
-    .register-signal( self, 'run-snap', 'clicked');
-    .set-size-request( 32, 32);
-    .set-valign(GTK_ALIGN_START);
+    # A large enough picture on the button
+    my Gnome::Gtk4::Picture $p .= new-picture;
+    $p.set-filename(%?RESOURCES<icons8-run-64.png>);
+    .set-child($p);
 
+    .register-signal( self, 'run-snap', 'clicked', :$object, :$label-progress);
+    .set-valign(GTK_ALIGN_START);
+#    .set-size-request( 32, 32);
+
+    # Set the tooltip
     .set-has-tooltip(True);
     .register-signal(
       self, 'show-tooltip', 'query-tooltip',
@@ -150,10 +160,15 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   }
 
   with my Gnome::Gtk4::Button $run-standard .= new-button {
-    .set-icon-name('application-x-executable');
-    .register-signal( self, 'run-standard', 'clicked');
-    .set-size-request( 32, 32);
+    my Gnome::Gtk4::Picture $p .= new-picture;
+    $p.set-filename(%?RESOURCES<icons8-run-64.png>);
+    .set-child($p);
+
+    .register-signal(
+      self, 'run-standard', 'clicked', :$object, :$label-progress
+    );
     .set-valign(GTK_ALIGN_START);
+#    .set-size-request( 32, 32);
 
     .set-has-tooltip(True);
     .register-signal(
@@ -162,27 +177,41 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
   }
 
-  with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
-    .attach( $run-snap, 1, 0, 1, 1);
-    .attach( $run-standard, 1, 1, 1, 1);
+  with my Gnome::Gtk4::Box $button-box .= new-box(
+    GTK_ORIENTATION_VERTICAL, 2
+  ) {
+    .append($run-snap);
+    .append($run-standard);
   }
 
-  my Gnome::Gtk4::Picture() $image = $grid.get-child-at( 0, 0);
-  my Gnome::Gtk4::Label() $label-comment = $grid.get-child-at( 0, 5);
-  my Gnome::Gtk4::Label() $label-size = $grid.get-child-at( 0, 6);
-  my Gnome::Gtk4::Label() $label-npieces = $grid.get-child-at( 0, 7);
-  my Gnome::Gtk4::Label() $label-source = $grid.get-child-at( 0, 8);
-  my Gnome::Gtk4::Label() $label-progress = $grid.get-child-at( 0, 9);
+  with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
+    .attach( $button-box, 1, 0, 1, 5);
 
-  my Hash $object = $!current-table-objects{$string-object.get-string};
-  $image.set-filename($object<Image>);
-  $label-comment.set-text($object<Comment>);
-  $label-size.set-text(
-    [~] 'Picture size: ', $object<Width>, ' x ', $object<Height>
-  );
-  $label-npieces.set-text('Nbr pieces: ' ~ $object<PieceCount>);
-  $label-source.set-text('Source: ' ~ $object<Source>);
-  $label-progress.set-text('Progress: ' ~ $object<Progess> ~ ' %');
+    my Gnome::Gtk4::Picture() $image = .get-child-at( 0, 0);
+    my Gnome::Gtk4::Label() $label-comment = .get-child-at( 0, 1);
+    my Gnome::Gtk4::Label() $label-size = .get-child-at( 0, 2);
+    my Gnome::Gtk4::Label() $label-npieces = .get-child-at( 0, 3);
+    my Gnome::Gtk4::Label() $label-source = .get-child-at( 0, 4);
+    my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 5);
+
+    $image.set-filename($object<Image>);
+    $label-comment.set-text($object<Comment>);
+    $label-size.set-text(
+      [~] 'Picture size: ', $object<Width>, ' x ', $object<Height>
+    );
+    $label-npieces.set-text('Nbr pieces: ' ~ $object<PieceCount>);
+    $label-source.set-text('Source: ' ~ $object<Source>);
+    
+    # Init if the values aren't there
+    $object<Progess> = %() unless $object<Progess>:exists;
+    $object<Progess><Snap> //= '0';
+    $object<Progess><Standard> //= '0';
+    my Str $p-snap = $object<Progess><Snap>.Str;
+    my Str $p-standard = $object<Progess><Standard>.Str;
+    $label-progress.set-text(
+      [~] 'Progress: ', $p-snap, ' % / ', $p-standard, ' %'
+    );
+  }
 
   $string-object.clear-object;
 }
@@ -198,11 +227,44 @@ method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
 }
 
 #-------------------------------------------------------------------------------
-method run-snap ( ) {
+method run-snap ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
+  note "run snap with $object<Filename>";
+  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
+         '/', $object<Puzzle-index>, '/',  $object<Filename>;
+  my $exec = $!config.get-pala-executable(Snap);
+
+#note "$exec $puzzle-path";
+  
+  # Start playing the puzzle
+  shell "$exec $puzzle-path";
+
+  # Returning from puzzle
+  # Calculate progress
+  my Str $progress = $!config.calculate-progress( $object, Snap);
+
+  $label-progress.set-text(
+    [~] 'Progress: ', $progress, ' % / ', $object<Progess><Standard>, ' %'
+  )
 }
 
 #-------------------------------------------------------------------------------
-method run-standard ( ) {
+method run-standard ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
+  note "run standard with $object<Filename>";
+  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
+         '/', $object<Puzzle-index>, '/',  $object<Filename>;
+  my $exec = $!config.get-pala-executable(Standard);
+
+#note "$exec $puzzle-path";
+
+  shell "$exec $puzzle-path";
+
+  # Returning from puzzle
+  # Calculate progress
+  my Str $progress = $!config.calculate-progress( $object, Standard);
+
+  $label-progress.set-text(
+    [~] 'Progress: ', $object<Progess><Snap>, ' % / ', $progress, ' %'
+  );
 }
 
 #-------------------------------------------------------------------------------
