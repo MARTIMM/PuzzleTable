@@ -43,7 +43,7 @@ submethod BUILD ( ) {
   );
 
   # Load the gtk resource file and register resource to make data global to app
-#  my Gnome::Gio::Resource $r .= new(:load(%?RESOURCES<library.gresource>.Str));
+#  my Gnome::Gio::Resource $r .= new(:load(%?RESOURCES<library.gresource>));
 #  $r.register;
 
   # Startup signal fired after registration of app
