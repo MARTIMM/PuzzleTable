@@ -81,7 +81,7 @@ method add-puzzle-to-table ( Hash $object ) {
   $object<Name>:delete;
   $object<SourceFile>:delete;
 
-  $object<Progess> = 0;
+#  $object<Progress> = %();
   $!current-table-objects{$index} = $object;
   $!puzzle-objects.append($index);
 }
@@ -140,14 +140,12 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   );
   my Hash $object = $!current-table-objects{$string-object.get-string};
 
-  my Gnome::Gtk4::Label() $label-progress;
   with my Gnome::Gtk4::Button $run-snap .= new-button {
     # A large enough picture on the button
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename(%?RESOURCES<icons8-run-64.png>);
     .set-child($p);
 
-    .register-signal( self, 'run-snap', 'clicked', :$object, :$label-progress);
     .set-valign(GTK_ALIGN_START);
 #    .set-size-request( 32, 32);
 
@@ -164,9 +162,6 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     $p.set-filename(%?RESOURCES<icons8-run-64.png>);
     .set-child($p);
 
-    .register-signal(
-      self, 'run-standard', 'clicked', :$object, :$label-progress
-    );
     .set-valign(GTK_ALIGN_START);
 #    .set-size-request( 32, 32);
 
@@ -193,6 +188,12 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     my Gnome::Gtk4::Label() $label-npieces = .get-child-at( 0, 3);
     my Gnome::Gtk4::Label() $label-source = .get-child-at( 0, 4);
     my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 5);
+    $run-snap.register-signal(
+      self, 'run-snap', 'clicked', :$object, :$label-progress
+    );
+    $run-standard.register-signal(
+      self, 'run-standard', 'clicked', :$object, :$label-progress
+    );
 
     $image.set-filename($object<Image>);
     $label-comment.set-text($object<Comment>);
@@ -201,13 +202,13 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
     $label-npieces.set-text('Nbr pieces: ' ~ $object<PieceCount>);
     $label-source.set-text('Source: ' ~ $object<Source>);
-    
+
     # Init if the values aren't there
-    $object<Progess> = %() unless $object<Progess>:exists;
-    $object<Progess><Snap> //= '0';
-    $object<Progess><Standard> //= '0';
-    my Str $p-snap = $object<Progess><Snap>.Str;
-    my Str $p-standard = $object<Progess><Standard>.Str;
+    $object<Progress> = %() unless $object<Progress>:exists;
+    $object<Progress><Snap> //= '0';
+    $object<Progress><Standard> //= '0';
+    my Str $p-snap = $object<Progress><Snap>.Str;
+    my Str $p-standard = $object<Progress><Standard>.Str;
     $label-progress.set-text(
       [~] 'Progress: ', $p-snap, ' % / ', $p-standard, ' %'
     );
@@ -243,7 +244,7 @@ method run-snap ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
   my Str $progress = $!config.calculate-progress( $object, Snap);
 
   $label-progress.set-text(
-    [~] 'Progress: ', $progress, ' % / ', $object<Progess><Standard>, ' %'
+    [~] 'Progress: ', $progress, ' % / ', $object<Progress><Standard>, ' %'
   )
 }
 
@@ -263,7 +264,7 @@ method run-standard ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
   my Str $progress = $!config.calculate-progress( $object, Standard);
 
   $label-progress.set-text(
-    [~] 'Progress: ', $object<Progess><Snap>, ' % / ', $progress, ' %'
+    [~] 'Progress: ', $object<Progress><Snap>, ' % / ', $progress, ' %'
   );
 }
 

@@ -386,10 +386,9 @@ method check-pala-progress-file (
 # Category and Image (see get-puzzles() below) while Name and SourceFile are
 # removed (see add-puzzle-to-table() in Table).
 method calculate-progress ( Hash $object, InstallType $type --> Str) {
-note "$?LINE $object.gist()";
+#note "$?LINE $object.gist()";
 
-  my Hash $puzzle :=
-    $*puzzle-data<palapeli><collections><members>{$object<Puzzle-index>};
+  my Hash $puzzle := $*puzzle-data<categories>{$object<Category>}<members>{$object<Puzzle-index>};
 
   my Str $filename = $puzzle<Filename>;
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
@@ -411,9 +410,12 @@ note "$?LINE $object.gist()";
     }
   }
 
-  my Str $progress = ($piece-coordinates.elems / $nbr-pieces * 100.0).Str;
-  $*puzzle-data<Progress>{$type ~~ Snap ?? 'Snap' !! 'Standard'} = $progress;
-
+  my Str $progress = (
+    100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0
+  ).fmt('%3.1f');
+  my Str $key = $type ~~ Snap ?? 'Snap' !! 'Standard';
+  $puzzle<Progress>{$key} = $progress;
+#note "$?LINE $key $puzzle.gist()";
   # Save admin
   self.save-puzzle-admin;
 
