@@ -76,3 +76,9 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
 * Gnome::Gsk4:api<2>
 * Gnome::Atk:api<2>
 -->
+
+# Attribution
+## Icons
+* Icon from set ['Run icons created by Smashicons'](https://www.flaticon.com/free-icons/run).
+
+* Icon from [Icons8](https://icons8.com/icon/ddoMPxn5moeM/girl-running).
