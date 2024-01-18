@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -30,5 +30,7 @@
   ],
   "test-depends": [ ],
   "build-depends": [ ],
-  "resources": [ ]
+  "resources": [
+    "icons8-run-64.png"
+  ]
 }
