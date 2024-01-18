@@ -13,6 +13,7 @@ use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::DialogLabel;
 
 use Gnome::Gtk4::Entry:api<2>;
+use Gnome::Gtk4::PasswordEntry:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
@@ -122,6 +123,103 @@ method do-category-add (
       else {
         # Add category to list
         $!main.config.add-category( $cat-text.tc, $check-button.get-active);
+        self.renew;
+        $sts-ok = True;
+      }
+    }
+
+    when GTK_RESPONSE_CANCEL {
+      $sts-ok = True;
+    }
+  }
+
+  $dialog.destroy if $sts-ok;
+}
+
+#-------------------------------------------------------------------------------
+# Select from menu to lock or unlock a category
+method category-lock ( N-Object $parameter ) {
+#  say 'category add';
+
+  my DialogLabel $ul-label .= new('Lock or unlock category');
+  my DialogLabel $pw-label .= new('Type password to change');
+  my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
+  my Gnome::Gtk4::PasswordEntry $pw-entry .= new-entry;
+  $check-button.set-active(False);
+  my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
+  $!statusbar .= new-statusbar(:context<category>);
+
+  # Fill the combobox in the dialog
+  for $!config.get-categories -> $category {
+    # Don't let default be changed
+    next if $category.lc eq 'default';
+    $combobox.append-text($category);
+  }
+  $combobox.set-active(0);
+
+  my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
+    'Add Category Dialog', $!main.application-window,
+    GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
+    'Change', GEnum, GTK_RESPONSE_ACCEPT, Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
+  );
+
+  with my Gnome::Gtk4::Box $box .= new(
+    :native-object($dialog.get-content-area)
+  ) {
+    .set-orientation(GTK_ORIENTATION_VERTICAL);
+    .set-margin-top(10);
+    .set-margin-bottom(10);
+    .set-margin-start(10);
+    .set-margin-end(10);
+    .append($combobox);
+    .append($ul-label);
+    .append($check-button);
+    .append($pw-label);
+    .append($!statusbar);
+  }
+
+  with $dialog {
+    .set-size-request( 400, 100);
+    .register-signal(
+       self, 'do-category-lock', 'response', :$pw-entry,
+       :$check-button, :$combobox
+    );
+    .register-signal( self, 'destroy-dialog', 'destroy');
+    $!config.set-css( .get-style-context, :css-class<dialog>);
+    .set-name('category-dialog');
+    my $r = .show;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method do-category-lock (
+  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  Gnome::Gtk4::PasswordEntry :$pw-entry,
+  Gnome::Gtk4::CheckButton :$check-button,
+  Gnome::Gtk4::ComboBox :$combobox
+) {
+  my Bool $sts-ok = False;
+  $!statusbar.remove-message;
+
+  my GtkResponseType() $response-type = $response-id;  
+  given $response-type {
+    when GTK_RESPONSE_DELETE_EVENT {
+      #ignore
+      $sts-ok = True;
+    }
+
+    when GTK_RESPONSE_ACCEPT {
+      my Str $pw-text = $pw-entry.get-text.tc;
+
+      if $!config.check-password($pw-text) {
+        $!statusbar.set-status('Wrong password');
+      }
+
+      else {
+        # Modify lockable category
+        $!main.config.set-category-lockable(
+          $combobox.get-active, $check-button.get-active
+        );
         self.renew;
         $sts-ok = True;
       }

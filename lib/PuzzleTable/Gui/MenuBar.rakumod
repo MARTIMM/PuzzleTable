@@ -53,6 +53,7 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
 
     when 'Category' {
       self.bind-action( $menu, $menu-name, $cat, 'Add', 'app.add');
+      self.bind-action( $menu, $menu-name, $cat, 'lock', 'app.lock');
       self.bind-action( $menu, $menu-name, $cat, 'Rename', 'app.rename');
       self.bind-action( $menu, $menu-name, $cat, 'Remove', 'app.remove');
     }
