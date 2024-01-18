@@ -1,4 +1,6 @@
-### TODO list
+
+* 2024-01-18 0.3.3
+  * Calculation of progress after stopping puzzle
 
 * 2024-01-13 0.3.2
   * Add password handling
