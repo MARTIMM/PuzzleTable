@@ -13,6 +13,7 @@ use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::DialogLabel;
 
 use Gnome::Gtk4::Entry:api<2>;
+use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
@@ -49,8 +50,9 @@ method category-add ( N-Object $parameter ) {
 #  say 'category add';
 
   my DialogLabel $label .= new('Specify a new category');
-  my $no = $label.get-native-object-no-reffing;
   my Gnome::Gtk4::Entry $entry .= new-entry;
+  my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
+  $check-button.set-active(False);
   $!statusbar .= new-statusbar(:context<category>);
 
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
@@ -69,12 +71,15 @@ method category-add ( N-Object $parameter ) {
     .set-margin-end(10);
     .append($label);
     .append($entry);
+    .append($check-button);
     .append($!statusbar);
   }
 
   with $dialog {
     .set-size-request( 400, 100);
-    .register-signal( self, 'do-category-add', 'response', :$entry);
+    .register-signal(
+       self, 'do-category-add', 'response', :$entry, :$check-button
+    );
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
     .set-name('category-dialog');
@@ -85,7 +90,7 @@ method category-add ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-add (
   Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
-  Gnome::Gtk4::Entry :$entry
+  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button
 ) {
   my Bool $sts-ok = False;
   $!statusbar.remove-message;
@@ -116,8 +121,7 @@ method do-category-add (
 
       else {
         # Add category to list
-# .... locked ....
-        $!main.config.add-category( $cat-text.tc, False);
+        $!main.config.add-category( $cat-text.tc, $check-button.get-active);
         self.renew;
         $sts-ok = True;
       }
