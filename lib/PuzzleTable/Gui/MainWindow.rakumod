@@ -139,7 +139,10 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   my Str $opt-category = 'Default';
   if $o<category>:exists {
     $opt-category = $o<category>.tc;
-    $!config.add-category( $opt-category, $lock);
+    # Keep lockable True when it is set to True
+    $!config.add-category(
+      $opt-category, ($lock or $!config.is-category-lockable($opt-category))
+    );
   }
 
   if $o<puzzles>:exists {
