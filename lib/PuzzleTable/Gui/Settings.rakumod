@@ -307,7 +307,7 @@ method do-password-unlock-check (
 
     when GTK_RESPONSE_ACCEPT {
       my Str $pw = $entry-pw.get-text;
-      if !$!config.check-password($pw) {
+      if ! $!config.check-password($pw) {
         $!statusbar.set-status('Password not correct');
       }
 
