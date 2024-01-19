@@ -98,9 +98,7 @@ method clear-table ( ) {
 
 #-------------------------------------------------------------------------------
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#method setup-object ( N-Object $n-list-item ) {
-#say 'setup-object';
-#  my Gnome::Gtk4::ListItem $list-item .= new(:native-object($n-list-item));
+say 'setup-object';
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
     .set-size-request( 300, 300);
@@ -134,6 +132,7 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
+say 'bind-object';
 
   my Gnome::Gtk4::StringObject $string-object .= new(
     :native-object($list-item.get-item)
@@ -220,10 +219,15 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
+note 'unbind';
+  my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
+  my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
+  $button-box.clear-object;
 }
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
+note 'destroy';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   $grid.clear-object;
 }
