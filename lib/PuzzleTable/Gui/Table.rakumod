@@ -140,10 +140,11 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   );
   my Hash $object = $!current-table-objects{$string-object.get-string};
 
+  my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
   with my Gnome::Gtk4::Button $run-snap .= new-button {
     # A large enough picture on the button
     my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename(%?RESOURCES<icons8-run-64.png>);
+    $p.set-filename($png-file);
     .set-child($p);
 
     .set-valign(GTK_ALIGN_START);
@@ -159,7 +160,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
   with my Gnome::Gtk4::Button $run-standard .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename(%?RESOURCES<icons8-run-64.png>);
+    $p.set-filename($png-file);
     .set-child($p);
 
     .set-valign(GTK_ALIGN_START);

@@ -117,6 +117,8 @@ submethod BUILD ( ) {
     $css-provider.load-from-path(PUZZLE_CSS);
   }
 
+  my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
+  %?RESOURCES<icons8-run-64.png>.copy($png-file) unless $png-file.IO.e;
   $!extracter .= new;
 }
 
