@@ -143,9 +143,9 @@ method get-password ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method check-password ( Str $old-password --> Bool ) {
+method check-password ( Str $password --> Bool ) {
   my Bool $ok = True;
-  $ok = (sha1-hex($old-password) eq $*puzzle-data<settings><password>).Bool
+  $ok = (sha1-hex($password) eq $*puzzle-data<settings><password>).Bool
     if $*puzzle-data<settings><password>:exists;
 
   $ok
@@ -179,18 +179,32 @@ method is-category-lockable ( Str:D $category --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-category-lockable ( Str:D $category, Bool:D $lockable ) {
-  $*puzzle-data<categories>{$category}<lockable> = $lockable;
+method set-category-lockable (
+  Str:D $category, Bool:D $lockable, Str $password --> Bool
+) {
+  my Bool $ok;
+  $*puzzle-data<categories>{$category}<lockable> = $lockable
+    if $ok = self.check-password($password);
+
+  $ok
 }
 
 #-------------------------------------------------------------------------------
-method lock ( ) {
-  $*puzzle-data<settings><locked> = True;
+method lock ( Str $password --> Bool ) {
+  my Bool $ok;
+  $*puzzle-data<settings><locked> = True
+    if $ok = self.check-password($password);
+
+  $ok
 }
 
 #-------------------------------------------------------------------------------
-method unlock ( ) {
-  $*puzzle-data<settings><locked> = False;
+method unlock ( Str $password --> Bool ) {
+  my Bool $ok;
+  $*puzzle-data<settings><locked> = False
+    if $ok = self.check-password($password);
+
+  $ok
 }
 
 #-------------------------------------------------------------------------------

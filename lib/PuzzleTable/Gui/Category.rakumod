@@ -144,7 +144,7 @@ method category-lock ( N-Object $parameter ) {
   my DialogLabel $ul-label .= new('Lock or unlock category');
   my DialogLabel $pw-label .= new('Type password to change');
   my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
-  my Gnome::Gtk4::PasswordEntry $pw-entry .= new-entry;
+  my Gnome::Gtk4::PasswordEntry $pw-entry .= new-passwordentry;
   $check-button.set-active(False);
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
   $!statusbar .= new-statusbar(:context<category>);
@@ -175,6 +175,7 @@ method category-lock ( N-Object $parameter ) {
     .append($ul-label);
     .append($check-button);
     .append($pw-label);
+    .append($pw-entry);
     .append($!statusbar);
   }
 
@@ -210,18 +211,20 @@ method do-category-lock (
 
     when GTK_RESPONSE_ACCEPT {
       my Str $pw-text = $pw-entry.get-text.tc;
-
-      if $!config.check-password($pw-text) {
+      if ! $!config.check-password($pw-text) {
         $!statusbar.set-status('Wrong password');
       }
 
-      else {
-        # Modify lockable category
-        $!main.config.set-category-lockable(
-          $combobox.get-active, $check-button.get-active
-        );
+      # Modify lockable category
+      elsif $!main.config.set-category-lockable(
+        $combobox.get-active-text, $check-button.get-active.Bool, $pw-text
+      ) {
         self.renew;
         $sts-ok = True;
+      }
+
+      else {
+        $!statusbar.set-status('Empty password while one is needed?');
       }
     }
 
