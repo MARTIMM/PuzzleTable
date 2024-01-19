@@ -314,7 +314,7 @@ method do-password-unlock-check (
       # If returned True, the password is accepted
       else {
         $sts-ok = True;
-        $!config.unlock;
+        $!config.unlock($pw);
         $!category.renew;
       }
     }
