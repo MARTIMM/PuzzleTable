@@ -169,11 +169,7 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method is-locked ( --> Bool ) {
-  ?$*puzzle-data<settings><locked>.Bool;
-}
-
-#-------------------------------------------------------------------------------
+# Get the category lockable state
 method is-category-lockable ( Str:D $category --> Bool ) {
   $*puzzle-data<categories>{$category}<lockable>.Bool
 }
@@ -190,6 +186,13 @@ method set-category-lockable (
 }
 
 #-------------------------------------------------------------------------------
+# Get the puzzle table locking state
+method is-locked ( --> Bool ) {
+  ?$*puzzle-data<settings><locked>.Bool;
+}
+
+#-------------------------------------------------------------------------------
+# Set the puzzle table locking state
 method lock ( Str $password --> Bool ) {
   my Bool $ok;
   $*puzzle-data<settings><locked> = True
@@ -199,6 +202,7 @@ method lock ( Str $password --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
+# Reset the puzzle table locking state
 method unlock ( Str $password --> Bool ) {
   my Bool $ok;
   $*puzzle-data<settings><locked> = False
