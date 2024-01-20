@@ -46,8 +46,15 @@ method palapeli-info( Str:D $store-path --> Hash ) {
 #note "$?LINE extract from $store-path/pala.desktop";
 
   my Hash $h = %();
+  my Int $piece-count = 0;
+  my Bool $do-count = False;
   for "$store-path/pala.desktop".IO.slurp.lines -> $line {
+    $do-count = True if $line eq '[PieceOffsets]';
+    $do-count = False if $line eq '[Relations]';
+
     next unless $line ~~ m/ '=' /;
+    $piece-count++ if $do-count;
+
     my ( $name, $val) = $line.split('=');
 
     given $name {
@@ -66,12 +73,14 @@ method palapeli-info( Str:D $store-path --> Hash ) {
         $h<Height> = $height.Int;
       }
 
-      when / PieceCount / {
-        $h<PieceCount> = $val.Int;
-      }
+      # Not always correct
+      #when / PieceCount / {
+      #  $h<PieceCount> = $val.Int;
+      #}
     }
   }
 
+  $h<PieceCount> = $piece-count;
 #note "$?LINE $h.gist()";
   $h
 }
