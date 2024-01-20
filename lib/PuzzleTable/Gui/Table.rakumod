@@ -19,6 +19,7 @@ use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
+use Gnome::Gtk4::N-Bitset:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -105,6 +106,7 @@ method clear-table ( Bool :$init = False ) {
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
+  $!multi-select.register-signal( self, 'items-selected', 'selection-changed');
 
   with $!signal-factory .= new-signallistitemfactory {
     .register-signal( self, 'setup-object', 'setup');
@@ -117,10 +119,12 @@ method clear-table ( Bool :$init = False ) {
     .set-min-columns(10);
     .set-max-columns(10);
     .set-enable-rubberband(True);
+    .set-single-click-activate(True);
     .set-model($!multi-select);
     .set-factory($!signal-factory);
     .set-hexpand(True);
     .set-vexpand(True);
+    .register-signal( self, 'item-clicked', 'activate');
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
@@ -316,4 +320,22 @@ method show-tooltip (
 ) {
   $tooltip.set-markup($tip);
   True
+}
+
+#-------------------------------------------------------------------------------
+method item-clicked ( guint $position ) {
+  note "$?LINE $position";
+  my Gnome::Gtk4::N-Bitset $bitset .= new(
+    :native-object($!multi-select.get-selection)
+  );
+
+  $bitset.add($position);
+  $!multi-select.set-selection( $bitset, $bitset);
+#  $!multi-select.set-select-item($position);
+#  $!multi-select.selection-changed( 1, 1);
+}
+
+#-------------------------------------------------------------------------------
+method items-selected ( guint $position, guint $n-items ) {
+  note "$?LINE $position, $n-items";
 }
