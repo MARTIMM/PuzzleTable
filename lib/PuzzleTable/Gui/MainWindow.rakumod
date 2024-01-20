@@ -200,7 +200,7 @@ method puzzle-table-display ( ) {
 
     .set-show-menubar(True);
     .set-title('Puzzle Table Display');
-    .set-size-request( 1000, 700);
+    .set-size-request( 1500, 1000);
     .set-child($!top-grid);
     .show;
   }
