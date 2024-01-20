@@ -372,7 +372,7 @@ method renew ( ) {
 
   my Int ( $idx, $idx-default, $idx-current ) = ( 0, 0, -1);
   my Bool $not-locked = !$!config.is-locked;
-  for $*puzzle-data<categories>.keys.sort -> $key {
+  for $!config.get-categories -> $key {
     # Add to combobox unless locking is on and category is lockable
     if $not-locked or !$!config.is-category-lockable($key) {
       self.append-text($key);
@@ -380,7 +380,6 @@ method renew ( ) {
       $idx-current = $idx if $key eq $current-cat;
       $idx++;
     }
-note "$?LINE $key, $idx, $idx-default, $!config.is-locked() $!config.is-category-lockable($key)";
   }
 
   self.set-active($idx-current == -1 ?? $idx-default !! $idx-current);
