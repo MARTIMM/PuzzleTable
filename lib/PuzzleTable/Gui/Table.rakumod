@@ -114,7 +114,8 @@ method clear-table ( Bool :$init = False ) {
   }
 
   with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
-    .set-max-columns(6);
+    .set-min-columns(10);
+    .set-max-columns(10);
     .set-enable-rubberband(True);
     .set-model($!multi-select);
     .set-factory($!signal-factory);
@@ -125,8 +126,7 @@ method clear-table ( Bool :$init = False ) {
   }
 
   self.set-child($!puzzle-grid);
-  self.set-hexpand(True);
-  self.set-vexpand(True);
+  self.set-has-frame(True);
   $!config.set-css( self.get-style-context, :css-class<puzzle-table>);
 }
 
@@ -182,7 +182,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .set-child($p);
 
     .set-valign(GTK_ALIGN_START);
-#    .set-size-request( 32, 32);
+    .set-size-request( 64, 64);
 
     # Set the tooltip
     .set-has-tooltip(True);
@@ -198,7 +198,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .set-child($p);
 
     .set-valign(GTK_ALIGN_START);
-#    .set-size-request( 32, 32);
+    .set-size-request( 64, 64);
 
     .set-has-tooltip(True);
     .register-signal(
