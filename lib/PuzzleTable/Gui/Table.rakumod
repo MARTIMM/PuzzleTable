@@ -44,6 +44,8 @@ has Hash $!current-table-objects;
 #-------------------------------------------------------------------------------
 submethod BUILD ( PuzzleTable::Config :$!config ) {
 
+  self.clear-table(:init);
+#`{{
   $!current-table-objects = %();
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
@@ -58,10 +60,12 @@ submethod BUILD ( PuzzleTable::Config :$!config ) {
   }
 
   with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
-    .set-max-columns(8);
+    .set-max-columns(6);
     .set-enable-rubberband(True);
     .set-model($!multi-select);
     .set-factory($!signal-factory);
+    .set-hexpand(True);
+    .set-vexpand(True);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
@@ -70,6 +74,7 @@ submethod BUILD ( PuzzleTable::Config :$!config ) {
   self.set-hexpand(True);
   self.set-vexpand(True);
   $!config.set-css( self.get-style-context, :css-class<puzzle-table>);
+}}
 }
 
 #-------------------------------------------------------------------------------
@@ -87,18 +92,47 @@ method add-puzzle-to-table ( Hash $object ) {
 }
 
 #-------------------------------------------------------------------------------
-method clear-table ( ) {
-#note "$?LINE add $object-path";
-  while $!puzzle-objects.get-string(0).defined {
-    $!puzzle-objects.remove(0);
+method clear-table ( Bool :$init = False ) {
+#note "$?LINE clear-table";
+  $!current-table-objects = %();
+
+  unless $init {
+    $!puzzle-objects.clear-object;
+    $!multi-select.clear-object;
+    $!signal-factory.clear-object;
+    $!puzzle-grid.clear-object;
   }
 
-  $!current-table-objects = %();
+  $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
+  $!multi-select .= new-multiselection($!puzzle-objects);
+
+  with $!signal-factory .= new-signallistitemfactory {
+    .register-signal( self, 'setup-object', 'setup');
+    .register-signal( self, 'bind-object', 'bind');
+    .register-signal( self, 'unbind-object', 'unbind');
+    .register-signal( self, 'destroy-object', 'teardown');
+  }
+
+  with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
+    .set-max-columns(6);
+    .set-enable-rubberband(True);
+    .set-model($!multi-select);
+    .set-factory($!signal-factory);
+    .set-hexpand(True);
+    .set-vexpand(True);
+
+    $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
+  }
+
+  self.set-child($!puzzle-grid);
+  self.set-hexpand(True);
+  self.set-vexpand(True);
+  $!config.set-css( self.get-style-context, :css-class<puzzle-table>);
 }
 
 #-------------------------------------------------------------------------------
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
-say 'setup-object';
+#say 'setup-object';
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
     .set-size-request( 300, 300);
@@ -117,6 +151,7 @@ say 'setup-object';
   my TableItemLabel $label-progress .= new;
 
   with my Gnome::Gtk4::Grid $grid .= new-grid {
+    .set-size-request( 350, 400);
     .attach( $image, 0, 0, 1, 1);
     .attach( $label-comment, 0, 1, 1, 1);
     .attach( $label-size, 0, 2, 1, 1);
@@ -132,7 +167,7 @@ say 'setup-object';
 
 #-------------------------------------------------------------------------------
 method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-say 'bind-object';
+#say 'bind-object';
 
   my Gnome::Gtk4::StringObject $string-object .= new(
     :native-object($list-item.get-item)
@@ -219,7 +254,7 @@ say 'bind-object';
 
 #-------------------------------------------------------------------------------
 method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-note 'unbind';
+#note 'unbind';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
   $button-box.clear-object;
@@ -227,7 +262,7 @@ note 'unbind';
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
-note 'destroy';
+#note 'destroy';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   $grid.clear-object;
 }
