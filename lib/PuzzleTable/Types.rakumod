@@ -9,7 +9,6 @@ constant APP_ID is export = 'io.github.martimm.puzzle-table';
 constant DATA_DIR is export = [~] $*HOME, '/.config/', APP_ID, '/';
 
 constant PUZZLE_DATA is export = DATA_DIR ~ 'puzzle-data.yaml';
-constant PUZZLE_CSS is export = DATA_DIR ~ 'puzzle-data.css';
 constant PUZZLE_TABLE_DATA is export = DATA_DIR ~ 'puzzle-table-data/';
 
 enum InstallType is export < FlatPak Snap Standard >;

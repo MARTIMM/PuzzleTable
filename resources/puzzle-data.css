@@ -1,0 +1,75 @@
+#password-dialog {
+  background-color: #b0b0b0;
+}
+
+#dialog-label {
+  color: black;
+}
+
+#category-dialog {
+  background-color: #b0b0b0;
+  color: black;
+}
+
+.puzzle-table {
+  border-width: 3px;
+  border-style: outset;
+  border-color: #ffee00;
+  padding: 5px;
+  border-style: inset;
+}
+
+/*
+.puzzle-grid {
+  padding: 5px;
+}
+*/
+
+.puzzle-object {
+  padding: 5px;
+  background-color: #c0c0c0;
+  /*color: white;*/
+  border-width: 3px;
+  border-style: outset;
+  border-color: #ffee00;
+}
+
+.puzzle-object:hover {
+  background-color: #a0a0a0;
+  color: white;
+}
+
+.puzzle-object selection {
+  background-color: #f0a080;
+  color: white;
+}
+
+#puzzle-image {
+  /*
+  border-width: 30px;
+  border-radius: 5px;
+  border-style: solid;
+  border-color: #ffee00;
+  */
+  background-color: #f0a080;
+}
+
+#puzzle-item-label {
+  /*background-color: #606060;*/
+  color: #202020;
+  padding: 0px;
+  padding-left: 10px;
+}
+
+#puzzle-item-comment {
+  /*background-color: #606060;*/
+  color: white;
+  padding: 0px;
+  margin-left: 0px;
+  margin-bottom: 5px;
+}
+
+.puzzle-object picture {
+  /*background-color: #a0a0a0;*/
+  padding: 10px;
+}

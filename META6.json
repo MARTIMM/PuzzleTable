@@ -31,6 +31,6 @@
   "test-depends": [ ],
   "build-depends": [ ],
   "resources": [
-    "icons8-run-64.png"
+    "icons8-run-64.png", "puzzle-data.css"
   ]
 }
