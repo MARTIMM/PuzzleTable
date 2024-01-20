@@ -431,7 +431,8 @@ method calculate-progress ( Hash $object, InstallType $type --> Str) {
 
     if $get-lines {
       my Str ( $, $piece-coordinate ) = $line.split('=');
-      $piece-coordinates{$piece-coordinate} = 1;
+      $piece-coordinates{$piece-coordinate} //= 0;
+      $piece-coordinates{$piece-coordinate}++;
     }
   }
 
@@ -440,7 +441,9 @@ method calculate-progress ( Hash $object, InstallType $type --> Str) {
   ).fmt('%3.1f');
   my Str $key = $type ~~ Snap ?? 'Snap' !! 'Standard';
   $puzzle<Progress>{$key} = $progress;
-#note "$?LINE $key $puzzle.gist()";
+
+note "$?LINE $progress, $piece-coordinates.elems(), $nbr-pieces";
+
   # Save admin
   self.save-puzzle-admin;
 
