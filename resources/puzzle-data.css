@@ -39,7 +39,7 @@
   color: white;
 }
 
-.puzzle-object selection {
+.puzzle-object:selection {
   background-color: #f0a080;
   color: white;
 }
