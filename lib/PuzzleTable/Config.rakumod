@@ -135,7 +135,13 @@ method unlock ( Str $password --> Bool ) {
 
 #-------------------------------------------------------------------------------
 method get-palapeli-preference ( --> Str ) {
-  $*puzzle-data<palapeli><preference> // 'standard';
+  $*puzzle-data<palapeli><preference> // 'standard'
+}
+
+#-------------------------------------------------------------------------------
+method get-palapeli-image-size ( --> List ) {
+  $*puzzle-data<palapeli><puzzle-image-width>//300,
+  $*puzzle-data<palapeli><puzzle-image-height>//300
 }
 
 #-------------------------------------------------------------------------------

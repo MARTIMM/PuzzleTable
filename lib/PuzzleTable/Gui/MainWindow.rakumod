@@ -152,8 +152,8 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     }
   }
 
-  if $o<pala-export>:exists {
-    $!config.export-pala-puzzles( $opt-category, $o<pala-export>);
+  if $o<pala-collection>:exists {
+    $!config.get-pala-puzzles( $opt-category, $o<pala-collection>);
   }
 
   $!application.activate unless $command-line.get-is-remote;
@@ -232,7 +232,7 @@ method usage ( ) {
     puzzle-table --version
     puzzle-table --help
     puzzle-table --puzzles <puzzle-path> …
-    puzzle-table --pala-export <collection-path>
+    puzzle-table --pala-collection <collection-path>
 
   Options:
     --category <name>. By default `Default`. Select the category to work
@@ -242,9 +242,10 @@ method usage ( ) {
     -h --help. Show this information. This is also shown, with an error,
       when there are faulty arguments or options.
 
-    --pala-export <path to palapeli collection>. Export puzzles from a
+    --pala-collection <path to palapeli collection>. Get puzzles from a
       Palapeli collection into a category. The puzzles in Palapeli
-      collection are removed.
+      collection are not removed because Palapelli has its own administration.
+      To remove from Palapeli, one must use the delete option in that program.
 
     --puzzles. Import one or more puzzles. The paths to the puzzles are
       given as the arguments.

@@ -20,6 +20,7 @@ use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::N-Bitset:api<2>;
+use Gnome::Gtk4::ProgressBar:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -46,36 +47,6 @@ has Hash $!current-table-objects;
 submethod BUILD ( PuzzleTable::Config :$!config ) {
 
   self.clear-table(:init);
-#`{{
-  $!current-table-objects = %();
-
-  $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
-
-  $!multi-select .= new-multiselection($!puzzle-objects);
-
-  with $!signal-factory .= new-signallistitemfactory {
-    .register-signal( self, 'setup-object', 'setup');
-    .register-signal( self, 'bind-object', 'bind');
-    .register-signal( self, 'unbind-object', 'unbind');
-    .register-signal( self, 'destroy-object', 'teardown');
-  }
-
-  with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
-    .set-max-columns(6);
-    .set-enable-rubberband(True);
-    .set-model($!multi-select);
-    .set-factory($!signal-factory);
-    .set-hexpand(True);
-    .set-vexpand(True);
-
-    $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
-  }
-
-  self.set-child($!puzzle-grid);
-  self.set-hexpand(True);
-  self.set-vexpand(True);
-  $!config.set-css( self.get-style-context, :css-class<puzzle-table>);
-}}
 }
 
 #-------------------------------------------------------------------------------
@@ -139,13 +110,17 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 #say 'setup-object';
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
-    .set-size-request( 300, 300);
+    .set-size-request(|$!config.get-palapeli-image-size);
     .set-name('puzzle-image');
     .set-margin-top(3);
     .set-margin-bottom(3);
     .set-margin-start(3);
     .set-margin-end(3);
   }
+
+  my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar;
+  $progress-bar.set-show-text(True);
+  $!config.set-css( $progress-bar.get-style-context, :css-class<progressbar>);
 
 #    $!config.set-css( .get-style-context, :css-class<puzzle-object-comment>);
   my TableItemLabel $label-comment .= new( :!align, :css<comment>);
@@ -161,7 +136,8 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .attach( $label-size, 0, 2, 1, 1);
     .attach( $label-npieces, 0, 3, 1, 1);
     .attach( $label-source, 0, 4, 1, 1);
-    .attach( $label-progress, 0, 5, 1, 1);
+    .attach( $label-progress, 0, 5, 2, 1);
+    .attach( $progress-bar, 0, 6, 2, 1);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-object>);
   }
@@ -179,24 +155,6 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   my Hash $object = $!current-table-objects{$string-object.get-string};
 
   my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
-#`{{
-  with my Gnome::Gtk4::Button $run-snap .= new-button {
-    # A large enough picture on the button
-    my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename($png-file);
-    .set-child($p);
-
-    .set-valign(GTK_ALIGN_START);
-    .set-size-request( 64, 64);
-
-    # Set the tooltip
-    .set-has-tooltip(True);
-    .register-signal(
-      self, 'show-tooltip', 'query-tooltip',
-      :tip('Run the snap version of palapeli')
-    );
-  }
-}}
 
   with my Gnome::Gtk4::Button $run-palapeli .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
@@ -216,12 +174,11 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   with my Gnome::Gtk4::Box $button-box .= new-box(
     GTK_ORIENTATION_VERTICAL, 2
   ) {
-  #  .append($run-snap);
     .append($run-palapeli);
   }
 
   with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
-    .attach( $button-box, 1, 0, 1, 5);
+    .attach( $button-box, 1, 0, 1, 4);
 
     my Gnome::Gtk4::Picture() $image = .get-child-at( 0, 0);
     my Gnome::Gtk4::Label() $label-comment = .get-child-at( 0, 1);
@@ -229,13 +186,12 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     my Gnome::Gtk4::Label() $label-npieces = .get-child-at( 0, 3);
     my Gnome::Gtk4::Label() $label-source = .get-child-at( 0, 4);
     my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 5);
-#    $run-snap.register-signal(
-#      self, 'run-snap', 'clicked', :$object, :$label-progress
-#    );
+    my Gnome::Gtk4::ProgressBar() $progress-bar = .get-child-at( 0, 6);
+
     my Str $preference = $!config.get-palapeli-preference;
     $run-palapeli.register-signal(
       self, 'run-palapeli', 'clicked', :$object, :$label-progress,
-      :$preference
+      :$preference, :$progress-bar
     );
 
     $image.set-filename($object<Image>);
@@ -251,6 +207,8 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     $object<Progress>{$preference} //= '0';
     my Str $progress = $object<Progress>{$preference}.Str;
     $label-progress.set-text("Progress: $progress \%");
+    $progress-bar.set-text("Progress: $progress \%");
+    $progress-bar.set-fraction($progress.Num / 100e0);
   }
 
   $string-object.clear-object;
@@ -273,7 +231,7 @@ method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method run-palapeli (
-  Hash :$object, Gnome::Gtk4::Label :$label-progress, Str :$preference
+  Hash :$object, Gnome::Gtk4::Label :$label-progress, Str :$preference, :$progress-bar
 ) {
   note "run palapeli with $object<Filename>";
 
@@ -299,29 +257,9 @@ note "$?LINE $preference, $type";
   my Str $progress = $!config.calculate-progress( $object, $type);
 
   $label-progress.set-text("Progress: $progress \%");
+  $progress-bar.set-text("Progress: $progress \%");
+  $progress-bar.set-fraction($progress.Num / 100e0);
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method run-standard ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
-  note "run standard with $object<Filename>";
-  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
-         '/', $object<Puzzle-index>, '/',  $object<Filename>;
-  my $exec = $!config.get-pala-executable(Standard);
-
-#note "$exec $puzzle-path";
-
-  shell "$exec $puzzle-path";
-
-  # Returning from puzzle
-  # Calculate progress
-  my Str $progress = $!config.calculate-progress( $object, Standard);
-
-  $label-progress.set-text(
-    [~] 'Progress: ', $object<Progress><Snap>, ' % / ', $progress, ' %'
-  );
-}
-}}
 
 #-------------------------------------------------------------------------------
 method show-tooltip (

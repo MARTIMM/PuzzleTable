@@ -1,3 +1,9 @@
+/* https://docs.gtk.org/gtk4/css-overview.html */
+
+* {
+  background-color: #dfdfdf;
+}
+
 #password-dialog {
   background-color: #b0b0b0;
 }
@@ -11,12 +17,37 @@
   color: black;
 }
 
+/* https://stackoverflow.com/questions/59122368/gtk-progress-bar-color */
+progressbar {
+  border-color: #804000;
+  border-width: 3px;
+}
+
+progressbar > text {
+  color: red;
+  background-color: #b0b0b0;
+  font-weight: bold;
+}
+
+progressbar > trough {
+  min-width: 50px;
+  min-height: 50px;
+  border-radius: 20px;
+}
+
+progressbar > trough > progress {
+/*  background-image: linear-gradient(90deg, pink, lightgreen);*/
+  background-color: blue;
+}
+
 .puzzle-table {
+/*
   border-width: 3px;
   border-style: outset;
   border-color: #ffee00;
-  padding: 5px;
   border-style: inset;
+*/
+  padding: 10px;
 }
 
 /*
