@@ -134,19 +134,24 @@ method unlock ( Str $password --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-palapeli-preference ( --> Str ) {
+  $*puzzle-data<palapeli><preference> // 'standard';
+}
+
+#-------------------------------------------------------------------------------
 method get-pala-collection ( InstallType $type --> Str ) {
   my Str $collection = '';
   given $type {
     when FlatPak {
-      $collection = $*puzzle-data<palapeli><collections><flatpak>;
+      $collection = $*puzzle-data<palapeli><collections><Flatpak>;
     }
 
     when Snap {
-      $collection = $*puzzle-data<palapeli><collections><snap>;
+      $collection = $*puzzle-data<palapeli><collections><Snap>;
     }
 
     when Standard {
-      $collection = $*puzzle-data<palapeli><collections><standard>;
+      $collection = $*puzzle-data<palapeli><collections><Standard>;
     }
   }
   
@@ -164,11 +169,11 @@ method get-pala-executable ( InstallType $type --> Str ) {
     }
 
     when Snap {
-      $h = $*puzzle-data<palapeli><execute><snap>;
+      $h = $*puzzle-data<palapeli><execute><Snap>;
     }
 
     when Standard {
-      $h = $*puzzle-data<palapeli><execute><standard>;
+      $h = $*puzzle-data<palapeli><execute><Standard>;
     }
   }
 

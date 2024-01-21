@@ -179,6 +179,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   my Hash $object = $!current-table-objects{$string-object.get-string};
 
   my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
+#`{{
   with my Gnome::Gtk4::Button $run-snap .= new-button {
     # A large enough picture on the button
     my Gnome::Gtk4::Picture $p .= new-picture;
@@ -195,8 +196,9 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
       :tip('Run the snap version of palapeli')
     );
   }
+}}
 
-  with my Gnome::Gtk4::Button $run-standard .= new-button {
+  with my Gnome::Gtk4::Button $run-palapeli .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($png-file);
     .set-child($p);
@@ -214,8 +216,8 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   with my Gnome::Gtk4::Box $button-box .= new-box(
     GTK_ORIENTATION_VERTICAL, 2
   ) {
-    .append($run-snap);
-    .append($run-standard);
+  #  .append($run-snap);
+    .append($run-palapeli);
   }
 
   with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
@@ -227,11 +229,13 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     my Gnome::Gtk4::Label() $label-npieces = .get-child-at( 0, 3);
     my Gnome::Gtk4::Label() $label-source = .get-child-at( 0, 4);
     my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 5);
-    $run-snap.register-signal(
-      self, 'run-snap', 'clicked', :$object, :$label-progress
-    );
-    $run-standard.register-signal(
-      self, 'run-standard', 'clicked', :$object, :$label-progress
+#    $run-snap.register-signal(
+#      self, 'run-snap', 'clicked', :$object, :$label-progress
+#    );
+    my Str $preference = $!config.get-palapeli-preference;
+    $run-palapeli.register-signal(
+      self, 'run-palapeli', 'clicked', :$object, :$label-progress,
+      :$preference
     );
 
     $image.set-filename($object<Image>);
@@ -244,13 +248,9 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
     # Init if the values aren't there
     $object<Progress> = %() unless $object<Progress>:exists;
-    $object<Progress><Snap> //= '0';
-    $object<Progress><Standard> //= '0';
-    my Str $p-snap = $object<Progress><Snap>.Str;
-    my Str $p-standard = $object<Progress><Standard>.Str;
-    $label-progress.set-text(
-      [~] 'Progress: ', $p-snap, ' % / ', $p-standard, ' %'
-    );
+    $object<Progress>{$preference} //= '0';
+    my Str $progress = $object<Progress>{$preference}.Str;
+    $label-progress.set-text("Progress: $progress \%");
   }
 
   $string-object.clear-object;
@@ -272,26 +272,36 @@ method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
 }
 
 #-------------------------------------------------------------------------------
-method run-snap ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
-  note "run snap with $object<Filename>";
-  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
-         '/', $object<Puzzle-index>, '/',  $object<Filename>;
-  my $exec = $!config.get-pala-executable(Snap);
+method run-palapeli (
+  Hash :$object, Gnome::Gtk4::Label :$label-progress, Str :$preference
+) {
+  note "run palapeli with $object<Filename>";
+
+  my InstallType $type;
+
+  with $preference {
+    when 'Snap' { $type = Snap; }
+    when 'Standard' { $type = Standard; }
+  }
+
+note "$?LINE $preference, $type";
+  my $exec = $!config.get-pala-executable($type);
 
 #note "$exec $puzzle-path";
+  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
+         '/', $object<Puzzle-index>, '/',  $object<Filename>;
   
   # Start playing the puzzle
   shell "$exec $puzzle-path";
 
   # Returning from puzzle
   # Calculate progress
-  my Str $progress = $!config.calculate-progress( $object, Snap);
+  my Str $progress = $!config.calculate-progress( $object, $type);
 
-  $label-progress.set-text(
-    [~] 'Progress: ', $progress, ' % / ', $object<Progress><Standard>, ' %'
-  )
+  $label-progress.set-text("Progress: $progress \%");
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method run-standard ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
   note "run standard with $object<Filename>";
@@ -311,6 +321,7 @@ method run-standard ( Hash :$object, Gnome::Gtk4::Label :$label-progress ) {
     [~] 'Progress: ', $object<Progress><Snap>, ' % / ', $progress, ' %'
   );
 }
+}}
 
 #-------------------------------------------------------------------------------
 method show-tooltip (
