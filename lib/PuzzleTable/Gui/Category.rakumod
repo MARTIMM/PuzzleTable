@@ -28,8 +28,6 @@ use Gnome::N::N-Object:api<2>;
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ComboBoxText;
 
-#constant \DialogLabel = PuzzleTable::Gui::DialogLabel;
-
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
@@ -50,7 +48,7 @@ submethod BUILD ( :$!main ) {
 method category-add ( N-Object $parameter ) {
 #  say 'category add';
 
-  my DialogLabel $label .= new('Specify a new category');
+  my DialogLabel $label .= new( 'Specify a new category', :$!config);
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
   $check-button.set-active(False);
@@ -141,8 +139,8 @@ method do-category-add (
 method category-lock ( N-Object $parameter ) {
 #  say 'category add';
 
-  my DialogLabel $ul-label .= new('Lock or unlock category');
-  my DialogLabel $pw-label .= new('Type password to change');
+  my DialogLabel $ul-label .= new( 'Lock or unlock category', :$!config);
+  my DialogLabel $pw-label .= new( 'Type password to change', :$!config);
   my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
   my Gnome::Gtk4::PasswordEntry $pw-entry .= new-passwordentry;
   $check-button.set-active(False);
@@ -241,8 +239,8 @@ method do-category-lock (
 method category-rename ( N-Object $parameter ) {
 #  say 'category rename';
 
-  my DialogLabel $label1 .= new('Select category from list');
-  my DialogLabel $label2 .= new('Text to rename category');
+  my DialogLabel $label1 .= new( 'Select category from list', :$!config);
+  my DialogLabel $label2 .= new( 'Text to rename category', :$!config);
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
   $!statusbar .= new-statusbar(:context<categories>);
@@ -398,7 +396,7 @@ method cat-selected ( ) {
 
   # Get the puzzles and send them to the table
   my Array $puzzles = $!config.get-puzzles($cat);
-  for @$puzzles -> $p {
+  for $puzzles.sort({.<Puzzle-Count>}) -> $p {
     $!table.add-puzzle-to-table($p);
   }
 }

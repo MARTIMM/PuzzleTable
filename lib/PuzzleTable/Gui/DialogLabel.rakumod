@@ -15,10 +15,12 @@ method new ( Str $text ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$text ) {
+submethod BUILD ( :$text, :$config ) {
   self.set-label($text);
   self.set-hexpand(True);
   self.set-halign(GTK_ALIGN_START);
-  self.set-name('dialog-label');
+#  self.set-name('dialog-label');
+
+  $config.set-css( self.get-style-context, :css-class<dialog-label>);
 }
 

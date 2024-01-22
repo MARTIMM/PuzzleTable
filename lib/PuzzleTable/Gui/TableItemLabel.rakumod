@@ -15,15 +15,17 @@ method new ( |c ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Bool :$align = True, Str :$css ) {
+submethod BUILD ( Bool :$align = True, Str :$css, :$config ) {
   self.set-hexpand(True);
   self.set-halign(GTK_ALIGN_START) if $align;
   if ?$css {
-    self.set-name('table-item-' ~ $css);
+#    self.set-name('table-item-' ~ $css);
+    $config.set-css( self.get-style-context, :css-class('table-item-' ~ $css));
   }
 
   else {
-    self.set-name('table-item-label');
+#    self.set-name('table-item-label');
+    $config.set-css( self.get-style-context, :css-class('table-item-label'));
   }
 }
 

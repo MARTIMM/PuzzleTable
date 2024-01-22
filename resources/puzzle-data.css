@@ -8,7 +8,7 @@
   background-color: #b0b0b0;
 }
 
-#dialog-label {
+.dialog-label {
   color: black;
 }
 
@@ -70,9 +70,28 @@ progressbar > trough > progress {
   color: white;
 }
 
-.puzzle-object:selection {
+.puzzle-object:selected {
   background-color: #f0a080;
   color: white;
+}
+
+box {
+  background-color: #a0002b;
+}
+ 
+.table-item-label {
+  /*background-color: #606060;*/
+  color: #8e0303;
+  padding: 0px;
+  padding-left: 10px;
+}
+
+.table-item-comment {
+  background-color: #8e0303;
+  color: white;
+  padding: 0px;
+  margin-left: 0px;
+  margin-bottom: 5px;
 }
 
 #puzzle-image {
@@ -85,22 +104,7 @@ progressbar > trough > progress {
   background-color: #f0a080;
 }
 
-#puzzle-item-label {
-  /*background-color: #606060;*/
-  color: #202020;
-  padding: 0px;
-  padding-left: 10px;
-}
-
-#puzzle-item-comment {
-  /*background-color: #606060;*/
-  color: white;
-  padding: 0px;
-  margin-left: 0px;
-  margin-bottom: 5px;
-}
-
-.puzzle-object picture {
+.puzzle-object > picture {
   /*background-color: #a0a0a0;*/
   padding: 10px;
 }
