@@ -45,7 +45,6 @@ has Hash $!current-table-objects;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( PuzzleTable::Config :$!config ) {
-
   self.clear-table(:init);
 }
 
@@ -58,7 +57,6 @@ method add-puzzle-to-table ( Hash $object ) {
   $object<Name>:delete;
   $object<SourceFile>:delete;
 
-#  $object<Progress> = %();
   $!current-table-objects{$index} = $object;
   $!puzzle-objects.append($index);
 }
@@ -107,52 +105,7 @@ method clear-table ( Bool :$init = False ) {
 
 #-------------------------------------------------------------------------------
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#say 'setup-object';
-
-  with my Gnome::Gtk4::Picture $image .= new-picture {
-    .set-size-request(|$!config.get-palapeli-image-size);
-    .set-name('puzzle-image');
-    .set-margin-top(3);
-    .set-margin-bottom(3);
-    .set-margin-start(3);
-    .set-margin-end(3);
-  }
-
-  my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar;
-  $progress-bar.set-show-text(True);
-  $!config.set-css( $progress-bar.get-style-context, :css-class<progressbar>);
-
-#    $!config.set-css( .get-style-context, :css-class<puzzle-object-comment>);
-  my TableItemLabel $label-comment .= new( :!align, :css<comment>);
-  my TableItemLabel $label-size .= new;
-  my TableItemLabel $label-npieces .= new;
-  my TableItemLabel $label-source .= new;
-  my TableItemLabel $label-progress .= new;
-
-  with my Gnome::Gtk4::Grid $grid .= new-grid {
-    .set-size-request( 350, 400);
-    .attach( $image, 0, 0, 1, 1);
-    .attach( $label-comment, 0, 1, 1, 1);
-    .attach( $label-size, 0, 2, 1, 1);
-    .attach( $label-npieces, 0, 3, 1, 1);
-    .attach( $label-source, 0, 4, 1, 1);
-    .attach( $label-progress, 0, 5, 2, 1);
-    .attach( $progress-bar, 0, 6, 2, 1);
-
-    $!config.set-css( .get-style-context, :css-class<puzzle-object>);
-  }
-
-  $list-item.set-child($grid);
-}
-
-#-------------------------------------------------------------------------------
-method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#say 'bind-object';
-
-  my Gnome::Gtk4::StringObject $string-object .= new(
-    :native-object($list-item.get-item)
-  );
-  my Hash $object = $!current-table-objects{$string-object.get-string};
+say 'setup-object';
 
   my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
 
@@ -177,21 +130,67 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .append($run-palapeli);
   }
 
+  with my Gnome::Gtk4::Picture $image .= new-picture {
+    .set-size-request(|$!config.get-palapeli-image-size);
+    .set-name('puzzle-image');
+    .set-margin-top(3);
+    .set-margin-bottom(3);
+    .set-margin-start(3);
+    .set-margin-end(3);
+  }
+
+  my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar;
+#  $progress-bar.set-show-text(True);
+  $!config.set-css( $progress-bar.get-style-context, :css-class<progressbar>);
+
+#    $!config.set-css( .get-style-context, :css-class<puzzle-object-comment>);
+  my TableItemLabel $label-comment .= new( :!align, :css<comment>, :$!config);
+  my TableItemLabel $label-size .= new(:$!config);
+  my TableItemLabel $label-npieces .= new(:$!config);
+  my TableItemLabel $label-source .= new(:$!config);
+  my TableItemLabel $label-progress .= new(:$!config);
+
+  with my Gnome::Gtk4::Grid $grid .= new-grid {
+    .attach( $image, 0, 0, 1, 1);
+    .attach( $label-comment, 0, 1, 2, 1);
+    .attach( $label-size, 0, 2, 2, 1);
+    .attach( $label-npieces, 0, 3, 2, 1);
+    .attach( $label-source, 0, 4, 2, 1);
+    .attach( $progress-bar, 0, 5, 2, 1);
+    .attach( $label-progress, 0, 6, 2, 1);
+    
+    .attach( $button-box, 1, 0, 1, 1);
+
+    $!config.set-css( .get-style-context, :css-class<puzzle-object>);
+  }
+
+  $list-item.set-child($grid);
+}
+
+#-------------------------------------------------------------------------------
+method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
+say 'bind-object';
+
+  my Gnome::Gtk4::StringObject $string-object .= new(
+    :native-object($list-item.get-item)
+  );
+  my Hash $object = $!current-table-objects{$string-object.get-string};
+
   with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
-    .attach( $button-box, 1, 0, 1, 4);
+    my Gnome::Gtk4::Box() $button-box = .get-child-at( 1, 0);
 
     my Gnome::Gtk4::Picture() $image = .get-child-at( 0, 0);
     my Gnome::Gtk4::Label() $label-comment = .get-child-at( 0, 1);
     my Gnome::Gtk4::Label() $label-size = .get-child-at( 0, 2);
     my Gnome::Gtk4::Label() $label-npieces = .get-child-at( 0, 3);
     my Gnome::Gtk4::Label() $label-source = .get-child-at( 0, 4);
-    my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 5);
-    my Gnome::Gtk4::ProgressBar() $progress-bar = .get-child-at( 0, 6);
+    my Gnome::Gtk4::ProgressBar() $progress-bar = .get-child-at( 0, 5);
+    my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 6);
 
-    my Str $preference = $!config.get-palapeli-preference;
+    my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
     $run-palapeli.register-signal(
       self, 'run-palapeli', 'clicked', :$object, :$label-progress,
-      :$preference, :$progress-bar
+      :$progress-bar
     );
 
     $image.set-filename($object<Image>);
@@ -203,6 +202,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     $label-source.set-text('Source: ' ~ $object<Source>);
 
     # Init if the values aren't there
+    my Str $preference = $!config.get-palapeli-preference;
     $object<Progress> = %() unless $object<Progress>:exists;
     $object<Progress>{$preference} //= '0';
     my Str $progress = $object<Progress>{$preference}.Str;
@@ -216,7 +216,6 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#note 'unbind';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
   $button-box.clear-object;
@@ -224,28 +223,19 @@ method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#note 'destroy';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   $grid.clear-object;
 }
 
 #-------------------------------------------------------------------------------
 method run-palapeli (
-  Hash :$object, Gnome::Gtk4::Label :$label-progress, Str :$preference, :$progress-bar
+  Hash :$object, Gnome::Gtk4::Label :$label-progress,
+  Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
   note "run palapeli with $object<Filename>";
 
-  my InstallType $type;
+  my $exec = $!config.get-pala-executable;
 
-  with $preference {
-    when 'Snap' { $type = Snap; }
-    when 'Standard' { $type = Standard; }
-  }
-
-note "$?LINE $preference, $type";
-  my $exec = $!config.get-pala-executable($type);
-
-#note "$exec $puzzle-path";
   my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
   
@@ -254,10 +244,9 @@ note "$?LINE $preference, $type";
 
   # Returning from puzzle
   # Calculate progress
-  my Str $progress = $!config.calculate-progress( $object, $type);
-
+  my Str $progress = $!config.calculate-progress($object);
   $label-progress.set-text("Progress: $progress \%");
-  $progress-bar.set-text("Progress: $progress \%");
+#  $progress-bar.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
 }
 

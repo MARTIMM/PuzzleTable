@@ -24,7 +24,7 @@ my Gnome::Gtk4::CssProvider $css-provider;
 has PuzzleTable::ExtractDataFromPuzzle $!extracter;
 has Version $.version = v0.3.1; 
 has Array $.options = [<
-  category=s pala-export=s puzzles lock h help version
+  category=s pala-collection=s puzzles lock h help version
 >];
 
 #-------------------------------------------------------------------------------
@@ -145,40 +145,28 @@ method get-palapeli-image-size ( --> List ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-pala-collection ( InstallType $type --> Str ) {
-  my Str $collection = '';
-  given $type {
-    when FlatPak {
-      $collection = $*puzzle-data<palapeli><collections><Flatpak>;
-    }
-
-    when Snap {
-      $collection = $*puzzle-data<palapeli><collections><Snap>;
-    }
-
-    when Standard {
-      $collection = $*puzzle-data<palapeli><collections><Standard>;
-    }
-  }
-  
+method get-pala-collection ( --> Str ) {
+  my Str $preference = self.get-palapeli-preference;
+  my Str $collection = $*puzzle-data<palapeli><collections>{$preference};
   [~] $*HOME, '/', $collection, '/'
 }
 
 #-------------------------------------------------------------------------------
-method get-pala-executable ( InstallType $type --> Str ) {
+method get-pala-executable ( --> Str ) {
   my Str $exec = '';
   my Hash $h;
-  given $type {
-    when FlatPak {
+  my Str $preference = self.get-palapeli-preference;
+  given $preference {
+    when 'FlatPak' {
       note "Sorry, does not seem to work!";
       $h = %();
     }
 
-    when Snap {
+    when 'Snap' {
       $h = $*puzzle-data<palapeli><execute><Snap>;
     }
 
-    when Standard {
+    when 'Standard' {
       $h = $*puzzle-data<palapeli><execute><Standard>;
     }
   }
@@ -241,7 +229,9 @@ method move-category ( $cat-from, $cat-to ) {
 }
 
 #-------------------------------------------------------------------------------
-method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
+method add-puzzle (
+  Str:D $category, Str:D $puzzle-path, Bool :$from-collection = False
+) {
 #say 'add puzzle';
   # Get source file info
   my Str $basename = $puzzle-path.IO.basename;
@@ -253,9 +243,10 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
     if $puzzle-path eq $cat{$puzzle-count}<SourceFile> {
       note "Puzzle '$basename' already added in category '$category'";
       self.check-pala-progress-file(
-        $basename, sha1-hex($puzzle-path) ~ ".puzzle", $cat{$puzzle-count}
+        $basename, sha1-hex($puzzle-path) ~ ".puzzle", $cat{$puzzle-count},
+        :$from-collection
       );
-      self.save-puzzle-admin;
+      self.save-puzzle-admin unless $from-collection;
       return;
     }
   }
@@ -289,6 +280,8 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
     :PieceCount($info<PieceCount>),
   );
 
+  note "Add new puzzle: $info<Name>, $info<Width> x $info<Height>, ",
+       "$info<PieceCount> pieces";
   # Convert the image into a smaller one to be displayed on the puzzle table
   run '/usr/bin/convert', "$destination/image.jpg",
       '-resize', '400x400', "$destination/image400.jpg";
@@ -296,9 +289,10 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
   self.check-pala-progress-file(
     $basename, sha1-hex($puzzle-path), $cat{$puzzle-count}
   );
+  self.calculate($cat{$puzzle-count});
 
   # Save admin
-  self.save-puzzle-admin;
+  self.save-puzzle-admin unless $from-collection;
 
   CATCH {
     default {
@@ -310,28 +304,39 @@ method add-puzzle ( Str:D $category, Str:D $puzzle-path ) {
 
 #-------------------------------------------------------------------------------
 method check-pala-progress-file (
-  Str $basename, Str $unique-name, Hash $puzzle-info
+  Str $basename, Str $unique-name, Hash $puzzle-info,
+  Bool :$from-collection = False
 ) {
-  my Str $col-unique-path = '';
   my Hash $collections := $*puzzle-data<palapeli><collections>;
 
   # Check in pala collections for this name
-  my Str $collection-name = [~] '__FSC_', $basename, '_0_.save';
+  my Str $collection-name;
+  if $from-collection {
+    $collection-name = $basename ~ '.save';
+    $collection-name ~~ s/ \. puzzle //;
+  }
+
+  else {
+    $from-collection = [~] '__FSC_', $basename, '_0_.save';
+  }
+
+  # The name it must become in the preferred collection
+  my Str $pref-col = self.get-palapeli-preference;
+  my Str $collection-unique = [~] '__FSC_', $unique-name, '_0_.save';
+  my Str $col-unique-path = [~] $*HOME, '/', $collections{$pref-col},
+         '/', $collection-unique;
 
   for $collections.keys -> $col-key {
-    my Str $col-path = [~] $collections{$col-key}, '/', $collection-name;
+    my Str $col-path = [~] $*HOME, '/', $collections{$col-key},
+           '/', $collection-name;
     if $col-path.IO.r {
-      say "$collection-name found in $col-key collection";
+      unless $col-unique-path.IO.e {
+        say "$collection-name.IO.basename() found in $col-key collection";
+        say "Copy $col-path.IO.basename() to $col-unique-path.IO.basename()";
+        $col-path.IO.copy( $col-unique-path, :createonly);
+      }
 
-      # Check for the name it must become
-      my Str $collection-unique = [~] '__FSC_', $unique-name, '_0_.save';
-      $col-unique-path = [~] $collections{$col-key}, '/', $collection-unique;
-
-      say "Copy $col-path to $col-unique-path, ", $col-unique-path.IO.e;
-      $col-path.IO.copy( $col-unique-path, :createonly)
-        unless $col-unique-path.IO.e;
-
-#      $puzzle-info<progress-files>{$col-key} = $col-unique-path;
+      last;
     }
   }
 }
@@ -343,14 +348,21 @@ method check-pala-progress-file (
 # the following fields: Puzzle-index,
 # Category and Image (see get-puzzles() below) while Name and SourceFile are
 # removed (see add-puzzle-to-table() in Table).
-method calculate-progress ( Hash $object, InstallType $type --> Str) {
+multi method calculate-progress ( Hash $object --> Str) {
 #note "$?LINE $object.gist()";
 
-  my Hash $puzzle := $*puzzle-data<categories>{$object<Category>}<members>{$object<Puzzle-index>};
+  self.calculate(
+    $*puzzle-data<categories>{$object<Category>}<members>{$object<Puzzle-index>}
+  )
+}
+
+#-------------------------------------------------------------------------------
+# Called from check-pala-progress-file()
+method calculate ( Hash $puzzle --> Str ) {
 
   my Str $filename = $puzzle<Filename>;
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
-  my Str $collection-path = [~] self.get-pala-collection($type),
+  my Str $collection-path = [~] self.get-pala-collection,
          '/', $collection-filename;
 
   my $nbr-pieces = $puzzle<PieceCount>;
@@ -372,8 +384,7 @@ method calculate-progress ( Hash $object, InstallType $type --> Str) {
   my Str $progress = (
     100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0
   ).fmt('%3.1f');
-  my Str $key = $type ~~ Snap ?? 'Snap' !! 'Standard';
-  $puzzle<Progress>{$key} = $progress;
+  $puzzle<Progress>{self.get-palapeli-preference} = $progress;
 
 note "$?LINE $progress, $piece-coordinates.elems(), $nbr-pieces";
 
@@ -413,13 +424,22 @@ method get-puzzles ( Str $category --> Array ) {
 }
 
 #-------------------------------------------------------------------------------
-method export-pala-puzzles ( Str $category, Str $pala-collection-path) {
+method get-pala-puzzles ( Str $category, Str $pala-collection-path) {
   for $pala-collection-path.IO.dir -> $collection-file {
     next if $collection-file.d;
 
     # The puzzle is started from outside the Palapeli. This is only a saved file
     # to keep track of progress of puzzle. Ends always in '.save'. Must be
     # checked when --puzzles option is used.
-    next if $collection-file.Str ~~ m/^ __FSC_ /;
+    #next if $collection-file.Str ~~ m/^ __FSC_ /;
+
+    # *.save files are matched later using a *.puzzle file
+    #next if $collection-file.Str ~~ m/ \. save $/;
+
+    # Skip any other file
+    next if $collection-file.Str !~~ m/ \. puzzle $/;
+    self.add-puzzle( $category, $collection-file.Str, :from-collection);
   }
+
+  self.save-puzzle-admin;
 }
