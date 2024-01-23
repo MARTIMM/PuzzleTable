@@ -20,8 +20,6 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Settings:auth<github:MARTIMM>;
 
-#constant \DialogLabel = PuzzleTable::Gui::DialogLabel;
-
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
@@ -67,9 +65,9 @@ method settings-lock-categories ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method show-dialog-with-old-entry ( ) {
 
-  my PuzzleTable::Gui::DialogLabel $label-oldpw .= new('Type old password');
-  my PuzzleTable::Gui::DialogLabel $label-newpw .= new('Type new password');
-  my PuzzleTable::Gui::DialogLabel $label-reppw .= new('Repeat new password');
+  my DialogLabel $label-oldpw .= new( 'Type old password', :$!config);
+  my DialogLabel $label-newpw .= new( 'Type new password', :$!config);
+  my DialogLabel $label-reppw .= new( 'Repeat new password', :$!config);
 
   my Gnome::Gtk4::PasswordEntry $entry-oldpw .= new-passwordentry;
   my Gnome::Gtk4::PasswordEntry $entry-newpw .= new-passwordentry;
@@ -164,8 +162,8 @@ method do-password-check-with-old (
 #-------------------------------------------------------------------------------
 method show-dialog-first-entry ( ) {
 
-  my DialogLabel $label-newpw .= new('Type password');
-  my DialogLabel $label-reppw .= new('Repeat password');
+  my DialogLabel $label-newpw .= new( 'Type password', :$!config);
+  my DialogLabel $label-reppw .= new( 'Repeat password', :$!config);
 
   my Gnome::Gtk4::PasswordEntry $entry-newpw .= new-passwordentry;
   my Gnome::Gtk4::PasswordEntry $entry-reppw .= new-passwordentry;
@@ -252,7 +250,7 @@ method do-password-check (
 #-------------------------------------------------------------------------------
 method show-dialog-password ( ) {
 
-  my DialogLabel $label-pw .= new('Type password');
+  my DialogLabel $label-pw .= new( 'Type password', :$!config);
 
   my Gnome::Gtk4::PasswordEntry $entry-pw .= new-passwordentry;
 
