@@ -220,6 +220,8 @@ method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 say 'unbind-object';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
+  my Gnome::Gtk4::Button() $button = $button-box.get-first-child;
+  $button.clear-object;
   $button-box.clear-object;
 }
 
@@ -245,7 +247,7 @@ method run-palapeli (
 note "\n$?LINE $puzzle-path\n$exec";
 
   # Start playing the puzzle
-  shell "$exec $puzzle-path";
+  shell "$exec '$puzzle-path'";
 
   # Returning from puzzle
   # Calculate progress
