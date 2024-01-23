@@ -108,7 +108,6 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 say 'setup-object';
 
   my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
-
   with my Gnome::Gtk4::Button $run-palapeli .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($png-file);
@@ -187,11 +186,13 @@ say 'bind-object';
     my Gnome::Gtk4::ProgressBar() $progress-bar = .get-child-at( 0, 5);
     my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 6);
 
+#Gnome::N::debug(:on);
     my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
     $run-palapeli.register-signal(
       self, 'run-palapeli', 'clicked', :$object, :$label-progress,
       :$progress-bar
     );
+#Gnome::N::debug(:off);
 
     $image.set-filename($object<Image>);
     $label-comment.set-text($object<Comment>);
@@ -216,6 +217,7 @@ say 'bind-object';
 
 #-------------------------------------------------------------------------------
 method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
+say 'unbind-object';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
   $button-box.clear-object;
@@ -223,6 +225,7 @@ method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
+say 'destroy-object';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   $grid.clear-object;
 }
@@ -232,13 +235,15 @@ method run-palapeli (
   Hash :$object, Gnome::Gtk4::Label :$label-progress,
   Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
+#Gnome::N::debug(:on);
   note "run palapeli with $object<Filename>";
 
   my $exec = $!config.get-pala-executable;
 
   my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
-  
+note "\n$?LINE $puzzle-path\n$exec";
+
   # Start playing the puzzle
   shell "$exec $puzzle-path";
 
@@ -248,6 +253,7 @@ method run-palapeli (
   $label-progress.set-text("Progress: $progress \%");
 #  $progress-bar.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
+#Gnome::N::debug(:off);
 }
 
 #-------------------------------------------------------------------------------
