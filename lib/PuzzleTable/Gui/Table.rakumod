@@ -4,11 +4,12 @@ use NativeCall;
 use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::TableItemLabel;
+use PuzzleTable::Gui::Statusbar;
 
 use Gnome::Gtk4::GridView:api<2>;
 use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::SignalListItemFactory:api<2>;
-use Gnome::Gtk4::ScrolledWindow:api<2>;
+#use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::ListItem:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
 use Gnome::Gtk4::StringObject:api<2>;
@@ -29,7 +30,8 @@ use Gnome::N::X:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Table:auth<github:MARTIMM>;
-also is Gnome::Gtk4::ScrolledWindow;
+#also is Gnome::Gtk4::Box;
+also is Gnome::Gtk4::GridView;
 
 has PuzzleTable::Config $!config;
 
@@ -37,14 +39,28 @@ has Gnome::Gtk4::StringList $!puzzle-objects;
 has Gnome::Gtk4::MultiSelection $!multi-select;
 #has Gnome::Gtk4::SingleSelection $!single-select;
 has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
-has Gnome::Gtk4::GridView $!puzzle-grid;
+#has Gnome::Gtk4::GridView $!puzzle-grid;
 has Gnome::Gtk4::StringList $!string-list;
+has PuzzleTable::Gui::Statusbar $!statusbar;
+#has Gnome::Gtk4::ScrolledWindow $!scrolled-window;
 
 #| The objects from the current selected category
 has Hash $!current-table-objects;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( PuzzleTable::Config :$!config ) {
+method new ( |c ) {
+  self.new-gridview( N-Object, N-Object, |c)
+}
+
+#-------------------------------------------------------------------------------
+submethod BUILD (
+  PuzzleTable::Config :$!config, PuzzleTable::Gui::Statusbar :$!statusbar
+) {
+#  $!scrolled-window .= new-scrolledwindow;
+#  $!statusbar .= new-statusbar(:context<puzzle-table>);
+#  self.append($!scrolled-window);
+#  self.append($!statusbar);
+note "$?LINE $!config, $!statusbar, ", self.get-native-object-no-reffing.gist;
   self.clear-table(:init);
 }
 
@@ -59,6 +75,9 @@ method add-puzzle-to-table ( Hash $object ) {
 
   $!current-table-objects{$index} = $object;
   $!puzzle-objects.append($index);
+
+  $!statusbar.remove-message;
+  $!statusbar.set-status("Number of puzzles: " ~ $!puzzle-objects.get-n-items);
 }
 
 #-------------------------------------------------------------------------------
@@ -70,12 +89,17 @@ method clear-table ( Bool :$init = False ) {
     $!puzzle-objects.clear-object;
     $!multi-select.clear-object;
     $!signal-factory.clear-object;
-    $!puzzle-grid.clear-object;
+#    self.clear-object;
   }
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
-  $!multi-select.register-signal( self, 'items-selected', 'selection-changed');
+#Gnome::N::debug(:on);
+  $!puzzle-objects.register-signal( self, 'items-changed', 'items-changed');
+  $!multi-select.register-signal(
+    self, 'selection-changed', 'selection-changed'
+  );
+#Gnome::N::debug(:off);
 
   with $!signal-factory .= new-signallistitemfactory {
     .register-signal( self, 'setup-object', 'setup');
@@ -84,7 +108,8 @@ method clear-table ( Bool :$init = False ) {
     .register-signal( self, 'destroy-object', 'teardown');
   }
 
-  with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
+note "$?LINE ", self.get-native-object-no-reffing.gist;
+  with self {
     .set-min-columns(10);
     .set-max-columns(10);
     .set-enable-rubberband(True);
@@ -98,9 +123,11 @@ method clear-table ( Bool :$init = False ) {
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
 
-  self.set-child($!puzzle-grid);
-  self.set-has-frame(True);
-  $!config.set-css( self.get-style-context, :css-class<puzzle-table>);
+#  $!scrolled-window.set-child($!puzzle-grid);
+#  $!scrolled-window.set-has-frame(True);
+#  $!config.set-css(
+#    $!scrolled-window.get-style-context, :css-class<puzzle-table>
+#  );
 }
 
 #-------------------------------------------------------------------------------
@@ -270,18 +297,30 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 method item-clicked ( guint $position ) {
-  note "$?LINE $position";
+note "$?LINE $position";
   my Gnome::Gtk4::N-Bitset $bitset .= new(
     :native-object($!multi-select.get-selection)
   );
 
   $bitset.add($position);
+  my Int $n = $bitset.get-size;
+note "$?LINE n $n";
+  for ^$n -> $i {
+    print " ", $bitset.get-nth;
+  }
+print "\n";
+
   $!multi-select.set-selection( $bitset, $bitset);
 #  $!multi-select.set-select-item($position);
 #  $!multi-select.selection-changed( 1, 1);
 }
 
 #-------------------------------------------------------------------------------
-method items-selected ( guint $position, guint $n-items ) {
-  note "$?LINE $position, $n-items";
+method selection-changed ( guint $position, guint $n-items ) {
+note "$?LINE $position, $n-items";
+}
+
+#-------------------------------------------------------------------------------
+method items-changed ( guint $position, guint $n-removed, guint $n-added ) {
+note "$?LINE $position, $n-removed, $n-added";
 }

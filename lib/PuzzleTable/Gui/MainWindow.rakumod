@@ -6,6 +6,7 @@ use PuzzleTable::Config;
 use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Table;
+use PuzzleTable::Gui::Statusbar;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
@@ -14,6 +15,7 @@ use Gnome::Gio::ApplicationCommandLine:api<2>;
 use Gnome::Gtk4::Application:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::ApplicationWindow:api<2>;
+use Gnome::Gtk4::T-Enums:api<2>;
 
 use Gnome::Glib::N-Error;
 
@@ -34,6 +36,7 @@ has Gnome::Gtk4::Grid $!top-grid;
 has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Category $.category;
 has PuzzleTable::Config $.config;
+has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -117,8 +120,10 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 method remote-options ( N-Object $n-command-line --> Int ) {
 #say 'remote opts';
 
+
   # We need the table and category management here already
-  $!table .= new-scrolledwindow(:$!config);
+  $!statusbar .= new-statusbar(:context<puzzle-table>);
+  $!table .= new( :$!config, :$!statusbar);
   $!category .= new-comboboxtext(:main(self));
 
   my Int $exit-code = 0;
@@ -190,6 +195,7 @@ method puzzle-table-display ( ) {
     .set-margin-end(10);
     .attach( $!category, 0, 0, 1, 1);
     .attach( $!table, 0, 1, 1, 1);
+    .attach( $!statusbar, 0, 2, 1, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {
