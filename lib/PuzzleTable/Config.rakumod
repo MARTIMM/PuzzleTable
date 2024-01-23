@@ -317,7 +317,7 @@ method check-pala-progress-file (
   }
 
   else {
-    $from-collection = [~] '__FSC_', $basename, '_0_.save';
+    $collection-name = [~] '__FSC_', $basename, '_0_.save';
   }
 
   # The name it must become in the preferred collection
@@ -345,9 +345,9 @@ method check-pala-progress-file (
 # Called from call-back in Table after playing a puzzle.
 # The object holds most of the fields of
 # $*puzzle-data<categories>{$category}<members><some puzzle index> added with
-# the following fields: Puzzle-index,
-# Category and Image (see get-puzzles() below) while Name and SourceFile are
-# removed (see add-puzzle-to-table() in Table).
+# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# below) while Name and SourceFile are removed (see add-puzzle-to-table()
+# in Table).
 multi method calculate-progress ( Hash $object --> Str) {
 #note "$?LINE $object.gist()";
 
