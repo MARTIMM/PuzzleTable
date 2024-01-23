@@ -10,8 +10,8 @@ also is Gnome::Gtk4::Label;
 constant \DialogLabel is export = PuzzleTable::Gui::DialogLabel;
 
 #-------------------------------------------------------------------------------
-method new ( Str $text ) {
-  self.new-label( Str, :$text);
+method new ( |c ) {
+  self.new-label( Str, |c);
 }
 
 #-------------------------------------------------------------------------------
