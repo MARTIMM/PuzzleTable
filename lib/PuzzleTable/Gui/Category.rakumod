@@ -395,8 +395,15 @@ method cat-selected ( ) {
   $!table.clear-table;
 
   # Get the puzzles and send them to the table
-  my Array $puzzles = $!config.get-puzzles($cat);
-  for $puzzles.sort({.<Puzzle-Count>}) -> $p {
+  my Seq $puzzles = $!config.get-puzzles($cat).sort(
+    -> $item1, $item2 { 
+      if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
+      elsif $item1<PieceCount> == $item2<PieceCount> { Order::Same }
+      else { Order::More }
+    }
+  );
+
+  for @$puzzles -> $p {
     $!table.add-puzzle-to-table($p);
   }
 }
