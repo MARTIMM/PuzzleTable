@@ -32,6 +32,7 @@ submethod BUILD ( :$!main ) {
   $!menus = [
     self.make-menu(:menu-name<File>),
     self.make-menu(:menu-name<Category>),
+    self.make-menu(:menu-name<Puzzles>),
     self.make-menu(:menu-name<Settings>),
     self.make-menu(:menu-name<Help>),
   ];
@@ -56,6 +57,10 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
       self.bind-action( $menu, $menu-name, $cat, 'lock', 'app.lock');
       self.bind-action( $menu, $menu-name, $cat, 'Rename', 'app.rename');
       self.bind-action( $menu, $menu-name, $cat, 'Remove', 'app.remove');
+    }
+
+    when 'Puzzles' {
+      
     }
 
     when 'Settings' {
