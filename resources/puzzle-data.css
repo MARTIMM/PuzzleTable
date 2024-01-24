@@ -74,7 +74,7 @@ progressbar > trough > progress {
   background-color: #f0a080;
   color: white;
 }
- 
+
 .table-item-label {
   background-color: #c0c0c0;
   color: #8e0303;
@@ -100,8 +100,8 @@ progressbar > trough > progress {
   background-color: #f0a080;
 }
 
+/*
 .puzzle-object picture {
-  /*background-color: #a0a0a0;*/
   padding: 10px;
   border-width: 3px;
   border-style: outset;
@@ -109,8 +109,8 @@ progressbar > trough > progress {
 }
 
 box {
-  /*background-color: #a0002b;*/
   border-width: 3px;
   border-style: outset;
   border-color: #ffee00;
 }
+*/
