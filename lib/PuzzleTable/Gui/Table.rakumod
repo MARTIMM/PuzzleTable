@@ -326,11 +326,12 @@ note "$?LINE $position, $n-items";
     :native-object($!multi-select.get-selection)
   );
 
-  $bitset.add($position);
+#  $bitset.add($position);
   my Int $n = $bitset.get-size;
-note "$?LINE n $n";
+note "\n$?LINE size of bitset: $n";
+print "Items set:";
   for ^$n -> $i {
-    print " ", $bitset.get-nth;
+    print " ", $bitset.get-nth($i);
   }
 print "\n";
 }
