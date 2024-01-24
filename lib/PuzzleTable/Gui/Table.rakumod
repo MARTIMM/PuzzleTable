@@ -9,7 +9,7 @@ use PuzzleTable::Gui::Statusbar;
 use Gnome::Gtk4::GridView:api<2>;
 use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::SignalListItemFactory:api<2>;
-#use Gnome::Gtk4::ScrolledWindow:api<2>;
+use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::ListItem:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
 use Gnome::Gtk4::StringObject:api<2>;
@@ -22,16 +22,23 @@ use Gnome::Gtk4::T-Enums:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::ProgressBar:api<2>;
+use Gnome::Gtk4::Adjustment:api<2>;
+
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
+#`{{
+A note from https://developer-old.gnome.org/gtk4/stable/ListContainers.html;
+
+Another important requirement for views is that they need to know which items are not visible so they can be recycled. Views achieve that by implementing the GtkScrollable interface and expecting to be placed directly into a GtkScrolledWindow. 
+}}
+
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Table:auth<github:MARTIMM>;
-#also is Gnome::Gtk4::Box;
-also is Gnome::Gtk4::GridView;
+also is Gnome::Gtk4::ScrolledWindow;
 
 has PuzzleTable::Config $!config;
 
@@ -39,7 +46,7 @@ has Gnome::Gtk4::StringList $!puzzle-objects;
 has Gnome::Gtk4::MultiSelection $!multi-select;
 #has Gnome::Gtk4::SingleSelection $!single-select;
 has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
-#has Gnome::Gtk4::GridView $!puzzle-grid;
+has Gnome::Gtk4::GridView $!puzzle-grid;
 has Gnome::Gtk4::StringList $!string-list;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 #has Gnome::Gtk4::ScrolledWindow $!scrolled-window;
@@ -48,19 +55,9 @@ has PuzzleTable::Gui::Statusbar $!statusbar;
 has Hash $!current-table-objects;
 
 #-------------------------------------------------------------------------------
-method new ( |c ) {
-  self.new-gridview( N-Object, N-Object, |c)
-}
-
-#-------------------------------------------------------------------------------
 submethod BUILD (
   PuzzleTable::Config :$!config, PuzzleTable::Gui::Statusbar :$!statusbar
 ) {
-#  $!scrolled-window .= new-scrolledwindow;
-#  $!statusbar .= new-statusbar(:context<puzzle-table>);
-#  self.append($!scrolled-window);
-#  self.append($!statusbar);
-note "$?LINE $!config, $!statusbar, ", self.get-native-object-no-reffing.gist;
   self.clear-table(:init);
 }
 
@@ -89,17 +86,14 @@ method clear-table ( Bool :$init = False ) {
     $!puzzle-objects.clear-object;
     $!multi-select.clear-object;
     $!signal-factory.clear-object;
-#    self.clear-object;
   }
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
-#Gnome::N::debug(:on);
   $!puzzle-objects.register-signal( self, 'items-changed', 'items-changed');
   $!multi-select.register-signal(
     self, 'selection-changed', 'selection-changed'
   );
-#Gnome::N::debug(:off);
 
   with $!signal-factory .= new-signallistitemfactory {
     .register-signal( self, 'setup-object', 'setup');
@@ -108,26 +102,31 @@ method clear-table ( Bool :$init = False ) {
     .register-signal( self, 'destroy-object', 'teardown');
   }
 
-note "$?LINE ", self.get-native-object-no-reffing.gist;
-  with self {
-    .set-min-columns(10);
-    .set-max-columns(10);
-    .set-enable-rubberband(True);
-    .set-single-click-activate(True);
+  with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
     .set-model($!multi-select);
     .set-factory($!signal-factory);
-    .set-hexpand(True);
-    .set-vexpand(True);
+    .set-min-columns(3);
+    .set-max-columns(10);
+    .set-enable-rubberband(True);
+#    .set-single-click-activate(True);
+#    .set-hscroll-policy(GTK_SCROLL_NATURAL);
+#    .set-vscroll-policy(GTK_SCROLL_NATURAL);
+#    my Gnome::Gtk4::Adjustment() $adj = .get-hadjustment;
+#    $adj.set-step-increment(10.0);
+#    .set-hadjustment($adj);
+#    $adj = .get-vadjustment;
+#    $adj.set-step-increment(10.0);
+#    .set-vadjustment($adj);
+#    .set-hexpand(True);
+#    .set-vexpand(True);
     .register-signal( self, 'item-clicked', 'activate');
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
 
-#  $!scrolled-window.set-child($!puzzle-grid);
-#  $!scrolled-window.set-has-frame(True);
-#  $!config.set-css(
-#    $!scrolled-window.get-style-context, :css-class<puzzle-table>
-#  );
+  self.set-hexpand(True);
+  self.set-vexpand(True);
+  self.set-child($!puzzle-grid);
 }
 
 #-------------------------------------------------------------------------------
@@ -146,7 +145,9 @@ say 'setup-object';
     .set-has-tooltip(True);
     .register-signal(
       self, 'show-tooltip', 'query-tooltip',
-      :tip('Run the standard version of palapeli')
+      :tip(
+        'Run the ' ~ $!config.get-palapeli-preference ~ ' version of palapeli'
+      )
     );
   }
 
@@ -157,7 +158,7 @@ say 'setup-object';
   }
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
-    .set-size-request(|$!config.get-palapeli-image-size);
+    .set-size-request(| $!config.get-palapeli-image-size);
     .set-name('puzzle-image');
     .set-margin-top(3);
     .set-margin-bottom(3);
@@ -214,6 +215,7 @@ say 'bind-object';
     my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 6);
 
 #Gnome::N::debug(:on);
+#note "register click";
     my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
     $run-palapeli.register-signal(
       self, 'run-palapeli', 'clicked', :$object, :$label-progress,
@@ -248,7 +250,9 @@ say 'unbind-object';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
   my Gnome::Gtk4::Button() $button = $button-box.get-first-child;
+#note "unref button";
   $button.clear-object;
+#  $button-box.destroy;
   $button-box.clear-object;
 }
 
@@ -318,9 +322,21 @@ print "\n";
 #-------------------------------------------------------------------------------
 method selection-changed ( guint $position, guint $n-items ) {
 note "$?LINE $position, $n-items";
+  my Gnome::Gtk4::N-Bitset $bitset .= new(
+    :native-object($!multi-select.get-selection)
+  );
+
+  $bitset.add($position);
+  my Int $n = $bitset.get-size;
+note "$?LINE n $n";
+  for ^$n -> $i {
+    print " ", $bitset.get-nth;
+  }
+print "\n";
 }
 
 #-------------------------------------------------------------------------------
 method items-changed ( guint $position, guint $n-removed, guint $n-added ) {
-note "$?LINE $position, $n-removed, $n-added";
+#note "$?LINE $position, $n-removed, $n-added";
+#  $!multi-select.selection-changed( $position, $n-added);
 }

@@ -123,7 +123,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>);
-  $!table .= new( :$!config, :$!statusbar);
+  $!table .= new-scrolledwindow( :$!config, :$!statusbar);
   $!category .= new-comboboxtext(:main(self));
 
   my Int $exit-code = 0;
