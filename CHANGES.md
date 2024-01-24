@@ -1,6 +1,7 @@
 
 * 2024-01-18 0.3.3
   * Calculation of progress after stopping puzzle
+  * Selections are possible but it isn't visible using css
 
 * 2024-01-13 0.3.2
   * Add password handling
