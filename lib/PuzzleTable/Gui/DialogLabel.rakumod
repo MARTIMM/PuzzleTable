@@ -10,12 +10,14 @@ also is Gnome::Gtk4::Label;
 constant \DialogLabel is export = PuzzleTable::Gui::DialogLabel;
 
 #-------------------------------------------------------------------------------
-method new ( |c ) {
-  self.new-label( Str, |c);
+method new ( $text, |c ) {
+note "$?LINE ", c.gist;
+  self.new-label( Str, :$text, |c);
 }
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$text, :$config ) {
+note "$?LINE $text, $config.gist()";
   self.set-label($text);
   self.set-hexpand(True);
   self.set-halign(GTK_ALIGN_START);
