@@ -122,9 +122,9 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
 
   # We need the table and category management here already
-  $!statusbar .= new-statusbar(:context<puzzle-table>);
-  $!table .= new-scrolledwindow( :$!config, :$!statusbar);
-  $!category .= new-comboboxtext(:main(self));
+  $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
+  $!table .= new-scrolledwindow( :$!config, :$!statusbar) unless ?$!table;
+  $!category .= new-comboboxtext(:main(self)) unless $!category;
 
   my Int $exit-code = 0;
   my Gnome::Gio::ApplicationCommandLine $command-line .= new(
