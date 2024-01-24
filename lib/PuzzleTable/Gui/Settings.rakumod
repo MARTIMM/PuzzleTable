@@ -251,9 +251,7 @@ method do-password-check (
 method show-dialog-password ( ) {
 
   my DialogLabel $label-pw .= new( 'Type password', :$!config);
-
   my Gnome::Gtk4::PasswordEntry $entry-pw .= new-passwordentry;
-
   $!statusbar .= new-statusbar(:context<password>);
 
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
