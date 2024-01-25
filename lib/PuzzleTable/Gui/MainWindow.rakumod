@@ -120,7 +120,6 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 method remote-options ( N-Object $n-command-line --> Int ) {
 #say 'remote opts';
 
-
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
   $!table .= new-scrolledwindow( :$!config, :$!statusbar) unless ?$!table;
