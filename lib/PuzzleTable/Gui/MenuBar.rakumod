@@ -3,6 +3,7 @@ use v6.d;
 use NativeCall;
 
 use PuzzleTable::Config;
+use PuzzleTable::PuzzleHandling;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Settings;
 
@@ -23,15 +24,21 @@ has $!application is required;
 has $!main is required;
 
 has Array $!menus;
+has PuzzleTable::Gui::Category $!cat;
+has PuzzleTable::PuzzleHandling $!phandling;
+has PuzzleTable::Gui::Settings $!set;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
   $!application = $!main.application;
+  $!cat = $!main.category;
+  $!phandling .= new( :$!main, :$!cat);
+  $!set .= new(:$!main);
 
   $!bar .= new-menu;
   $!menus = [
     self.make-menu(:menu-name<File>),
-    self.make-menu(:menu-name<Category>),
+    self.make-menu(:menu-name<Categories>),
     self.make-menu(:menu-name<Puzzles>),
     self.make-menu(:menu-name<Settings>),
     self.make-menu(:menu-name<Help>),
@@ -43,37 +50,46 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
   my Gnome::Gio::Menu $menu .= new-menu;
   $!bar.append-submenu( $menu-name, $menu);
 
-  my PuzzleTable::Config $config = $!main.config;
-  my PuzzleTable::Gui::Category $cat = $!main.category;
-  my PuzzleTable::Gui::Settings $set .= new(:$!main);
+#  my PuzzleTable::Config $config = $!main.config;
 
   with $menu-name {
     when 'File' {
       self.bind-action( $menu, $menu-name, self, 'Quit', 'app.quit');
     }
 
-    when 'Category' {
-      self.bind-action( $menu, $menu-name, $cat, 'Add', 'app.add');
-      self.bind-action( $menu, $menu-name, $cat, 'lock', 'app.lock');
-      self.bind-action( $menu, $menu-name, $cat, 'Rename', 'app.rename');
-      self.bind-action( $menu, $menu-name, $cat, 'Remove', 'app.remove');
+    when 'Categories' {
+      self.bind-action(
+        $menu, $menu-name, $!cat, 'Add Category', 'app.add-category'
+      );
+      self.bind-action(
+        $menu, $menu-name, $!cat, 'Lock Category', 'app.lock-category'
+      );
+      self.bind-action(
+        $menu, $menu-name, $!cat, 'Rename Category', 'app.rename-category'
+      );
+      self.bind-action(
+        $menu, $menu-name, $!cat, 'Remove Category', 'app.remove-category'
+      );
     }
 
     when 'Puzzles' {
-      
+      self.bind-action(
+        $menu, $menu-name, $!phandling, 'Move Puzzles', 'app.move-puzzles'
+      );
+      self.bind-action(
+        $menu, $menu-name, $!phandling, 'Remove Puzzles', 'app.remove-puzzles'
+      );
     }
 
     when 'Settings' {
       self.bind-action(
-        $menu, $menu-name, $set, 'Set Password', 'app.set-password'
+        $menu, $menu-name, $!set, 'Set Password', 'app.set-password'
       );
-
       self.bind-action(
-        $menu, $menu-name, $set, 'Unlock Categories', 'app.unlock-categories'
+        $menu, $menu-name, $!set, 'Unlock Categories', 'app.unlock-categories'
       );
-
       self.bind-action(
-        $menu, $menu-name, $set, 'Lock Categories', 'app.lock-categories'
+        $menu, $menu-name, $!set, 'Lock Categories', 'app.lock-categories'
       );
     }
 
