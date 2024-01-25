@@ -36,7 +36,7 @@ has Gnome::Gtk4::Grid $!top-grid;
 has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Category $.category;
 has PuzzleTable::Config $.config;
-has PuzzleTable::Gui::Statusbar $!statusbar;
+has PuzzleTable::Gui::Statusbar $.statusbar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
