@@ -42,12 +42,12 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 has PuzzleTable::Config $!config;
 
-has Gnome::Gtk4::StringList $!puzzle-objects;
-has Gnome::Gtk4::MultiSelection $!multi-select;
+has Gnome::Gtk4::StringList $.puzzle-objects;
+has Gnome::Gtk4::MultiSelection $.multi-select;
 #has Gnome::Gtk4::SingleSelection $!single-select;
 has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
 has Gnome::Gtk4::GridView $!puzzle-grid;
-has Gnome::Gtk4::StringList $!string-list;
+#has Gnome::Gtk4::StringList $.string-list;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 #has Gnome::Gtk4::ScrolledWindow $!scrolled-window;
 
@@ -119,7 +119,7 @@ method clear-table ( Bool :$init = False ) {
 #    .set-vadjustment($adj);
 #    .set-hexpand(True);
 #    .set-vexpand(True);
-    .register-signal( self, 'item-clicked', 'activate');
+#    .register-signal( self, 'item-clicked', 'activate');
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
@@ -131,7 +131,7 @@ method clear-table ( Bool :$init = False ) {
 
 #-------------------------------------------------------------------------------
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
-say 'setup-object';
+#say 'setup-object';
 
   my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
   with my Gnome::Gtk4::Button $run-palapeli .= new-button {
@@ -164,6 +164,7 @@ say 'setup-object';
     .set-margin-bottom(3);
     .set-margin-start(3);
     .set-margin-end(3);
+    .set-hexpand(True);
   }
 
   my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar;
@@ -196,7 +197,7 @@ say 'setup-object';
 
 #-------------------------------------------------------------------------------
 method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-say 'bind-object';
+#say 'bind-object';
 
   my Gnome::Gtk4::StringObject $string-object .= new(
     :native-object($list-item.get-item)
@@ -246,7 +247,7 @@ say 'bind-object';
 
 #-------------------------------------------------------------------------------
 method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-say 'unbind-object';
+#say 'unbind-object';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
   my Gnome::Gtk4::Button() $button = $button-box.get-first-child;
@@ -258,7 +259,7 @@ say 'unbind-object';
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
-say 'destroy-object';
+#say 'destroy-object';
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   $grid.clear-object;
 }
@@ -291,14 +292,14 @@ note "\n$?LINE $puzzle-path\n$exec";
 
 #-------------------------------------------------------------------------------
 method show-tooltip (
-  Int $x, Int $y, gboolean $kb-mode,
-  Gnome::Gtk4::Tooltip() $tooltip, Str :$tip
+  Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip, Str :$tip
   --> gboolean
 ) {
   $tooltip.set-markup($tip);
   True
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method item-clicked ( guint $position ) {
 note "$?LINE $position";
@@ -306,7 +307,7 @@ note "$?LINE $position";
     :native-object($!multi-select.get-selection)
   );
 
-  $bitset.add($position);
+#  $bitset.add($position);
   my Int $n = $bitset.get-size;
 note "$?LINE n $n";
   for ^$n -> $i {
@@ -314,10 +315,11 @@ note "$?LINE n $n";
   }
 print "\n";
 
-  $!multi-select.set-selection( $bitset, $bitset);
+#  $!multi-select.set-selection( $bitset, $bitset);
 #  $!multi-select.set-select-item($position);
 #  $!multi-select.selection-changed( 1, 1);
 }
+}}
 
 #-------------------------------------------------------------------------------
 method selection-changed ( guint $position, guint $n-items ) {
