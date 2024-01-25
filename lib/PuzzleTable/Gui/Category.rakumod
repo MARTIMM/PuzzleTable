@@ -45,7 +45,7 @@ submethod BUILD ( :$!main ) {
 
 #-------------------------------------------------------------------------------
 # Select from menu to add a category
-method category-add ( N-Object $parameter ) {
+method categories-add-category ( N-Object $parameter ) {
 #  say 'category add';
 
   my DialogLabel $label .= new( 'Specify a new category', :$!config);
@@ -57,7 +57,8 @@ method category-add ( N-Object $parameter ) {
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
     'Add Category Dialog', $!main.application-window,
     GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
-    'Add', GEnum, GTK_RESPONSE_ACCEPT, Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
+         'Add', GEnum, GTK_RESPONSE_ACCEPT,
+    Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
   );
 
   with my Gnome::Gtk4::Box $box .= new(
@@ -136,7 +137,7 @@ method do-category-add (
 
 #-------------------------------------------------------------------------------
 # Select from menu to lock or unlock a category
-method category-lock ( N-Object $parameter ) {
+method categories-lock-category ( N-Object $parameter ) {
 #  say 'category add';
 
   my DialogLabel $ul-label .= new( 'Lock or unlock category', :$!config);
@@ -158,7 +159,8 @@ method category-lock ( N-Object $parameter ) {
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
     'Add Category Dialog', $!main.application-window,
     GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
-    'Change', GEnum, GTK_RESPONSE_ACCEPT, Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
+         'Change', GEnum, GTK_RESPONSE_ACCEPT,
+    Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
   );
 
   with my Gnome::Gtk4::Box $box .= new(
@@ -186,7 +188,7 @@ method category-lock ( N-Object $parameter ) {
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
     .set-name('category-dialog');
-    my $r = .show;
+    .show;
   }
 }
 
@@ -236,7 +238,7 @@ method do-category-lock (
 
 #-------------------------------------------------------------------------------
 # Select from menu to rename a category
-method category-rename ( N-Object $parameter ) {
+method categories-rename-category ( N-Object $parameter ) {
 #  say 'category rename';
 
   my DialogLabel $label1 .= new( 'Select category from list', :$!config);
@@ -343,7 +345,7 @@ method do-category-rename (
 
 #-------------------------------------------------------------------------------
 # Select from menu to remove a category
-method category-remove ( N-Object $parameter ) {
+method categories-remove-category ( N-Object $parameter ) {
   say 'category remove';
 }
 
@@ -363,7 +365,7 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
 #-------------------------------------------------------------------------------
 method renew ( ) {
   # Get current setting first
-  my Str $current-cat = self.get-active-text // '';
+  my Str $current-cat = self.get-current-category;
 
   # Empty list and then refill
   self.remove-all;
@@ -384,11 +386,16 @@ method renew ( ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-current-category ( --> Str ) {
+  self.get-active-text // '';
+}
+
+#-------------------------------------------------------------------------------
 # Callback to handle selection of a combobox entry.
 method cat-selected ( ) {
 
   # Get the selected category
-  my Str $cat = self.get-active-text // '';
+  my Str $cat = self.get-current-category;
   return unless ?$cat;
 
   # Clear the puzzletable before showing the puzzles of this category
