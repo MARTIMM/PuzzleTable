@@ -1,7 +1,8 @@
 
 * 2024-01-18 0.3.3
-  * Calculation of progress after stopping puzzle
-  * Selections are possible but it isn't visible using css
+  * Calculation of progress after stopping puzzle. Not ok yet for puzzles which are imported from directories or collections.
+  * Selections are possible but it isn't visible using css.
+  * Use selections to move puzzles into another category.
 
 * 2024-01-13 0.3.2
   * Add password handling
