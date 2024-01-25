@@ -348,7 +348,7 @@ method check-pala-progress-file (
 # the following fields: Puzzle-index, Category and Image (see get-puzzles()
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
-multi method calculate-progress ( Hash $object --> Str) {
+method calculate-progress ( Hash $object --> Str) {
 #note "$?LINE $object.gist()";
 
   self.calculate(
