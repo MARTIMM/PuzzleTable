@@ -19,6 +19,7 @@
     "PuzzleTable::Gui::TableItemLabel": "lib/PuzzleTable/Gui/TableItemLabel.rakumod",
     "PuzzleTable::Config": "lib/PuzzleTable/Config.rakumod",
     "PuzzleTable::ExtractDataFromPuzzle": "lib/PuzzleTable/Gui/Statusbar.rakumod",
+    "PuzzleTable::PuzzleHandling": "lib/PuzzleTable/PuzzleHandling.rakumod",
     "PuzzleTable::Types": "lib/PuzzleTable/Types.rakumod"
   },
 
