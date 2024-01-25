@@ -47,11 +47,9 @@ has Gnome::Gtk4::MultiSelection $.multi-select;
 #has Gnome::Gtk4::SingleSelection $!single-select;
 has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
 has Gnome::Gtk4::GridView $!puzzle-grid;
-#has Gnome::Gtk4::StringList $.string-list;
 has PuzzleTable::Gui::Statusbar $!statusbar;
-#has Gnome::Gtk4::ScrolledWindow $!scrolled-window;
 
-#| The objects from the current selected category
+# The objects from the current selected category
 has Hash $!current-table-objects;
 
 #-------------------------------------------------------------------------------
@@ -108,18 +106,6 @@ method clear-table ( Bool :$init = False ) {
     .set-min-columns(3);
     .set-max-columns(10);
     .set-enable-rubberband(True);
-#    .set-single-click-activate(True);
-#    .set-hscroll-policy(GTK_SCROLL_NATURAL);
-#    .set-vscroll-policy(GTK_SCROLL_NATURAL);
-#    my Gnome::Gtk4::Adjustment() $adj = .get-hadjustment;
-#    $adj.set-step-increment(10.0);
-#    .set-hadjustment($adj);
-#    $adj = .get-vadjustment;
-#    $adj.set-step-increment(10.0);
-#    .set-vadjustment($adj);
-#    .set-hexpand(True);
-#    .set-vexpand(True);
-#    .register-signal( self, 'item-clicked', 'activate');
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
