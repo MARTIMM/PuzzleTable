@@ -410,8 +410,11 @@ method get-puzzles ( Str $category --> Array ) {
   my Hash $cat := $*puzzle-data<categories>{$category}<members>;
   my Int $count = $cat.elems;
   my Array $cat-puzzle-data = [];
+
   loop ( my Int $i = 0; $i < $count; $i++ ) {
     $pi = ($i+1).fmt('p%03d');
+#note "$?LINE $pi $cat{$pi}.gist()";
+    next unless ?$cat{$pi};
     $cat-puzzle-data.push: %(
       :Puzzle-index($pi),
       :Category($category),
@@ -442,4 +445,25 @@ method get-pala-puzzles ( Str $category, Str $pala-collection-path) {
   }
 
   self.save-puzzle-admin;
+}
+
+#-------------------------------------------------------------------------------
+method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
+note "$?LINE $puzzle-id: $from-cat -> $to-cat";
+
+  for 1..999 -> $count {
+    my Str $p-id = $count.fmt('p%03d');
+    next if $*puzzle-data<categories>{$to-cat}<members>{$p-id}:exists;
+
+    my Hash $puzzle =
+      $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
+    $*puzzle-data<categories>{$to-cat}<members>{$p-id} = $puzzle;
+    my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
+    my Str $to-dir = [~] PUZZLE_TABLE_DATA, $to-cat, '/', $p-id;
+note "$?LINE $from-dir -> $to-dir";
+    $from-dir.IO.rename( $to-dir, :createonly);
+
+    # Puzzle is moved to free spot
+    last;
+  }
 }
