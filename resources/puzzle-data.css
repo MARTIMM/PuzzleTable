@@ -8,13 +8,19 @@
   background-color: #b0b0b0;
 }
 
-.dialog-label {
-  color: black;
-}
-
 #category-dialog {
   background-color: #b0b0b0;
   color: black;
+}
+
+#puzzle-dialog {
+  background-color: #b0b0b0;
+  color: black;
+}
+
+.dialog-label {
+  color: black;
+  background-color: rgba(0,0,0,0);
 }
 
 /* https://stackoverflow.com/questions/59122368/gtk-progress-bar-color */
@@ -76,14 +82,14 @@ progressbar > trough > progress {
 }
 
 .table-item-label {
-  background-color: #c0c0c0;
+  background-color: rgba(0, 0, 0, 0);
   color: #8e0303;
   padding: 0px;
   padding-left: 10px;
 }
 
 .table-item-comment {
-  background-color: #8e0303;
+  background-color: rgba(0, 0, 0, 0);
   color: white;
   padding: 0px;
   margin-left: 0px;
