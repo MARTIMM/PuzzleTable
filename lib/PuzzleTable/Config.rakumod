@@ -102,7 +102,7 @@ method set-category-lockable (
 ) {
   my Bool $ok;
   $*puzzle-data<categories>{$category}<lockable> = $lockable
-    if $ok = self.check-password($password);
+    if $ok = (not self.is-locked() or self.check-password($password));
 
   $ok
 }
@@ -409,18 +409,24 @@ method get-puzzles ( Str $category --> Array ) {
   my Str $pi;
   my Hash $cat := $*puzzle-data<categories>{$category}<members>;
   my Int $count = $cat.elems;
+  my Int $found-count = 0;
   my Array $cat-puzzle-data = [];
 
-  loop ( my Int $i = 0; $i < $count; $i++ ) {
-    $pi = ($i+1).fmt('p%03d');
-#note "$?LINE $pi $cat{$pi}.gist()";
-    next unless ?$cat{$pi};
-    $cat-puzzle-data.push: %(
-      :Puzzle-index($pi),
-      :Category($category),
-      :Image(PUZZLE_TABLE_DATA ~ "$category/$pi/image400.jpg"),
-      |$cat{$pi}
-    );
+  loop ( my Int $i = 1; $i < 1000; $i++) {
+    $pi = $i.fmt('p%03d');
+#note "$?LINE $count, $found-count, $pi, $cat{$pi}.gist()";
+    if ?$cat{$pi} {
+      $cat-puzzle-data.push: %(
+        :Puzzle-index($pi),
+        :Category($category),
+        :Image(PUZZLE_TABLE_DATA ~ "$category/$pi/image400.jpg"),
+        |$cat{$pi}
+      );
+
+      $found-count++;
+    }
+    
+    last if $found-count >= $count;
   }
 
   $cat-puzzle-data
@@ -460,10 +466,10 @@ note "$?LINE $puzzle-id: $from-cat -> $to-cat";
     $*puzzle-data<categories>{$to-cat}<members>{$p-id} = $puzzle;
     my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
     my Str $to-dir = [~] PUZZLE_TABLE_DATA, $to-cat, '/', $p-id;
-note "$?LINE $from-dir -> $to-dir";
+#note "$?LINE $from-dir -> $to-dir";
     $from-dir.IO.rename( $to-dir, :createonly);
 
-    # Puzzle is moved to free spot
+    # Puzzle is moved to other category spot
     last;
   }
 }
