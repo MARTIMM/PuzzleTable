@@ -76,6 +76,28 @@ method add-puzzle-to-table ( Hash $object ) {
 }
 
 #-------------------------------------------------------------------------------
+# Add puzzles to the table
+method add-puzzles-to-table ( Seq $objects ) {
+
+  my Array $indices = [];
+  for @$objects -> $object {
+    # Save the index and drop some other fields to save memory
+    my Str $index = $object<Puzzle-index>;
+    $object<Name>:delete;
+    $object<SourceFile>:delete;
+
+    $!current-table-objects{$index} = $object;
+    $indices.push: $index;
+  }
+
+  my $is = CArray[Str].new( |$indices, Str);
+  $!puzzle-objects.splice( 0, 0, $is);
+
+  $!statusbar.remove-message;
+  $!statusbar.set-status("Number of puzzles: " ~ $!puzzle-objects.get-n-items);
+}
+
+#-------------------------------------------------------------------------------
 method clear-table ( Bool :$init = False ) {
 #note "$?LINE clear-table";
   $!current-table-objects = %();
@@ -88,7 +110,7 @@ method clear-table ( Bool :$init = False ) {
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
-  $!puzzle-objects.register-signal( self, 'items-changed', 'items-changed');
+#  $!puzzle-objects.register-signal( self, 'items-changed', 'items-changed');
   $!multi-select.register-signal(
     self, 'selection-changed', 'selection-changed'
   );
@@ -262,7 +284,10 @@ method run-palapeli (
 
   my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
-note "\n$?LINE $puzzle-path\n$exec";
+#note "\n$?LINE $puzzle-path\n$exec";
+
+  $!statusbar.remove-message;
+  $!statusbar.set-status("$exec '$puzzle-path'");
 
   # Start playing the puzzle
   shell "$exec '$puzzle-path'";
@@ -309,21 +334,23 @@ print "\n";
 
 #-------------------------------------------------------------------------------
 method selection-changed ( guint $position, guint $n-items ) {
-note "$?LINE $position, $n-items";
+#note "$?LINE $position, $n-items";
   my Gnome::Gtk4::N-Bitset $bitset .= new(
     :native-object($!multi-select.get-selection)
   );
 
-#  $bitset.add($position);
   my Int $n = $bitset.get-size;
-note "\n$?LINE size of bitset: $n";
-print "Items set:";
+  my Str $msg = "$n puzzles selected. Items set:";
   for ^$n -> $i {
-    print " ", $bitset.get-nth($i);
+    $msg ~= " $bitset.get-nth($i)";
   }
-print "\n";
+
+  $!statusbar.remove-message;
+  $!statusbar.set-status($msg);
 }
 
+
+=finish
 #-------------------------------------------------------------------------------
 method items-changed ( guint $position, guint $n-removed, guint $n-added ) {
 #note "$?LINE $position, $n-removed, $n-added";

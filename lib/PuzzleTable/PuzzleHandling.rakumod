@@ -143,7 +143,7 @@ method do-move-puzzles (
             $current-cat, $dest-cat, $puzzle-objects.get-string($item-pos)
           );
         }
-
+#`{{
         # Remove puzzles from current display. First get all items, then
         # remove the item beginning with the highest to prevent that
         # items are picked from the wrong spot because the display renumbers
@@ -153,8 +153,10 @@ method do-move-puzzles (
         for @items.sort.reverse -> $item-pos {
           $puzzle-objects.remove($item-pos);
         }
-
+}}
+        $!cat.cat-selected;
         $!config.save-puzzle-admin;
+        $puzzle-objects = $!main.table.puzzle-objects;
         $!main.statusbar.set-status(
           "Number of puzzles: " ~ $puzzle-objects.get-n-items
         );
