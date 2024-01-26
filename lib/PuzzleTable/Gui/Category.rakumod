@@ -138,14 +138,18 @@ method do-category-add (
 #-------------------------------------------------------------------------------
 # Select from menu to lock or unlock a category
 method categories-lock-category ( N-Object $parameter ) {
-#  say 'category add';
 
   my DialogLabel $ul-label .= new( 'Lock or unlock category', :$!config);
   my DialogLabel $pw-label .= new( 'Type password to change', :$!config);
   my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
   my Gnome::Gtk4::PasswordEntry $pw-entry .= new-passwordentry;
   $check-button.set-active(False);
-  my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
+
+  my Gnome::Gtk4::ComboBoxText $combobox .= new-comboboxtext;
+  $combobox.register-signal(
+    self, 'set-cat-lock-info', 'changed', :$check-button
+  );
+
   $!statusbar .= new-statusbar(:context<category>);
 
   # Fill the combobox in the dialog
@@ -174,8 +178,12 @@ method categories-lock-category ( N-Object $parameter ) {
     .append($combobox);
     .append($ul-label);
     .append($check-button);
-    .append($pw-label);
-    .append($pw-entry);
+    
+    # Only ask for password if puzzletable is locked
+    if $!config.is-locked {
+      .append($pw-label);
+      .append($pw-entry);
+    }
     .append($!statusbar);
   }
 
@@ -210,21 +218,30 @@ method do-category-lock (
     }
 
     when GTK_RESPONSE_ACCEPT {
-      my Str $pw-text = $pw-entry.get-text.tc;
-      if ! $!config.check-password($pw-text) {
-        $!statusbar.set-status('Wrong password');
-      }
+      if $!config.is-locked {
+        my Str $pw-text = $pw-entry.get-text.tc;
+        if ! $!config.check-password($pw-text) {
+          $!statusbar.set-status('Wrong password');
+        }
 
-      # Modify lockable category
-      elsif $!main.config.set-category-lockable(
-        $combobox.get-active-text, $check-button.get-active.Bool, $pw-text
-      ) {
-        self.renew;
-        $sts-ok = True;
+        # Modify lockable category
+        elsif $!config.set-category-lockable(
+          $combobox.get-active-text, $check-button.get-active.Bool, $pw-text
+        ) {
+          self.renew;
+          $sts-ok = True;
+        }
+
+        else {
+          $!statusbar.set-status('Empty password while one is needed?');
+        }
       }
 
       else {
-        $!statusbar.set-status('Empty password while one is needed?');
+        $!config.set-category-lockable(
+          $combobox.get-active-text, $check-button.get-active.Bool, Str
+        );
+        $sts-ok = True;
       }
     }
 
@@ -410,7 +427,20 @@ method cat-selected ( ) {
     }
   );
 
+  $!table.add-puzzles-to-table($puzzles);
+#`{{
   for @$puzzles -> $p {
     $!table.add-puzzle-to-table($p);
   }
+}}
+}
+
+#-------------------------------------------------------------------------------
+method set-cat-lock-info (
+  Gnome::Gtk4::ComboBoxText :_widget($combobox),
+  Gnome::Gtk4::CheckButton :$check-button
+) {
+  $check-button.set-active(
+    $!config.is-category-lockable($combobox.get-active-text)
+  );
 }
