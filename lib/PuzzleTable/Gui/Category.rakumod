@@ -153,9 +153,7 @@ method categories-lock-category ( N-Object $parameter ) {
   $!statusbar .= new-statusbar(:context<category>);
 
   # Fill the combobox in the dialog
-  for $!config.get-categories -> $category {
-    # Don't let default be changed
-    next if $category.lc eq 'default';
+  for $!config.get-categories(:filter<default>) -> $category {
     $combobox.append-text($category);
   }
   $combobox.set-active(0);
@@ -265,9 +263,7 @@ method categories-rename-category ( N-Object $parameter ) {
   $!statusbar .= new-statusbar(:context<categories>);
 
   # Fill the combobox in the dialog
-  for $!config.get-categories -> $category {
-    # Don't let default be changed
-    next if $category.lc eq 'default';
+  for $!config.get-categories(:filter<default>) -> $category {
     $combobox.append-text($category);
   }
   $combobox.set-active(0);
@@ -389,14 +385,13 @@ method renew ( ) {
 
   my Int ( $idx, $idx-default, $idx-current ) = ( 0, 0, -1);
   my Bool $not-locked = !$!config.is-locked;
-  for $!config.get-categories -> $key {
-    # Add to combobox unless locking is on and category is lockable
-    if $not-locked or !$!config.is-category-lockable($key) {
-      self.append-text($key);
-      $idx-default = $idx if $key eq 'Default';
-      $idx-current = $idx if $key eq $current-cat;
-      $idx++;
-    }
+
+  # Add to combobox unless locking is on and category is lockable
+  for $!config.get-categories(:filter<lockable>) -> $category {
+    self.append-text($category);
+    $idx-default = $idx if $category eq 'Default';
+    $idx-current = $idx if $category eq $current-cat;
+    $idx++;
   }
 
   self.set-active($idx-current == -1 ?? $idx-default !! $idx-current);

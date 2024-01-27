@@ -65,7 +65,7 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
 
   # Fill the combobox in the dialog
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
-  for $!config.get-categories -> $category {
+  for $!config.get-categories(:filter<lockable>) -> $category {
     $combobox.append-text($category);
   }
   $combobox.set-active(0);

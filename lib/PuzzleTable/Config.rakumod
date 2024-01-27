@@ -214,8 +214,31 @@ method check-category ( Str:D $category --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( --> Seq ) {
-  $*puzzle-data<categories>.keys.sort;
+# Return a sorted sequence of categories depending on the filter.
+# When filter is 'default' then all categories are returned except 'Default'.
+# When filter is 'lockable', all categories are returned except the lockable
+# categories when the puzzle table is locked.
+method get-categories ( Str :$filter --> Seq ) {
+  my @cat = ();
+  if $filter eq 'default' {
+    for $*puzzle-data<categories>.keys -> $category {
+      @cat.push: $category unless $category eq 'Default';
+    }
+  }
+
+  elsif $filter eq 'lockable' {
+    my Bool $locked = self.is-locked;
+    for $*puzzle-data<categories>.keys -> $category {
+      @cat.push: $category
+        unless $locked and self.is-category-lockable($category);
+    }
+  }
+
+  else {
+    @cat = $*puzzle-data<categories>.keys;
+  }
+
+  @cat.sort
 }
 
 #-------------------------------------------------------------------------------
