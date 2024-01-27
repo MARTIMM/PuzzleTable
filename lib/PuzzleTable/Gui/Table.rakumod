@@ -24,7 +24,6 @@ use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::ProgressBar:api<2>;
 use Gnome::Gtk4::Adjustment:api<2>;
 
-
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
