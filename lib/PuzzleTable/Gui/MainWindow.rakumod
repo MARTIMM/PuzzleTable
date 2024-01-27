@@ -7,6 +7,7 @@ use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
+use PuzzleTable::Gui::Sidebar;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
@@ -33,10 +34,11 @@ has Gnome::Gtk4::Application $.application;
 has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::Grid $!top-grid;
 
+has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Category $.category;
-has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Statusbar $.statusbar;
+has PuzzleTable::Gui::Sidebar $!sidebar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -185,6 +187,7 @@ method app-shutdown ( ) {
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
 #say 'display table';
+  $!sidebar .= new-scrolledwindow(:main(self));
 
   with $!top-grid .= new-grid {
     $!config.set-css( .get-style-context, :css-class<main-view>);
@@ -192,9 +195,10 @@ method puzzle-table-display ( ) {
     .set-margin-bottom(10);
     .set-margin-start(10);
     .set-margin-end(10);
-    .attach( $!category, 0, 0, 1, 1);
-    .attach( $!table, 0, 1, 1, 1);
-    .attach( $!statusbar, 0, 2, 1, 1);
+    .attach( $!sidebar, 0, 0, 1, 3);
+    .attach( $!category, 1, 0, 1, 1);
+    .attach( $!table, 1, 1, 1, 1);
+    .attach( $!statusbar, 1, 2, 1, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {
