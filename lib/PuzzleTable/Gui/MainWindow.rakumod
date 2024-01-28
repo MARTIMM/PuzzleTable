@@ -196,9 +196,10 @@ method puzzle-table-display ( ) {
     .set-margin-start(10);
     .set-margin-end(10);
     .attach( $!sidebar, 0, 0, 1, 3);
-    .attach( $!category, 1, 0, 1, 1);
-    .attach( $!table, 1, 1, 1, 1);
-    .attach( $!statusbar, 1, 2, 1, 1);
+    # Need a x-width of 3 to press sidebar smaller
+    .attach( $!category, 1, 0, 3, 1);
+    .attach( $!table, 1, 1, 3, 1);
+    .attach( $!statusbar, 1, 2, 3, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {
@@ -209,7 +210,7 @@ method puzzle-table-display ( ) {
 
     .set-show-menubar(True);
     .set-title('Puzzle Table Display');
-    .set-size-request( 1500, 1000);
+    .set-size-request( 1500, 600);
     .set-child($!top-grid);
     .show;
   }

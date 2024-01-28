@@ -255,18 +255,18 @@ method move-category ( $cat-from, $cat-to ) {
 method add-puzzle (
   Str:D $category, Str:D $puzzle-path, Bool :$from-collection = False
 ) {
-#say 'add puzzle';
+say "\n", 'add puzzle';
   # Get source file info
   my Str $basename = $puzzle-path.IO.basename;
-#  my Str $import-from = $puzzle-path.IO.parent.Str;
 
   # Check if source file is copied before
   my Hash $cat := $*puzzle-data<categories>{$category}<members>;
-  for $cat.keys -> $puzzle-count {
-    if $puzzle-path eq $cat{$puzzle-count}<SourceFile> {
-      note "Puzzle '$basename' already added in category '$category'";
+  for $cat.keys -> $puzzle-id {
+note "$?LINE $puzzle-id $cat{$puzzle-id}<SourceFile>.IO.basename()";
+    if $puzzle-path eq $cat{$puzzle-id}<SourceFile> {
+      note "Puzzle $puzzle-id '$basename' already added in category '$category'";
       self.check-pala-progress-file(
-        $basename, sha1-hex($puzzle-path) ~ ".puzzle", $cat{$puzzle-count},
+        $basename, sha1-hex($puzzle-path) ~ ".puzzle", $cat{$puzzle-id},
         :$from-collection
       );
       self.save-puzzle-admin unless $from-collection;
@@ -274,16 +274,21 @@ method add-puzzle (
     }
   }
 
-  # Get number of keys to get count for next puzzle
-  my Int $count = $cat.elems + 1;
-  my Str $puzzle-count = $count.fmt('p%03d');
-  my Str $destination = PUZZLE_TABLE_DATA ~ $category ~ "/$puzzle-count";
+  # Get free entry
+  my Str $puzzle-id;
+  loop ( my Int $count = 1; $count < 1000; $count++ ) {
+    $puzzle-id = $count.fmt('p%03d');
+    last unless $cat{$puzzle-id}:exists;
+  }
+
+  my Str $destination = PUZZLE_TABLE_DATA ~ $category ~ "/$puzzle-id";
   mkdir $destination, 0o700;
 
   # Store the puzzle using a unique filename. It is possible that
   # puzzle name is the same found in other directories.
   my Str $unique-name = sha1-hex($puzzle-path) ~ ".puzzle";
-  $puzzle-path.IO.copy( "$destination/$unique-name", :createonly);
+  $puzzle-path.IO.copy( "$destination/$unique-name", :createonly)
+    unless "$destination/$unique-name".IO.e;
 
   # Get the image and desktop file from the puzzle file, a tar archive.
   $!extracter.extract( $destination, "$destination/$unique-name");
@@ -292,7 +297,7 @@ method add-puzzle (
   my Hash $info = $!extracter.palapeli-info($destination);
 
   # Store data in $*puzzle-data admin
-  $cat{$puzzle-count} = %(
+  $cat{$puzzle-id} = %(
     :Filename($unique-name),
     :SourceFile($puzzle-path),
     :Source(''),
@@ -303,16 +308,16 @@ method add-puzzle (
     :PieceCount($info<PieceCount>),
   );
 
-  note "Add new puzzle: $info<Name>, $info<Width> x $info<Height>, ",
-       "$info<PieceCount> pieces";
+  note "Add new puzzle: $puzzle-id, $basename, $info<Name>, $info<Width> x $info<Height>, ", "$info<PieceCount> pieces";
+
   # Convert the image into a smaller one to be displayed on the puzzle table
   run '/usr/bin/convert', "$destination/image.jpg",
       '-resize', '400x400', "$destination/image400.jpg";
 
   self.check-pala-progress-file(
-    $basename, sha1-hex($puzzle-path), $cat{$puzzle-count}
+    $basename, sha1-hex($puzzle-path), $cat{$puzzle-id}
   );
-  self.calculate($cat{$puzzle-count});
+  self.calculate($cat{$puzzle-id});
 
   # Save admin
   self.save-puzzle-admin unless $from-collection;
@@ -388,28 +393,33 @@ method calculate ( Hash $puzzle --> Str ) {
   my Str $collection-path = [~] self.get-pala-collection,
          '/', $collection-filename;
 
-  my $nbr-pieces = $puzzle<PieceCount>;
-  my Bool $get-lines = False;
-  my Hash $piece-coordinates = %();
-  for $collection-path.IO.slurp.lines -> $line {
-    if $line eq '[XYCo-ordinates]' {
-      $get-lines = True;
-      next;
+  my Str $progress = "0.0";
+  if $collection-path.IO.r {
+    my $nbr-pieces = $puzzle<PieceCount>;
+    my Bool $get-lines = False;
+    my Hash $piece-coordinates = %();
+    for $collection-path.IO.slurp.lines -> $line {
+      if $line eq '[XYCo-ordinates]' {
+        $get-lines = True;
+        next;
+      }
+
+      if $get-lines {
+        my Str ( $, $piece-coordinate ) = $line.split('=');
+        $piece-coordinates{$piece-coordinate} //= 0;
+        $piece-coordinates{$piece-coordinate}++;
+      }
     }
 
-    if $get-lines {
-      my Str ( $, $piece-coordinate ) = $line.split('=');
-      $piece-coordinates{$piece-coordinate} //= 0;
-      $piece-coordinates{$piece-coordinate}++;
-    }
+    $progress = (
+      100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0
+    ).fmt('%3.1f');
+
+#note "$?LINE $collection-filename, $progress, $piece-coordinates.elems(), $nbr-pieces";
   }
 
-  my Str $progress = (
-    100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0
-  ).fmt('%3.1f');
   $puzzle<Progress>{self.get-palapeli-preference} = $progress;
 
-note "$?LINE $progress, $piece-coordinates.elems(), $nbr-pieces";
 
   # Save admin
   self.save-puzzle-admin;
@@ -453,6 +463,27 @@ method get-puzzles ( Str $category --> Array ) {
   }
 
   $cat-puzzle-data
+}
+
+#-------------------------------------------------------------------------------
+# Return an array of hashes. Basic info comes from
+# $*puzzle-data<categories>{$category}<members> where info of Image and the
+# index of the puzzle is added.
+method get-puzzle-image ( Str $category --> Str ) {
+
+  my Str $pi;
+  my Hash $cat := $*puzzle-data<categories>{$category}<members>;
+  my Str $puzzle-image;
+
+  loop ( my Int $i = 1; $i < 1000; $i++) {
+    $pi = $i.fmt('p%03d');
+    if ?$cat{$pi} {
+      $puzzle-image = PUZZLE_TABLE_DATA ~ "$category/$pi/image400.jpg";
+      last;
+    }
+  }
+
+  $puzzle-image
 }
 
 #-------------------------------------------------------------------------------
