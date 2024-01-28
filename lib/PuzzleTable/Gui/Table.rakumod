@@ -131,6 +131,7 @@ method clear-table ( Bool :$init = False ) {
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
 
+  self.set-halign(GTK_ALIGN_FILL);
   self.set-hexpand(True);
   self.set-vexpand(True);
   self.set-child($!puzzle-grid);
