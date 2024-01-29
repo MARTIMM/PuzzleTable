@@ -20,27 +20,42 @@ use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::ScrolledWindow:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
-also is Gnome::Gtk4::ComboBoxText;
+#also is Gnome::Gtk4::ComboBoxText;
+also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Statusbar $!statusbar;
+has Gnome::Gtk4::Box $!cat-grid;
+has Str $!current-category;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
   $!table = $!main.table;
-  self.set-active(0);
 
-  self.register-signal( self, 'cat-selected', 'changed');
+  self.set-halign(GTK_ALIGN_FILL);
+  self.set-valign(GTK_ALIGN_FILL);
+#  self.set-hexpand-set(True);
+#  self.set-hexpand(True);
+  self.set-vexpand(True);
+  self.set-propagate-natural-width(True);
+
+  self.set-min-content-width(0);
+  self.set-max-content-width(450);
+
+  self.fill-sidebar;
+#  self.set-active(0);
+#  self.register-signal( self, 'cat-selected', 'changed');
 }
 
 #-------------------------------------------------------------------------------
@@ -122,7 +137,7 @@ method do-category-add (
       else {
         # Add category to list
         $!main.config.add-category( $cat-text.tc, $check-button.get-active);
-        self.renew;
+        self.fill-sidebar;
         $sts-ok = True;
       }
     }
@@ -226,7 +241,7 @@ method do-category-lock (
         elsif $!config.set-category-lockable(
           $combobox.get-active-text, $check-button.get-active.Bool, $pw-text
         ) {
-          self.renew;
+          self.fill-sidebar;
           $sts-ok = True;
         }
 
@@ -343,7 +358,7 @@ method do-category-rename (
       else {
         # Move members to other category
         $!config.move-category( $combobox.get-active-text, $cat-text.tc);
-        self.renew;
+        self.fill-sidebar;
         $sts-ok = True;
       }
     }
@@ -375,8 +390,12 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
   $dialog.destroy;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method renew ( ) {
+  self.fill-sidebar;
+
+#`{{
   # Get current setting first
   my Str $current-cat = self.get-current-category;
 
@@ -395,40 +414,29 @@ method renew ( ) {
   }
 
   self.set-active($idx-current == -1 ?? $idx-default !! $idx-current);
+}}
 }
+}}
 
 #-------------------------------------------------------------------------------
 method get-current-category ( --> Str ) {
-  self.get-active-text // '';
+  $!current-category // '';
 }
-
-#-------------------------------------------------------------------------------
-# Callback to handle selection of a combobox entry.
-method cat-selected ( ) {
-
-  # Get the selected category
-  my Str $cat = self.get-current-category;
-  return unless ?$cat;
-
-  # Clear the puzzletable before showing the puzzles of this category
-  $!table.clear-table;
-
-  # Get the puzzles and send them to the table
-  my Seq $puzzles = $!config.get-puzzles($cat).sort(
-    -> $item1, $item2 { 
-      if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
-      elsif $item1<PieceCount> == $item2<PieceCount> { Order::Same }
-      else { Order::More }
-    }
-  );
-
-  $!table.add-puzzles-to-table($puzzles);
 #`{{
-  for @$puzzles -> $p {
-    $!table.add-puzzle-to-table($p);
-  }
 }}
+
+#`{{
+#-------------------------------------------------------------------------------
+method set-current-category ( Str $category-select ) {
+  my Int ( $idx, $idx-select) = ( 0, -1);
+  for $!config.get-categories(:filter<lockable>) -> $category {
+    $idx-select = $idx if $category eq $category-select;
+    $idx++;
+  }
+
+  self.set-active($idx-select);
 }
+}}
 
 #-------------------------------------------------------------------------------
 method set-cat-lock-info (
@@ -438,4 +446,84 @@ method set-cat-lock-info (
   $check-button.set-active(
     $!config.is-category-lockable($combobox.get-active-text)
   );
+}
+
+#-------------------------------------------------------------------------------
+method fill-sidebar ( ) {
+
+  if ?$!cat-grid and $!cat-grid.is-valid {
+    $!cat-grid.clear-object;
+  }
+
+  with $!cat-grid .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
+    .set-name('sidebar');
+    .set-size-request( 200, 100);
+
+    for $!config.get-categories(:filter<lockable>) -> $category {
+      my Gnome::Gtk4::Button $cat-name .= new-button($category);
+      $!config.set-css(
+        $cat-name.get-style-context, :css-class<sidebar-label>
+      );
+      $cat-name.set-label($category);
+      $cat-name.set-hexpand(True);
+      $cat-name.set-halign(GTK_ALIGN_START);
+      $cat-name.set-has-tooltip(True);
+      $cat-name.register-signal(
+        self, 'show-tooltip', 'query-tooltip', :$category
+      );
+
+      $cat-name.register-signal(
+        self, 'select-category', 'clicked', :$category
+      );
+
+      .append($cat-name);
+    }
+  }
+
+  self.set-child($!cat-grid);
+}
+
+#-------------------------------------------------------------------------------
+method show-tooltip (
+  Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip,
+  Str :$category
+  --> gboolean
+) {
+  my Gnome::Gtk4::Picture $p .= new-picture;
+  $p.set-filename($!config.get-puzzle-image($category));
+  $tooltip.set-custom($p);
+  True
+}
+
+#-------------------------------------------------------------------------------
+# Method to handle a category selection
+method select-category ( Str :$category ) {
+#  $!category.set-current-category($category);
+#  $!category.cat-selected;
+  $!current-category = $category;
+
+  # Get the selected category
+#  my Str $cat = self.get-current-category;
+#  return unless ?$cat;
+
+  # Clear the puzzletable before showing the puzzles of this category
+  $!table.clear-table;
+
+  # Get the puzzles and send them to the table
+  my Seq $puzzles = $!config.get-puzzles($category).sort(
+    -> $item1, $item2 { 
+      if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
+      elsif $item1<PieceCount> == $item2<PieceCount> { Order::Same }
+      else { Order::More }
+    }
+  );
+
+note "$?LINE $category";
+
+  $!table.add-puzzles-to-table($puzzles);
+#`{{
+  for @$puzzles -> $p {
+    $!table.add-puzzle-to-table($p);
+  }
+}}
 }

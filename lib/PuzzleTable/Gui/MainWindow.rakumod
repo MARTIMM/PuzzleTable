@@ -7,7 +7,7 @@ use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
-use PuzzleTable::Gui::Sidebar;
+#use PuzzleTable::Gui::Sidebar;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
@@ -38,7 +38,7 @@ has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Category $.category;
 has PuzzleTable::Gui::Statusbar $.statusbar;
-has PuzzleTable::Gui::Sidebar $!sidebar;
+#has PuzzleTable::Gui::Sidebar $!sidebar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -125,7 +125,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
   $!table .= new-scrolledwindow( :$!config, :$!statusbar) unless ?$!table;
-  $!category .= new-comboboxtext(:main(self)) unless $!category;
+  $!category .= new-scrolledwindow(:main(self)) unless $!category;
 
   my Int $exit-code = 0;
   my Gnome::Gio::ApplicationCommandLine $command-line .= new(
@@ -165,7 +165,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   $!application.activate unless $command-line.get-is-remote;
   $command-line.clear-object;
 
-  $!category.renew;
+  $!category.fill-sidebar;
 
   $exit-code
 }
@@ -187,7 +187,7 @@ method app-shutdown ( ) {
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
 #say 'display table';
-  $!sidebar .= new-scrolledwindow(:main(self));
+#  $!sidebar .= new-scrolledwindow(:main(self));
 
   with $!top-grid .= new-grid {
     $!config.set-css( .get-style-context, :css-class<main-view>);
@@ -195,11 +195,10 @@ method puzzle-table-display ( ) {
     .set-margin-bottom(10);
     .set-margin-start(10);
     .set-margin-end(10);
-    .attach( $!sidebar, 0, 0, 1, 3);
-    # Need a x-width of 3 to press sidebar smaller
-    .attach( $!category, 1, 0, 3, 1);
-    .attach( $!table, 1, 1, 3, 1);
-    .attach( $!statusbar, 1, 2, 3, 1);
+    .attach( $!category, 0, 0, 1, 2);
+#    .attach( $!category, 1, 0, 1, 1);
+    .attach( $!table, 1, 1, 1, 1);
+    .attach( $!statusbar, 1, 2, 1, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {

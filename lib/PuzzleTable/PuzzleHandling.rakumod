@@ -154,7 +154,7 @@ method do-move-puzzles (
           $puzzle-objects.remove($item-pos);
         }
 }}
-        $!cat.cat-selected;
+        $!cat.select-category(:category($current-cat));
         $!config.save-puzzle-admin;
         $puzzle-objects = $!main.table.puzzle-objects;
         $!main.statusbar.set-status(

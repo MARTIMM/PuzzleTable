@@ -55,6 +55,12 @@ has Hash $!current-table-objects;
 submethod BUILD (
   PuzzleTable::Config :$!config, PuzzleTable::Gui::Statusbar :$!statusbar
 ) {
+  self.set-halign(GTK_ALIGN_FILL);
+#  self.set-hexpand(True);
+  self.set-vexpand(True);
+#  self.set-hexpand-set(True);
+  self.set-propagate-natural-width(True);
+
   self.clear-table(:init);
 }
 
@@ -124,16 +130,13 @@ method clear-table ( Bool :$init = False ) {
   with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
     .set-model($!multi-select);
     .set-factory($!signal-factory);
-    .set-min-columns(3);
+    .set-min-columns(5);
     .set-max-columns(10);
     .set-enable-rubberband(True);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
 
-  self.set-halign(GTK_ALIGN_FILL);
-  self.set-hexpand(True);
-  self.set-vexpand(True);
   self.set-child($!puzzle-grid);
 }
 

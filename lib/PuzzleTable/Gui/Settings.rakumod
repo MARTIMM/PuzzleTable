@@ -59,7 +59,7 @@ method settings-unlock-categories ( N-Object $parameter ) {
 method settings-lock-categories ( N-Object $parameter ) {
   say 'lock';
   $!config.lock;
-  $!category.renew;
+  $!category.fill-sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -311,7 +311,7 @@ method do-password-unlock-check (
       else {
         $sts-ok = True;
         $!config.unlock($pw);
-        $!category.renew;
+        $!category.fill-sidebar;
       }
     }
 
