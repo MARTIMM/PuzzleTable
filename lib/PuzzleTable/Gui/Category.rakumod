@@ -466,7 +466,7 @@ method fill-sidebar ( ) {
       );
       $cat-name.set-label($category);
       $cat-name.set-hexpand(True);
-      $cat-name.set-halign(GTK_ALIGN_START);
+      $cat-name.set-halign(GTK_ALIGN_FILL);
       $cat-name.set-has-tooltip(True);
       $cat-name.register-signal(
         self, 'show-tooltip', 'query-tooltip', :$category
@@ -479,8 +479,8 @@ method fill-sidebar ( ) {
       .append($cat-name);
     }
   }
-
   self.set-child($!cat-grid);
+  self.select-category(:category<Default>);
 }
 
 #-------------------------------------------------------------------------------
