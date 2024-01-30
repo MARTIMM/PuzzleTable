@@ -6,6 +6,7 @@ use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::PasswordEntry:api<2>;
 use Gnome::Gtk4::Box:api<2>;
@@ -62,6 +63,7 @@ method settings-lock-categories ( N-Object $parameter ) {
   $!category.fill-sidebar;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method show-dialog-with-old-entry ( ) {
 
@@ -112,6 +114,22 @@ method show-dialog-with-old-entry ( ) {
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
     my $r = .show;
+  }
+}
+}}
+#-------------------------------------------------------------------------------
+method show-dialog-with-old-entry ( ) {
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Password Change Dialog')
+  ) {
+    .add-content(DialogLabel.new( 'Type old password', :$!config));
+    .add-content(
+      my Gnome::Gtk4::PasswordEntry $entry-oldpw .= new-passwordentry
+    );
+
+
+    .add-button( self, 'do-password-check-with-old', 'Change');
+    .add-button( self, 'cancel-change', 'Cancel');
   }
 }
 
