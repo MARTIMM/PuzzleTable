@@ -144,7 +144,7 @@ method clear-table ( Bool :$init = False ) {
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 #say 'setup-object';
 
-  my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
+  my Str $png-file = DATA_DIR ~ 'start-puzzle-64.png';
   with my Gnome::Gtk4::Button $run-palapeli .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($png-file);
@@ -162,10 +162,27 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
   }
 
+  $png-file = DATA_DIR ~ 'edit-puzzle-64.png';
+  with my Gnome::Gtk4::Button $edit-palapeli .= new-button {
+    my Gnome::Gtk4::Picture $p .= new-picture;
+    $p.set-filename($png-file);
+    .set-child($p);
+
+    .set-valign(GTK_ALIGN_START);
+    .set-size-request( 64, 64);
+
+    .set-has-tooltip(True);
+    .register-signal(
+      self, 'show-tooltip', 'query-tooltip',
+      :tip('Edit some texts of this puzzle')
+    );
+  }
+
   with my Gnome::Gtk4::Box $button-box .= new-box(
     GTK_ORIENTATION_VERTICAL, 2
   ) {
     .append($run-palapeli);
+    .append($edit-palapeli);
   }
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
@@ -226,14 +243,16 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     my Gnome::Gtk4::ProgressBar() $progress-bar = .get-child-at( 0, 5);
     my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 6);
 
-#Gnome::N::debug(:on);
-#note "register click";
     my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
     $run-palapeli.register-signal(
       self, 'run-palapeli', 'clicked', :$object, :$label-progress,
       :$progress-bar
     );
-#Gnome::N::debug(:off);
+
+    my Gnome::Gtk4::Button() $edit-palapeli = $run-palapeli.get-next-sibling;
+    $edit-palapeli.register-signal(
+      self, 'edit-palapeli', 'clicked', :$object
+    );
 
     $image.set-filename($object<Image>);
     $label-comment.set-text($object<Comment>);
@@ -352,6 +371,12 @@ method selection-changed ( guint $position, guint $n-items ) {
   $!statusbar.set-status($msg);
 }
 
+#-------------------------------------------------------------------------------
+method edit-palapeli ( Hash :$object ) {
+  note "edit puzzle";
+
+  
+}
 
 =finish
 #-------------------------------------------------------------------------------

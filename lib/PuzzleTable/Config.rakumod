@@ -30,8 +30,10 @@ has Array $.options = [<
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
 
-  my Str $png-file = DATA_DIR ~ 'icons8-run-64.png';
-  %?RESOURCES<icons8-run-64.png>.copy($png-file) unless $png-file.IO.e;
+  my Str $png-file = DATA_DIR ~ 'start-puzzle-64.png';
+  %?RESOURCES<start-puzzle-64.png>.copy($png-file) unless $png-file.IO.e;
+  $png-file = DATA_DIR ~ 'edit-puzzle-64.png';
+  %?RESOURCES<edit-puzzle-64.png>.copy($png-file) unless $png-file.IO.e;
 
   my Str $css-file = DATA_DIR ~ 'puzzle-data.css';
   %?RESOURCES<puzzle-data.css>.copy($css-file);
