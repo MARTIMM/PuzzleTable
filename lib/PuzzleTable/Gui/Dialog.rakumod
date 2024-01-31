@@ -12,8 +12,9 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::Label:api<2>;
-use Gnome::Gtk4::Enums:api<2>;
-use Gnome::Gtk4::Window:api<2>;
+use Gnome::Gtk4::T-Enums:api<2>;
+
+use Gnome::Glib::N-MainLoop:api<2>;
 
 
 #-------------------------------------------------------------------------------
@@ -21,12 +22,12 @@ unit class PuzzleTable::Gui::Dialog:auth<github:MARTIMM>;
 also is Gnome::Gtk4::Window;
 
 has $!main is required;
-has PuzzleTable::Config $!config;
 has Gnome::Gtk4::Grid $!content;
-has Gnome::Gtk4::Box $!button-row;
+has Int $!content-count;
 
-has PuzzleTable::Gui::Category $!cat;
+has Gnome::Gtk4::Box $!button-row;
 has PuzzleTable::Gui::Statusbar $!statusbar;
+has Gnome::Glib::N-MainLoop $!main-loop;
 
 #-------------------------------------------------------------------------------
 method new ( |c ) {
@@ -36,44 +37,60 @@ method new ( |c ) {
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main, Str :$dialog-header? ) {
-  $!config = $!main.config;
-  $!cat = $!main.category;
 
-  my Gnome::Gtk4::Label $header .= new-label($!dialog-header);
+  $!main-loop .= new-mainloop;
+
+  $!content-count = 0;
   $!content .= new-grid;
 
   $!button-row .= new-box( GTK_ORIENTATION_HORIZONTAL, 4);
-  with my Gnome::Gtk4::Label $!button-row-strut .= new-label('') {
-    self.set-halign(GTK_ALIGN_FILL);
-    self.set-hexpand(True);
+  with my Gnome::Gtk4::Label $button-row-strut .= new-label(' ') {
+    .set-halign(GTK_ALIGN_FILL);
+    .set-hexpand(True);
+    .set-wrap(False);
   }
-  $!button-row.append($!button-row-strut);
+  $!button-row.append($button-row-strut);
 
   $!statusbar .= new-statusbar(:context<dialog>);
 
-  with my $grid .= new-grid {
-    .attach( $header,      0, 0, 1, 1);
-    .attach( $!content,    0, 1, 1, 1);
-    .attach( $!button-row, 0, 2, 1, 1);
-    .attach( $!statusbar,  0, 3, 1, 1);
+  my Gnome::Gtk4::Label $header .= new-label($dialog-header);
+  with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
+    .append($header);
+    .append($!content);
+    .append($!button-row);
+    .append($!statusbar);
   }
 
-  self.register-signal( self, 'close-dialog', 'destroy');
-  self.set-request-size( 300, 100);
-  self.set-title($!dialog-header);
-  self.set-child($grid);
+  with self {
+    $!main.config.set-css( .get-style-context, :css-class<puzzle-dialog>);
+    .set-transient-for($!main.application-window);
+    .set-destroy-with-parent(True);
+    .set-modal(True);
+    .set-size-request( 300, 100);
+    .set-title($dialog-header);
+    .register-signal( self, 'close-dialog', 'destroy');
+    .set-child($box);
+  }
 }
 
 #-------------------------------------------------------------------------------
-method add-content ( Mu $widget, Int $row, Int $col, Int $width, Int $height ) {
-  $!content( $widget, $row, $col, $width, $height);
+method add-content ( Str $text, Mu $widget ) {
+  with my Gnome::Gtk4::Label $label .= new-label($text) {
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_START);
+    .set-margin-end(5);
+  }
+
+  $!content.attach( $label, 0, $!content-count, 1, 1);
+  $!content.attach( $widget, 1, $!content-count, 1, 1);
+  $!content-count++;
 }
 
 #-------------------------------------------------------------------------------
-method add-button ( $object, Str $method, Str $label, *%options ) {
+method add-button ( Mu $object, Str $method, Str $button-label, *%options ) {
   my Gnome::Gtk4::Button $button .= new-button;
-  $button.set-label($label);
-  $button.register-signal( $object, $method, 'clicked', *%options);
+  $button.set-label($button-label);
+  $button.register-signal( $object, $method, 'clicked', |%options);
   $!button-row.append($button);
 }
 
@@ -88,14 +105,15 @@ method set-status ( Str $message ) {
   $!statusbar.set-status($message);
 }
 
-#`{{
 #-------------------------------------------------------------------------------
-method get-content ( Int $row, Int $col, Int $width, Int $height --> N-Object) {
-  $!content.get-child-at( $row, $col, $width, $height);
+method show-dialog ( ) {
+  self.show;
+  $!main-loop.run;
 }
-}}
 
 #-------------------------------------------------------------------------------
-method close-dialog ( ) {
+method destroy-dialog ( ) {
+  $!main-loop.quit;
+  self.destroy;
   self.clear-object;
 }

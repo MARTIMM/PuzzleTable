@@ -122,17 +122,65 @@ method show-dialog-with-old-entry ( ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Password Change Dialog')
   ) {
-    .add-content(DialogLabel.new( 'Type old password', :$!config));
     .add-content(
+      'Type old password',
       my Gnome::Gtk4::PasswordEntry $entry-oldpw .= new-passwordentry
     );
 
+    .add-content(
+      'Type new password',
+      my Gnome::Gtk4::PasswordEntry $entry-newpw .= new-passwordentry
+    );
 
-    .add-button( self, 'do-password-check-with-old', 'Change');
-    .add-button( self, 'cancel-change', 'Cancel');
+    .add-content(
+      'Repeat new password',
+      my Gnome::Gtk4::PasswordEntry $entry-reppw .= new-passwordentry
+    );
+
+    .add-button(
+      self, 'do-password-check-with-old', 'Change',
+      :$entry-oldpw, :$entry-newpw, :$entry-reppw, :$dialog
+    );
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+
+    .show-dialog;
   }
 }
 
+#-------------------------------------------------------------------------------
+method do-password-check-with-old (
+  PuzzleTable::Gui::Dialog :$dialog,
+  Gnome::Gtk4::PasswordEntry :$entry-oldpw,
+  Gnome::Gtk4::PasswordEntry :$entry-newpw,
+  Gnome::Gtk4::PasswordEntry :$entry-reppw
+) {
+#Gnome::N::debug(:on);
+
+  my Bool $sts-ok = False;
+#  while !$sts-ok {
+    my Str $opw = $entry-oldpw.get-text;
+    my Str $npw = $entry-newpw.get-text;
+    my Str $rpw = $entry-reppw.get-text;
+
+    if $npw ne $rpw {
+      $dialog.set-status('New password not equal to repeated one');
+    }
+
+    # If returned False, the password is not set
+    elsif !$!config.set-password( $opw, $npw) {
+      $dialog.set-status('Old password does not match');
+    }
+
+    else {
+      $sts-ok = True;
+    }
+#  }
+
+  $dialog.destroy-dialog if $sts-ok;
+#Gnome::N::debug(:off);
+}
+
+#`{{
 #-------------------------------------------------------------------------------
 method do-password-check-with-old (
   Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
@@ -176,6 +224,7 @@ method do-password-check-with-old (
 
   $dialog.destroy if $sts-ok;
 }
+}}
 
 #-------------------------------------------------------------------------------
 method show-dialog-first-entry ( ) {
