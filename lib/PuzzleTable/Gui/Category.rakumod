@@ -501,6 +501,8 @@ method select-category ( Str :$category ) {
 #  $!category.set-current-category($category);
 #  $!category.cat-selected;
   $!current-category = $category;
+  $!main.application-window.set-title("Puzzle Table Display - $category")
+    if ?$!main.application-window;
 
   # Get the selected category
 #  my Str $cat = self.get-current-category;
