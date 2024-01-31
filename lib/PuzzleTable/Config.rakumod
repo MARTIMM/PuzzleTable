@@ -77,11 +77,12 @@ method check-password ( Str $password --> Bool ) {
 
 #-------------------------------------------------------------------------------
 method set-password ( Str $old-password, Str $new-password --> Bool ) {
-  my Bool $is-set;
+  my Bool $is-set = False;
 
   # Throw an error if called with an empty string while there is a password set
-  die 'Coding error, password is available yet old password is empty'
-    if $old-password eq '' and ?self.get-password;
+  #die 'Coding error, password is available yet old password is empty'
+  #  if $old-password eq '' and ?self.get-password;
+  return $is-set if $old-password eq '' and ?self.get-password;
 
   # Check if old password matches before a new one is set
   $*puzzle-data<settings><password> = sha1-hex($new-password)
