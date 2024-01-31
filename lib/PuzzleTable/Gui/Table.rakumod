@@ -375,7 +375,7 @@ method selection-changed ( guint $position, guint $n-items ) {
 method edit-palapeli ( Hash :$object ) {
   note "edit puzzle";
 
-  
+
 }
 
 =finish
