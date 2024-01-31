@@ -208,8 +208,8 @@ method puzzle-table-display ( ) {
     $!config.set-css(.get-style-context);
 
     .set-show-menubar(True);
-    .set-title('Puzzle Table Display');
-    .set-size-request( 1500, 600);
+    .set-title('Puzzle Table Display - Default');
+    .set-size-request( 1700, 1000);
     .set-child($!top-grid);
     .show;
   }
