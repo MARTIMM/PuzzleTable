@@ -124,7 +124,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
-  $!table .= new-scrolledwindow( :$!config, :$!statusbar) unless ?$!table;
+  $!table .= new-scrolledwindow(:main(self)) unless ?$!table;
   $!category .= new-scrolledwindow(:main(self)) unless $!category;
 
   my Int $exit-code = 0;
@@ -204,14 +204,14 @@ method puzzle-table-display ( ) {
   with $!application-window .= new-applicationwindow($!application) {
     my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
     $!application.set-menubar($menu-bar.bar);
+    $!config.set-css( .get-style-context, :css-class<main-puzzle-table>);
 
-    $!config.set-css(.get-style-context);
-
+    .register-signal( self, 'quit-application', 'destroy');
     .set-show-menubar(True);
     .set-title('Puzzle Table Display - Default');
     .set-size-request( 1700, 1000);
     .set-child($!top-grid);
-    .show;
+    .set-visible(True);
   }
 }
 
@@ -229,6 +229,11 @@ method go-ahead ( ) {
   my $argv = CArray[Str].new($arg_arr);
 
   $!application.run( $argc, $argv);
+}
+
+#-------------------------------------------------------------------------------
+method quit-application ( ) {
+  $!application.quit;
 }
 
 #-------------------------------------------------------------------------------
