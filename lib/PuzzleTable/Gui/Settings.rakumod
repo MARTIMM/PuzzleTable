@@ -154,30 +154,26 @@ method do-password-check-with-old (
   Gnome::Gtk4::PasswordEntry :$entry-newpw,
   Gnome::Gtk4::PasswordEntry :$entry-reppw
 ) {
-#Gnome::N::debug(:on);
 
   my Bool $sts-ok = False;
-#  while !$sts-ok {
-    my Str $opw = $entry-oldpw.get-text;
-    my Str $npw = $entry-newpw.get-text;
-    my Str $rpw = $entry-reppw.get-text;
+  my Str $opw = $entry-oldpw.get-text;
+  my Str $npw = $entry-newpw.get-text;
+  my Str $rpw = $entry-reppw.get-text;
 
-    if $npw ne $rpw {
-      $dialog.set-status('New password not equal to repeated one');
-    }
+  if $npw ne $rpw {
+    $dialog.set-status('New password not equal to repeated one');
+  }
 
-    # If returned False, the password is not set
-    elsif !$!config.set-password( $opw, $npw) {
-      $dialog.set-status('Old password does not match');
-    }
+  # If returned False, the password is not set
+  elsif !$!config.set-password( $opw, $npw) {
+    $dialog.set-status('Old password does not match');
+  }
 
-    else {
-      $sts-ok = True;
-    }
-#  }
+  else {
+    $sts-ok = True;
+  }
 
   $dialog.destroy-dialog if $sts-ok;
-#Gnome::N::debug(:off);
 }
 
 #`{{
