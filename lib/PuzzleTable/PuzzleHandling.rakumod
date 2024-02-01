@@ -2,7 +2,6 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Table;
-use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Statusbar;
 
@@ -27,18 +26,11 @@ unit class PuzzleTable::PuzzleHandling:auth<github:MARTIMM>;
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
-has PuzzleTable::Gui::Category $!cat;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 
-#has Gnome::Gtk4::MultiSelection $!multi-select;
-#has Gnome::Gtk4::StringList $!string-list;
-
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main, PuzzleTable::Gui::Category :$!cat ) {
+submethod BUILD ( :$!main ) {
   $!config = $!main.config;
-#  $!multi-select := $!main.table.multi-select;
-#  $!string-list := $!main.table.string-list;
-#  note "BUILD, ", $!multi-select.gist;
 }
 
 #-------------------------------------------------------------------------------
@@ -123,7 +115,7 @@ method do-move-puzzles (
     }
 
     when GTK_RESPONSE_ACCEPT {
-      my Str $current-cat = $!cat.get-current-category;
+      my Str $current-cat = $!main.category.get-current-category;
       my Str $dest-cat = $combobox.get-active-text;
       if $current-cat eq $dest-cat {
         $!statusbar.set-status('Selected category is same as current');
@@ -154,7 +146,7 @@ method do-move-puzzles (
           $puzzle-objects.remove($item-pos);
         }
 }}
-        $!cat.select-category(:category($current-cat));
+        $!main.category.select-category(:category($current-cat));
         $!config.save-puzzle-admin;
         $puzzle-objects = $!main.table.puzzle-objects;
         $!main.statusbar.set-status(
