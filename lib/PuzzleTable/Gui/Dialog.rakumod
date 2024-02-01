@@ -36,29 +36,34 @@ method new ( |c ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main, Str :$dialog-header? ) {
-
+submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
+note "$?LINE $dialog-header";
   $!main-loop .= new-mainloop;
 
   $!content-count = 0;
   $!content .= new-grid;
 
   $!button-row .= new-box( GTK_ORIENTATION_HORIZONTAL, 4);
-  with my Gnome::Gtk4::Label $button-row-strut .= new-label(' ') {
+  with my Gnome::Gtk4::Label $button-row-strut .= new-label {
+    .set-text(' ');
     .set-halign(GTK_ALIGN_FILL);
     .set-hexpand(True);
     .set-wrap(False);
+    .set-visible(True);
   }
   $!button-row.append($button-row-strut);
 
   $!statusbar .= new-statusbar(:context<dialog>);
 
-  my Gnome::Gtk4::Label $header .= new-label($dialog-header);
+  my Gnome::Gtk4::Label $header .= new-label;
+  $header.set-text($dialog-header);
+note "$?LINE $header.get-text()";
   with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
     .append($header);
     .append($!content);
     .append($!button-row);
     .append($!statusbar);
+    .set-visible(True);
   }
 
   with self {
@@ -66,7 +71,7 @@ submethod BUILD ( :$!main, Str :$dialog-header? ) {
     .set-transient-for($!main.application-window);
     .set-destroy-with-parent(True);
     .set-modal(True);
-    .set-size-request( 300, 100);
+    .set-size-request( 400, 100);
     .set-title($dialog-header);
     .register-signal( self, 'close-dialog', 'destroy');
     .set-child($box);
@@ -75,7 +80,8 @@ submethod BUILD ( :$!main, Str :$dialog-header? ) {
 
 #-------------------------------------------------------------------------------
 method add-content ( Str $text, Mu $widget ) {
-  with my Gnome::Gtk4::Label $label .= new-label($text) {
+  with my Gnome::Gtk4::Label $label .= new-label {
+    .set-text($text);
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_START);
     .set-margin-end(5);
@@ -107,7 +113,7 @@ method set-status ( Str $message ) {
 
 #-------------------------------------------------------------------------------
 method show-dialog ( ) {
-  self.show;
+  self.set-visible(True);
   $!main-loop.run;
 }
 
