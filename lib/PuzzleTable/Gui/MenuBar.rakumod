@@ -32,7 +32,7 @@ has PuzzleTable::Gui::Settings $!set;
 submethod BUILD ( :$!main ) {
   $!application = $!main.application;
   $!cat = $!main.category;
-  $!phandling .= new( :$!main, :$!cat);
+  $!phandling .= new(:$!main);
   $!set .= new(:$!main);
 
   $!bar .= new-menu;
