@@ -9,12 +9,14 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Statusbar;
-use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::DialogLabel;
 
 use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::PasswordEntry:api<2>;
+use Gnome::Gtk4::Picture:api<2>;
+use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
+use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
@@ -27,12 +29,10 @@ use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
-#also is Gnome::Gtk4::ComboBoxText;
 also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 has Gnome::Gtk4::Box $!cat-grid;
 has Str $!current-category;
@@ -41,12 +41,9 @@ has Str $!current-category;
 # Initialize from main page
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
-  $!table = $!main.table;
 
   self.set-halign(GTK_ALIGN_FILL);
   self.set-valign(GTK_ALIGN_FILL);
-#  self.set-hexpand-set(True);
-#  self.set-hexpand(True);
   self.set-vexpand(True);
   self.set-propagate-natural-width(True);
 
@@ -54,14 +51,11 @@ submethod BUILD ( :$!main ) {
   self.set-max-content-width(450);
 
   self.fill-sidebar;
-#  self.set-active(0);
-#  self.register-signal( self, 'cat-selected', 'changed');
 }
 
 #-------------------------------------------------------------------------------
 # Select from menu to add a category
 method categories-add-category ( N-Object $parameter ) {
-#  say 'category add';
 
   my DialogLabel $label .= new( 'Specify a new category', :$!config);
   my Gnome::Gtk4::Entry $entry .= new-entry;
@@ -509,7 +503,7 @@ method select-category ( Str :$category ) {
 #  return unless ?$cat;
 
   # Clear the puzzletable before showing the puzzles of this category
-  $!table.clear-table;
+  $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
   my Seq $puzzles = $!config.get-puzzles($category).sort(
@@ -522,7 +516,7 @@ method select-category ( Str :$category ) {
 
 note "$?LINE $category";
 
-  $!table.add-puzzles-to-table($puzzles);
+  $!main.table.add-puzzles-to-table($puzzles);
 #`{{
   for @$puzzles -> $p {
     $!table.add-puzzle-to-table($p);
