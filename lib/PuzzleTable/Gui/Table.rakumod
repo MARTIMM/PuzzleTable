@@ -4,7 +4,7 @@ use NativeCall;
 use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::TableItemLabel;
-use PuzzleTable::Gui::Statusbar;
+use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::GridView:api<2>;
 use Gnome::Gtk4::MultiSelection:api<2>;
@@ -15,6 +15,7 @@ use Gnome::Gtk4::StringList:api<2>;
 use Gnome::Gtk4::StringObject:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Label:api<2>;
+use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
@@ -39,26 +40,27 @@ Another important requirement for views is that they need to know which items ar
 unit class PuzzleTable::Gui::Table:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ScrolledWindow;
 
+has $!main is required;
 has PuzzleTable::Config $!config;
+#has PuzzleTable::Gui::Statusbar $!statusbar;
 
 has Gnome::Gtk4::StringList $.puzzle-objects;
 has Gnome::Gtk4::MultiSelection $.multi-select;
 #has Gnome::Gtk4::SingleSelection $!single-select;
 has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
 has Gnome::Gtk4::GridView $!puzzle-grid;
-has PuzzleTable::Gui::Statusbar $!statusbar;
 
 # The objects from the current selected category
 has Hash $!current-table-objects;
 
 #-------------------------------------------------------------------------------
-submethod BUILD (
-  PuzzleTable::Config :$!config, PuzzleTable::Gui::Statusbar :$!statusbar
-) {
+submethod BUILD ( :$!main ) {
+  $!config = $!main.config;
+
   self.set-halign(GTK_ALIGN_FILL);
 #  self.set-hexpand(True);
-  self.set-vexpand(True);
 #  self.set-hexpand-set(True);
+  self.set-vexpand(True);
   self.set-propagate-natural-width(True);
 
   self.clear-table(:init);
@@ -76,8 +78,10 @@ method add-puzzle-to-table ( Hash $object ) {
   $!current-table-objects{$index} = $object;
   $!puzzle-objects.append($index);
 
-  $!statusbar.remove-message;
-  $!statusbar.set-status("Number of puzzles: " ~ $!puzzle-objects.get-n-items);
+  $!main.statusbar.remove-message;
+  $!main.statusbar.set-status(
+    "Number of puzzles: " ~ $!puzzle-objects.get-n-items
+  );
 }
 
 #-------------------------------------------------------------------------------
@@ -98,8 +102,10 @@ method add-puzzles-to-table ( Seq $objects ) {
   my $is = CArray[Str].new( |$indices, Str);
   $!puzzle-objects.splice( 0, 0, $is);
 
-  $!statusbar.remove-message;
-  $!statusbar.set-status("Number of puzzles: " ~ $!puzzle-objects.get-n-items);
+  $!main.statusbar.remove-message;
+  $!main.statusbar.set-status(
+    "Number of puzzles: " ~ $!puzzle-objects.get-n-items
+  );
 }
 
 #-------------------------------------------------------------------------------
@@ -308,8 +314,8 @@ method run-palapeli (
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
 #note "\n$?LINE $puzzle-path\n$exec";
 
-  $!statusbar.remove-message;
-  $!statusbar.set-status("$exec '$puzzle-path'");
+  $!main.statusbar.remove-message;
+  $!main.statusbar.set-status("$exec '$puzzle-path'");
 
   # Start playing the puzzle
   shell "$exec '$puzzle-path'";
@@ -367,15 +373,39 @@ method selection-changed ( guint $position, guint $n-items ) {
     $msg ~= " $bitset.get-nth($i)";
   }
 
-  $!statusbar.remove-message;
-  $!statusbar.set-status($msg);
+  $!main.statusbar.remove-message;
+  $!main.statusbar.set-status($msg);
 }
 
 #-------------------------------------------------------------------------------
 method edit-palapeli ( Hash :$object ) {
-  note "edit puzzle";
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Edit Puzzle Info Dialog')
+  ) {
+    .add-content( 'Title', my Gnome::Gtk4::Entry $comment .= new-entry);
+    $comment.set-text($object<Comment>);
+    .add-content( 'Source', my Gnome::Gtk4::Entry $source .= new-entry);
+    $source.set-text($object<Source>);
 
+    .add-button(
+      self, 'do-store-puzzle-info', 'Change Text',
+      :$comment, :$source, :$dialog, :$object
+    );
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
 
+    .show-dialog;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method do-store-puzzle-info (
+  PuzzleTable::Gui::Dialog :$dialog, Hash :$object,
+  Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source
+) {
+  $!main.config.store-puzzle-info(
+    $object, $comment.get-text, $source.get-text
+  );
+  $dialog.destroy-dialog;
 }
 
 =finish

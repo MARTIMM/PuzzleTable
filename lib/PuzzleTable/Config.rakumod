@@ -420,11 +420,21 @@ method calculate ( Hash $puzzle --> Str ) {
 
   $puzzle<Progress>{self.get-palapeli-preference} = $progress;
 
-
   # Save admin
   self.save-puzzle-admin;
 
   $progress
+}
+
+#-------------------------------------------------------------------------------
+method store-puzzle-info( $object, $comment, $source) {
+note "$?LINE store $comment, $source on $object<Puzzle-index> of $object<Category>";
+  my Hash $puzzle = $*puzzle-data<categories>{
+    $object<Category>
+  }<members>{$object<Puzzle-index>};
+  $puzzle<Comment> = $comment;
+  $puzzle<Source> = $source;
+  self.save-puzzle-admin;
 }
 
 #-------------------------------------------------------------------------------
