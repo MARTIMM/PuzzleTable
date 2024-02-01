@@ -4,6 +4,10 @@
   background-color: #dfdfdf;
 }
 
+.main-puzzle-table {
+  background-color: #dfdfdf;
+}
+
 #password-dialog {
   background-color: #b0b0b0;
 }
@@ -97,7 +101,7 @@ progressbar > trough > progress {
 }
 
 .table-item-comment {
-  background-color: rgba(0, 0, 0, 0);
+  background-color: rgba(108, 5, 5, 1);
   color: white;
   padding: 0px;
   margin-left: 0px;
