@@ -37,7 +37,6 @@ method new ( |c ) {
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
-note "$?LINE $dialog-header";
   $!main-loop .= new-mainloop;
 
   $!content-count = 0;
@@ -57,7 +56,6 @@ note "$?LINE $dialog-header";
 
   my Gnome::Gtk4::Label $header .= new-label;
   $header.set-text($dialog-header);
-note "$?LINE $header.get-text()";
   with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
     .append($header);
     .append($!content);
