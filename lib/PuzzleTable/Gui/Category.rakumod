@@ -492,15 +492,9 @@ method show-tooltip (
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category ( Str :$category ) {
-#  $!category.set-current-category($category);
-#  $!category.cat-selected;
   $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
-
-  # Get the selected category
-#  my Str $cat = self.get-current-category;
-#  return unless ?$cat;
 
   # Clear the puzzletable before showing the puzzles of this category
   $!main.table.clear-table;
@@ -514,12 +508,5 @@ method select-category ( Str :$category ) {
     }
   );
 
-note "$?LINE $category";
-
   $!main.table.add-puzzles-to-table($puzzles);
-#`{{
-  for @$puzzles -> $p {
-    $!table.add-puzzle-to-table($p);
-  }
-}}
 }
