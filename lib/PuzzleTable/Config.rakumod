@@ -99,6 +99,7 @@ method is-category-lockable ( Str:D $category --> Bool ) {
 #-------------------------------------------------------------------------------
 method set-category-lockable ( Str:D $category, Bool:D $lockable ) {
   $*puzzle-data<categories>{$category}<lockable> = $lockable;
+  self.save-puzzle-admin;
 }
 
 #-------------------------------------------------------------------------------
