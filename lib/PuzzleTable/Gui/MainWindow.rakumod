@@ -73,7 +73,7 @@ submethod BUILD ( ) {
 
   # Now we can register the application.
   my $e = CArray[N-Error].new(N-Error);
-  note 'register: ', $!application.register( N-Object, $e);
+  $!application.register( N-Object, $e);
   die $e[0].message if ?$e[0];
 }
 
