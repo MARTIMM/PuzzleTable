@@ -283,7 +283,8 @@ method categories-rename-category ( N-Object $parameter ) {
   $!statusbar .= new-statusbar(:context<categories>);
 
   # Fill the combobox in the dialog
-  for $!config.get-categories(:filter<default>) -> $category {
+  for $!config.get-categories(:filter<lockable>) -> $category {
+    next if $category eq 'Default';
     $combobox.append-text($category);
   }
   $combobox.set-active(0);
