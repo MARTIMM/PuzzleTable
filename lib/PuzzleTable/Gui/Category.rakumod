@@ -149,9 +149,11 @@ method do-category-add (
 method categories-lock-category ( N-Object $parameter ) {
 
   my DialogLabel $ul-label .= new( 'Lock or unlock category', :$!config);
-  my DialogLabel $pw-label .= new( 'Type password to change', :$!config);
-  my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
-  my Gnome::Gtk4::PasswordEntry $pw-entry .= new-passwordentry;
+#  my DialogLabel $pw-label .= new( 'Type password to change', :$!config);
+  my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
+    'Lock or unlock category'
+  );
+#  my Gnome::Gtk4::PasswordEntry $pw-entry .= new-passwordentry;
   $check-button.set-active(False);
 
   my Gnome::Gtk4::ComboBoxText $combobox .= new-comboboxtext;
@@ -161,8 +163,11 @@ method categories-lock-category ( N-Object $parameter ) {
 
   $!statusbar .= new-statusbar(:context<category>);
 
-  # Fill the combobox in the dialog
-  for $!config.get-categories(:filter<default>) -> $category {
+  # Fill the combobox in the dialog. Using this filter, it isn't necessary to
+  # check passwords. One is already authenticated or not.
+  for $!config.get-categories(:filter<lockable>) -> $category {
+    # skip 'default'
+    next if $category eq 'Default';
     $combobox.append-text($category);
   }
   $combobox.set-active(0);
@@ -183,21 +188,21 @@ method categories-lock-category ( N-Object $parameter ) {
     .set-margin-start(10);
     .set-margin-end(10);
     .append($combobox);
-    .append($ul-label);
+#    .append($ul-label);
     .append($check-button);
     
     # Only ask for password if puzzletable is locked
-    if $!config.is-locked {
-      .append($pw-label);
-      .append($pw-entry);
-    }
+#    if $!config.is-locked {
+#      .append($pw-label);
+#      .append($pw-entry);
+#    }
     .append($!statusbar);
   }
 
   with $dialog {
     .set-size-request( 400, 100);
     .register-signal(
-       self, 'do-category-lock', 'response', :$pw-entry,
+       self, 'do-category-lock', 'response', #, :$pw-entry,
        :$check-button, :$combobox
     );
     .register-signal( self, 'destroy-dialog', 'destroy');
@@ -210,7 +215,7 @@ method categories-lock-category ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-lock (
   Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
-  Gnome::Gtk4::PasswordEntry :$pw-entry,
+#  Gnome::Gtk4::PasswordEntry :$pw-entry,
   Gnome::Gtk4::CheckButton :$check-button,
   Gnome::Gtk4::ComboBox :$combobox
 ) {
@@ -225,6 +230,7 @@ method do-category-lock (
     }
 
     when GTK_RESPONSE_ACCEPT {
+#`{{
       if $!config.is-locked {
         my Str $pw-text = $pw-entry.get-text.tc;
         if ! $!config.check-password($pw-text) {
@@ -245,11 +251,16 @@ method do-category-lock (
       }
 
       else {
+}}
         $!config.set-category-lockable(
-          $combobox.get-active-text, $check-button.get-active.Bool, Str
+          $combobox.get-active-text, $check-button.get-active.Bool
         );
+
+        # Sidebar changes when a category is set lockable and table is locked
+        self.fill-sidebar
+          if $check-button.get-active.Bool and $!config.is-locked;
         $sts-ok = True;
-      }
+#      }
     }
 
     when GTK_RESPONSE_CANCEL {

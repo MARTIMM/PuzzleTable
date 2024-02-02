@@ -97,14 +97,8 @@ method is-category-lockable ( Str:D $category --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-category-lockable (
-  Str:D $category, Bool:D $lockable, Str $password --> Bool
-) {
-  my Bool $ok;
-  $*puzzle-data<categories>{$category}<lockable> = $lockable
-    if $ok = (not self.is-locked() or self.check-password($password));
-
-  $ok
+method set-category-lockable ( Str:D $category, Bool:D $lockable ) {
+  $*puzzle-data<categories>{$category}<lockable> = $lockable;
 }
 
 #-------------------------------------------------------------------------------
