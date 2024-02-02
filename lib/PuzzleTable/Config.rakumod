@@ -255,14 +255,12 @@ method move-category ( $cat-from, $cat-to ) {
 method add-puzzle (
   Str:D $category, Str:D $puzzle-path, Bool :$from-collection = False
 ) {
-say "\n", 'add puzzle';
   # Get source file info
   my Str $basename = $puzzle-path.IO.basename;
 
   # Check if source file is copied before
   my Hash $cat := $*puzzle-data<categories>{$category}<members>;
   for $cat.keys -> $puzzle-id {
-note "$?LINE $puzzle-id $cat{$puzzle-id}<SourceFile>.IO.basename()";
     if $puzzle-path eq $cat{$puzzle-id}<SourceFile> {
       note "Puzzle $puzzle-id '$basename' already added in category '$category'";
       self.check-pala-progress-file(
@@ -377,8 +375,6 @@ method check-pala-progress-file (
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
 method calculate-progress ( Hash $object --> Str) {
-#note "$?LINE $object.gist()";
-
   self.calculate(
     $*puzzle-data<categories>{$object<Category>}<members>{$object<Puzzle-index>}
   )
@@ -414,8 +410,6 @@ method calculate ( Hash $puzzle --> Str ) {
     $progress = (
       100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0
     ).fmt('%3.1f');
-
-#note "$?LINE $collection-filename, $progress, $piece-coordinates.elems(), $nbr-pieces";
   }
 
   $puzzle<Progress>{self.get-palapeli-preference} = $progress;
@@ -428,7 +422,6 @@ method calculate ( Hash $puzzle --> Str ) {
 
 #-------------------------------------------------------------------------------
 method store-puzzle-info( $object, $comment, $source) {
-note "$?LINE store $comment, $source on $object<Puzzle-index> of $object<Category>";
   my Hash $puzzle = $*puzzle-data<categories>{
     $object<Category>
   }<members>{$object<Puzzle-index>};
@@ -518,8 +511,6 @@ method get-pala-puzzles ( Str $category, Str $pala-collection-path) {
 
 #-------------------------------------------------------------------------------
 method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
-note "$?LINE $puzzle-id: $from-cat -> $to-cat";
-
   for 1..999 -> $count {
     my Str $p-id = $count.fmt('p%03d');
     next if $*puzzle-data<categories>{$to-cat}<members>{$p-id}:exists;
@@ -527,9 +518,9 @@ note "$?LINE $puzzle-id: $from-cat -> $to-cat";
     my Hash $puzzle =
       $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
     $*puzzle-data<categories>{$to-cat}<members>{$p-id} = $puzzle;
+
     my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
     my Str $to-dir = [~] PUZZLE_TABLE_DATA, $to-cat, '/', $p-id;
-#note "$?LINE $from-dir -> $to-dir";
     $from-dir.IO.rename( $to-dir, :createonly);
 
     # Puzzle is moved to other category spot
