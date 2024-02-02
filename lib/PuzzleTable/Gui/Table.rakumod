@@ -110,7 +110,6 @@ method add-puzzles-to-table ( Seq $objects ) {
 
 #-------------------------------------------------------------------------------
 method clear-table ( Bool :$init = False ) {
-#note "$?LINE clear-table";
   $!current-table-objects = %();
 
   unless $init {
@@ -257,7 +256,8 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
     my Gnome::Gtk4::Button() $edit-palapeli = $run-palapeli.get-next-sibling;
     $edit-palapeli.register-signal(
-      self, 'edit-palapeli', 'clicked', :$object
+      self, 'edit-palapeli', 'clicked', :$object,
+      :$label-comment, :$label-source
     );
 
     $image.set-filename($object<Image>);
@@ -287,9 +287,8 @@ method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
   my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
   my Gnome::Gtk4::Button() $button = $button-box.get-first-child;
-#note "unref button";
+
   $button.clear-object;
-#  $button-box.destroy;
   $button-box.clear-object;
 }
 
@@ -305,14 +304,12 @@ method run-palapeli (
   Hash :$object, Gnome::Gtk4::Label :$label-progress,
   Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
-#Gnome::N::debug(:on);
   note "run palapeli with $object<Filename>";
 
   my $exec = $!config.get-pala-executable;
 
   my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
-#note "\n$?LINE $puzzle-path\n$exec";
 
   $!main.statusbar.remove-message;
   $!main.statusbar.set-status("$exec '$puzzle-path'");
@@ -324,9 +321,7 @@ method run-palapeli (
   # Calculate progress
   my Str $progress = $!config.calculate-progress($object);
   $label-progress.set-text("Progress: $progress \%");
-#  $progress-bar.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
-#Gnome::N::debug(:off);
 }
 
 #-------------------------------------------------------------------------------
@@ -362,7 +357,6 @@ print "\n";
 
 #-------------------------------------------------------------------------------
 method selection-changed ( guint $position, guint $n-items ) {
-#note "$?LINE $position, $n-items";
   my Gnome::Gtk4::N-Bitset $bitset .= new(
     :native-object($!multi-select.get-selection)
   );
@@ -378,7 +372,10 @@ method selection-changed ( guint $position, guint $n-items ) {
 }
 
 #-------------------------------------------------------------------------------
-method edit-palapeli ( Hash :$object ) {
+method edit-palapeli (
+  Hash :$object,
+  Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
+) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Edit Puzzle Info Dialog')
   ) {
@@ -389,7 +386,8 @@ method edit-palapeli ( Hash :$object ) {
 
     .add-button(
       self, 'do-store-puzzle-info', 'Change Text',
-      :$comment, :$source, :$dialog, :$object
+      :$comment, :$source, :$dialog, :$object,
+      :$label-comment, :$label-source
     );
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
 
@@ -400,17 +398,13 @@ method edit-palapeli ( Hash :$object ) {
 #-------------------------------------------------------------------------------
 method do-store-puzzle-info (
   PuzzleTable::Gui::Dialog :$dialog, Hash :$object,
-  Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source
+  Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source,
+  Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
 ) {
   $!main.config.store-puzzle-info(
     $object, $comment.get-text, $source.get-text
   );
+  $label-comment.set-text($comment.get-text);
+  $label-source.set-text('Source: ' ~ $source.get-text);
   $dialog.destroy-dialog;
-}
-
-=finish
-#-------------------------------------------------------------------------------
-method items-changed ( guint $position, guint $n-removed, guint $n-added ) {
-#note "$?LINE $position, $n-removed, $n-added";
-#  $!multi-select.selection-changed( $position, $n-added);
 }
