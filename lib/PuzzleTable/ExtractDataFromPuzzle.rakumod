@@ -66,6 +66,10 @@ method palapeli-info( Str:D $store-path --> Hash ) {
         $h<Name> = $val // '';
       }
 
+      when / Author / {
+        $h<Source> = $val // '';
+      }
+
       when 'ImageSize' {
         my $size = $val // '';
         my ( $width, $height) = $size.split(',');

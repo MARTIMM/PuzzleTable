@@ -293,7 +293,7 @@ method add-puzzle (
   $cat{$puzzle-id} = %(
     :Filename($unique-name),
     :SourceFile($puzzle-path),
-    :Source(''),
+    :Source($info<Source>),
     :Comment($info<Comment>),
     :Name($info<Name>),
     :Width($info<Width>),
