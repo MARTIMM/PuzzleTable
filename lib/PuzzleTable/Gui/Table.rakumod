@@ -200,11 +200,14 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .set-hexpand(True);
   }
 
-  my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar;
-#  $progress-bar.set-show-text(True);
-  $!config.set-css( $progress-bar.get-style-context, :css-class<progressbar>);
+  with my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar {
+    $!config.set-css( .get-style-context, :css-class<puzzle-progress>);
+    .set-size-request( 1, 10);
+#    .set-show-text(True);
+    .set-vexpand(True);
+    .set-valign(GTK_ALIGN_FILL);
+  }
 
-#    $!config.set-css( .get-style-context, :css-class<puzzle-object-comment>);
   my TableItemLabel $label-comment .= new( :!align, :css<comment>, :$!config);
   my TableItemLabel $label-size .= new(:$!config);
   my TableItemLabel $label-npieces .= new(:$!config);
