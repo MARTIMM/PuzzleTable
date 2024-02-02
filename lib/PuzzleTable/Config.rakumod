@@ -407,9 +407,10 @@ method calculate ( Hash $puzzle --> Str ) {
       }
     }
 
-    $progress = (
-      100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0
-    ).fmt('%3.1f');
+    my Rat $p = $piece-coordinates.elems == 1
+                ?? 100.0
+                !! 100.0 - $piece-coordinates.elems / $nbr-pieces * 100.0;
+    $progress = $p.fmt('%3.1f');
   }
 
   $puzzle<Progress>{self.get-palapeli-preference} = $progress;
