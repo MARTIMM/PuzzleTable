@@ -4,10 +4,12 @@ use PuzzleTable::Config;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Statusbar;
+use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
+use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
@@ -21,7 +23,7 @@ use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::PuzzleHandling:auth<github:MARTIMM>;
+unit class PuzzleTable::Gui::PuzzleHandling:auth<github:MARTIMM>;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
@@ -46,7 +48,7 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
       $!main.application-window, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO,
       GTK_BUTTONS_OK, "There are no puzzles selected"
     );
-    $message.register-signal( self, 'remove-message-dialog', 'response');
+    $message.register-signal( self, 'move-message-dialog', 'response');
     $message.show;
 
     return
@@ -167,11 +169,58 @@ method do-move-puzzles (
 #-------------------------------------------------------------------------------
 method puzzles-remove-puzzles ( N-Object $parameter ) {
   note "remove";
+  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
+  my Gnome::Gtk4::N-Bitset $bitset .= new(
+    :native-object($multi-select.get-selection)
+  );
+
+  my Int $n = $bitset.get-size;
+  unless ?$n {
+    my Gnome::Gtk4::MessageDialog $message .= new-messagedialog(
+      $!main.application-window, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO,
+      GTK_BUTTONS_OK, "There are no puzzles selected"
+    );
+    $message.register-signal( self, 'move-message-dialog', 'response');
+    $message.show;
+
+    return
+  }
+
+  # Fill the combobox for the dialog
+  my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
+  for $!config.get-categories(:filter<lockable>) -> $category {
+    $combobox.append-text($category);
+  }
+  $combobox.set-active(0);
+  my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
+    'Check to make sure you really want it'
+  );
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Remove Puzzle Dialog')
+  ) {
+    .add-content( 'Specify the category to move to', $combobox);
+    .add-content( '', $check-button);
+
+    .add-button(
+      self, 'do-remove-puzzles', 'Move to puzzle trash',
+      :$combobox, :$check-button, :$dialog
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
+  }
 }
 
+#-------------------------------------------------------------------------------
+method do-remove-puzzles (
+  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  Gnome::Gtk4::CheckButton :$check-button,
+  Gnome::Gtk4::ComboBox :$combobox
+) {
+}
 
 #-------------------------------------------------------------------------------
-method remove-message-dialog (
+method move-message-dialog (
   Int $response-id, Gnome::Gtk4::MessageDialog :_widget($message)
 ) {
   $message.destroy;

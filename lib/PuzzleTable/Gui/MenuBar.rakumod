@@ -3,7 +3,7 @@ use v6.d;
 use NativeCall;
 
 use PuzzleTable::Config;
-use PuzzleTable::PuzzleHandling;
+use PuzzleTable::Gui::PuzzleHandling;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Settings;
 
@@ -24,8 +24,8 @@ has $!application is required;
 has $!main is required;
 
 has Array $!menus;
+has PuzzleTable::Gui::PuzzleHandling $!phandling;
 has PuzzleTable::Gui::Category $!cat;
-has PuzzleTable::PuzzleHandling $!phandling;
 has PuzzleTable::Gui::Settings $!set;
 
 #-------------------------------------------------------------------------------
