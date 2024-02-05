@@ -56,7 +56,7 @@ method palapeli-info( Str:D $store-path --> Hash ) {
     $piece-count++ if $do-count;
 
     my ( $name, $val) = $line.split('=');
-
+    my Str $slicer = '';
     given $name {
       when 'Comment' {
         $h<Comment> = $val // '';
@@ -77,10 +77,29 @@ method palapeli-info( Str:D $store-path --> Hash ) {
         $h<Height> = $height.Int;
       }
 
-      # Not always correct
-      #when / PieceCount / {
-      #  $h<PieceCount> = $val.Int;
-      #}
+      when 'Slicer' {
+        $val ~~ s/^ palapeli '_' //;
+        $val ~~ s/ slicer $//;
+        $h<Slicer> = $val;
+      }
+
+      when 'SlicerMode' {
+        if    $val eq 'preset' { $h<SlicerMode> = ', predefined cut'; }
+        elsif $val eq 'rect'   { $h<SlicerMode> = ', rectangular cut'; }
+        elsif $val eq 'cairo'  { $h<SlicerMode> = ', cairo cut'; }
+        elsif $val eq 'hex'    { $h<SlicerMode> = ', hexagonal cut'; }
+        elsif $val eq 'rotrex' { $h<SlicerMode> = ', rhombi trihexagonal cut'; }
+        elsif $val eq 'irreg'  { $h<SlicerMode> = ', irregular cut'; }
+        elsif $val eq ''       {
+          if $h<Slicer> eq 'rect' {
+            $h<SlicerMode> = ' cut in rectangles';
+          }
+
+          elsif $h<Slicer> eq 'jigsaw' {
+            $h<SlicerMode> = ' cut in classic pieces';
+          }
+        }
+      }
     }
   }
 

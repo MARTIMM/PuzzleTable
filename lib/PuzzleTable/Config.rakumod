@@ -304,6 +304,8 @@ method add-puzzle (
     :Width($info<Width>),
     :Height($info<Height>),
     :PieceCount($info<PieceCount>),
+    :Slicer($info<Slicer>),
+    :SlicerMode($info<SlicerMode>),
   );
 
   note "Add new puzzle: $puzzle-id, $basename, $info<Name>, $info<Width> x $info<Height>, ", "$info<PieceCount> pieces";
