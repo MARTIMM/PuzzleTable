@@ -268,7 +268,9 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     $label-size.set-text(
       [~] 'Picture size: ', $object<Width>, ' x ', $object<Height>
     );
-    $label-npieces.set-text('Nbr pieces: ' ~ $object<PieceCount>);
+    $label-npieces.set-text(
+      'Nbr pieces: ' ~ $object<PieceCount> ~ ($object<SlicerMode>//'')
+    );
     $label-source.set-text('Source: ' ~ $object<Source>);
 
     # Init if the values aren't there
