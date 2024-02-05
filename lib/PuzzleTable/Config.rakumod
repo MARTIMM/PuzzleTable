@@ -217,20 +217,25 @@ method get-categories ( Str :$filter --> Seq ) {
   my @cat = ();
   if $filter eq 'default' {
     for $*puzzle-data<categories>.keys -> $category {
-      @cat.push: $category unless $category eq 'Default';
+      next if $category ~~ m/ [Trash | Default] /;
+      @cat.push: $category;
     }
   }
 
   elsif $filter eq 'lockable' {
     my Bool $locked = self.is-locked;
     for $*puzzle-data<categories>.keys -> $category {
-      @cat.push: $category
-        unless $locked and self.is-category-lockable($category);
+      next if $category eq 'Trash';
+      next if $locked and self.is-category-lockable($category);
+      @cat.push: $category;
     }
   }
 
   else {
-    @cat = $*puzzle-data<categories>.keys;
+    for $*puzzle-data<categories>.keys -> $category {
+      next if $category eq 'Trash';
+      @cat.push: $category;
+    }
   }
 
   @cat.sort
@@ -517,6 +522,25 @@ method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
 
     my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
     my Str $to-dir = [~] PUZZLE_TABLE_DATA, $to-cat, '/', $p-id;
+    $from-dir.IO.rename( $to-dir, :createonly);
+
+    # Puzzle is moved to other category spot
+    last;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
+  for 1..9999 -> $count {
+    my Str $p-id = $count.fmt('p%03d');
+    next if $*puzzle-data<categories><Trash><members>{$p-id}:exists;
+
+    my Hash $puzzle =
+      $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
+    $*puzzle-data<categories><Trash><members>{$p-id} = $puzzle;
+
+    my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
+    my Str $to-dir = [~] PUZZLE_TRASH, $p-id;
     $from-dir.IO.rename( $to-dir, :createonly);
 
     # Puzzle is moved to other category spot

@@ -1,13 +1,13 @@
 use v6.d;
 
 use PuzzleTable::Config;
-use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::Dialog;
 
-use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
+use Gnome::Gtk4::N-Bitset:api<2>;
+use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
@@ -27,7 +27,6 @@ unit class PuzzleTable::Gui::PuzzleHandling:auth<github:MARTIMM>;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
@@ -87,7 +86,7 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
   with $dialog {
     .set-size-request( 400, 100);
     .register-signal(
-       self, 'do-move-puzzles', 'response', :$combobox
+       self, 'do-move-puzzles', 'response', :$combobox, :$bitset
     );
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
@@ -99,10 +98,10 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-move-puzzles ( 
   Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
-  Gnome::Gtk4::ComboBox :$combobox
+  Gnome::Gtk4::ComboBox :$combobox, Gnome::Gtk4::N-Bitset :$bitset
  ) {
   note "do move";
-  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
+#  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
   my Gnome::Gtk4::StringList $puzzle-objects = $!main.table.puzzle-objects;
   my Bool $sts-ok = False;
 
@@ -124,13 +123,12 @@ method do-move-puzzles (
       }
 
       else {
-        # Get the selected items from the bitset
-        my Gnome::Gtk4::N-Bitset $bitset .= new(
-          :native-object($multi-select.get-selection)
-        );
-        my Int $n = $bitset.get-size;
+#        my Gnome::Gtk4::N-Bitset $bitset .= new(
+#          :native-object($multi-select.get-selection)
+#        );
 
-        # Move the puzzles
+        # Get the selected puzzles from the bitset and move them
+        my Int $n = $bitset.get-size;
         for ^$n -> $i {
           my Int $item-pos = $bitset.get-nth($i);
           $!config.move-puzzle(
@@ -148,12 +146,17 @@ method do-move-puzzles (
           $puzzle-objects.remove($item-pos);
         }
 }}
-        $!main.category.select-category(:category($current-cat));
+
+        # Save admin and update puzzle table
         $!config.save-puzzle-admin;
+        $!main.category.select-category(:category($current-cat));
+
+        # Update status bar to show number of puzzles
         $puzzle-objects = $!main.table.puzzle-objects;
         $!main.statusbar.set-status(
           "Number of puzzles: " ~ $puzzle-objects.get-n-items
         );
+
         $sts-ok = True;
       }
     }
@@ -168,7 +171,8 @@ method do-move-puzzles (
 
 #-------------------------------------------------------------------------------
 method puzzles-remove-puzzles ( N-Object $parameter ) {
-  note "remove";
+note "remove";
+
   my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
   my Gnome::Gtk4::N-Bitset $bitset .= new(
     :native-object($multi-select.get-selection)
@@ -186,24 +190,24 @@ method puzzles-remove-puzzles ( N-Object $parameter ) {
     return
   }
 
+#`{{
   # Fill the combobox for the dialog
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
   for $!config.get-categories(:filter<lockable>) -> $category {
     $combobox.append-text($category);
   }
   $combobox.set-active(0);
-  my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
-    'Check to make sure you really want it'
-  );
+}}
+  my Gnome::Gtk4::CheckButton $check-button .= new-with-label;
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Remove Puzzle Dialog')
   ) {
-    .add-content( 'Specify the category to move to', $combobox);
-    .add-content( '', $check-button);
+#    .add-content( 'Specify the category to move to', $combobox);
+    .add-content( 'Check to make sure you really want it', $check-button);
 
     .add-button(
       self, 'do-remove-puzzles', 'Move to puzzle trash',
-      :$combobox, :$check-button, :$dialog
+      :$check-button, :$dialog, :$bitset
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -213,10 +217,46 @@ method puzzles-remove-puzzles ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-remove-puzzles (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
-  Gnome::Gtk4::CheckButton :$check-button,
-  Gnome::Gtk4::ComboBox :$combobox
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
+  Gnome::Gtk4::N-Bitset :$bitset
 ) {
+note "do remove";
+
+#  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
+  my Gnome::Gtk4::StringList $puzzle-objects = $!main.table.puzzle-objects;
+  my Bool $sts-ok = False;
+  #my Str $category = $!config
+
+  if $check-button.get-active.Bool {
+    my Str $current-cat = $!main.category.get-current-category;
+
+    # Get the selected puzzles from the bitset and move them
+    my Int $n = $bitset.get-size;
+    for ^$n -> $i {
+      my Int $item-pos = $bitset.get-nth($i);
+      $!config.remove-puzzle(
+        $current-cat, $puzzle-objects.get-string($item-pos)
+      );
+    }
+
+    # Save admin and update puzzle table
+    $!config.save-puzzle-admin;
+    $!main.category.select-category(:category($current-cat));
+
+    # Update status bar to show number of puzzles
+    $puzzle-objects = $!main.table.puzzle-objects;
+    $!main.statusbar.set-status(
+      "Number of puzzles: " ~ $puzzle-objects.get-n-items
+    );
+
+    $sts-ok = True;
+  }
+
+  else {
+    $dialog.set-status('Please check to give your consent');
+  }
+
+  $dialog.destroy if $sts-ok;
 }
 
 #-------------------------------------------------------------------------------
