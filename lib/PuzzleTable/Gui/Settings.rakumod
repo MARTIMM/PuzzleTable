@@ -141,8 +141,8 @@ method show-dialog-with-old-entry ( ) {
       self, 'do-password-check-with-old', 'Change',
       :$entry-oldpw, :$entry-newpw, :$entry-reppw, :$dialog
     );
-    .add-button( $dialog, 'destroy-dialog', 'Cancel');
 
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
     .show-dialog;
   }
 }
