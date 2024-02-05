@@ -7,7 +7,6 @@ use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
-#use PuzzleTable::Gui::Sidebar;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-Ioenums:api<2>;
@@ -38,7 +37,6 @@ has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Category $.category;
 has PuzzleTable::Gui::Statusbar $.statusbar;
-#has PuzzleTable::Gui::Sidebar $!sidebar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
