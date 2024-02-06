@@ -206,7 +206,7 @@ note "remove";
     .add-content( 'Check to make sure you really want it', $check-button);
 
     .add-button(
-      self, 'do-remove-puzzles', 'Move to puzzle trash',
+      self, 'do-remove-puzzles', 'Archive Puzzle in Trash',
       :$check-button, :$dialog, :$bitset
     );
 

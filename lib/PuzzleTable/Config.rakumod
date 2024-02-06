@@ -13,6 +13,8 @@ use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
+use Archive::Libarchive;
+use Archive::Libarchive::Constants;
 use Digest::SHA1::Native;
 use YAMLish;
 
@@ -217,7 +219,8 @@ method get-categories ( Str :$filter --> Seq ) {
   my @cat = ();
   if $filter eq 'default' {
     for $*puzzle-data<categories>.keys -> $category {
-      next if $category ~~ m/ [Trash | Default] /;
+#      next if $category ~~ m/ [Trash | Default] /;
+      next if $category eq 'Default';
       @cat.push: $category;
     }
   }
@@ -225,7 +228,7 @@ method get-categories ( Str :$filter --> Seq ) {
   elsif $filter eq 'lockable' {
     my Bool $locked = self.is-locked;
     for $*puzzle-data<categories>.keys -> $category {
-      next if $category eq 'Trash';
+#      next if $category eq 'Trash';
       next if $locked and self.is-category-lockable($category);
       @cat.push: $category;
     }
@@ -233,7 +236,7 @@ method get-categories ( Str :$filter --> Seq ) {
 
   else {
     for $*puzzle-data<categories>.keys -> $category {
-      next if $category eq 'Trash';
+#      next if $category eq 'Trash';
       @cat.push: $category;
     }
   }
@@ -434,12 +437,6 @@ method store-puzzle-info( $object, $comment, $source) {
 }
 
 #-------------------------------------------------------------------------------
-method save-puzzle-admin ( ) {
-say 'save puzzle admin in ', PUZZLE_DATA;
-  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
-}
-
-#-------------------------------------------------------------------------------
 # Return an array of hashes. Basic info comes from
 # $*puzzle-data<categories>{$category}<members> where info of Image and the
 # index of the puzzle is added.
@@ -533,19 +530,75 @@ method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
 
 #-------------------------------------------------------------------------------
 method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
-  for 1..9999 -> $count {
-    my Str $p-id = $count.fmt('p%03d');
-    next if $*puzzle-data<categories><Trash><members>{$p-id}:exists;
 
-    my Hash $puzzle =
-      $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
-    $*puzzle-data<categories><Trash><members>{$p-id} = $puzzle;
+  # Create the name of the archive
+  my Str $d = DateTime.now.Str;
+  $d ~~ s/ '.' (...) .* $/.$0/;
+  $d ~~ s:g/ <[:-]> //;
+  $d ~~ s:g/ <[T.]> /-/;
 
-    my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
-    my Str $to-dir = [~] PUZZLE_TRASH, $p-id;
-    $from-dir.IO.rename( $to-dir, :createonly);
+  # Get the source and destination of the puzzle
+  my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
+  my Str $to-dir = [~] PUZZLE_TRASH, $d;
+  $from-dir.IO.rename($to-dir);
 
-    # Puzzle is moved to other category spot
-    last;
+  # Get the puzzle data from the config
+  my Hash $puzzle =
+    $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
+
+  # Create the name of the progress file in any of the Palapeli collections
+  my Str $progress-file = [~] '__FSC_', $puzzle<Filename>, '_0_.save';
+
+  # Search for progress file. If found move it also to destination dir
+  for $*puzzle-data<palapeli><collections>.keys -> $key {
+    my Str $colection-dir = $*puzzle-data<palapeli><collections>{$key};
+    my Str $progress-path =
+      [~] $*HOME, '/', $colection-dir, '/', $progress-file;
+
+    if $progress-path.IO.r {
+      $progress-path.IO.move( "$to-dir/$progress-file", :createonly);
+      last;
+    }
   }
+
+  # Save config into a yaml file in the destination dir
+  "$to-dir/$puzzle-id.yaml".IO.spurt(save-yaml($puzzle));
+
+  # Change dir to destination dir
+  my Str $cwd = $*CWD.Str;
+  chdir($to-dir);
+
+  # Create a bzipped tar archive
+  my Archive::Libarchive $a .= new(
+    operation => LibarchiveWrite,
+    file => "{PUZZLE_TRASH}$d.tbz2",
+    format => 'v7tar',
+    filters => ['bzip2']
+  );
+
+  # Archive each file in the destination
+  for dir('.') -> $file {
+    $a.write-header($file.Str);
+    $a.write-data($file.Str);
+  }
+
+  # And close the archive
+  $a.close;
+
+  # Cleanup the directory and leave tarfile in the trash dir
+  for dir('.') -> $file {
+    $file.IO.unlink;
+  }
+
+  $to-dir.IO.rmdir;
+
+  # Return to dir where we started
+  chdir($cwd);
 }
+
+#-------------------------------------------------------------------------------
+method save-puzzle-admin ( ) {
+#say 'save puzzle admin in ', PUZZLE_DATA;
+  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
+}
+
