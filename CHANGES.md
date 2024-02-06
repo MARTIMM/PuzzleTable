@@ -1,4 +1,8 @@
 
+* 2024-02-06 0.4.0
+  * Use selections to remove puzzles. The puzzle data is archived in a trash directory in a bzipped tar file.
+  * Calculation of progress is improved.
+
 * 2024-01-18 0.3.3
   * Calculation of progress after stopping puzzle. Not ok yet for puzzles which are imported from directories or collections.
   * Selections are possible but it isn't visible using css.
