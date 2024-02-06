@@ -120,7 +120,6 @@ method clear-table ( Bool :$init = False ) {
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
-#  $!puzzle-objects.register-signal( self, 'items-changed', 'items-changed');
   $!multi-select.register-signal(
     self, 'selection-changed', 'selection-changed'
   );
@@ -135,7 +134,7 @@ method clear-table ( Bool :$init = False ) {
   with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
     .set-model($!multi-select);
     .set-factory($!signal-factory);
-    .set-min-columns(5);
+    .set-min-columns(3);
     .set-max-columns(10);
     .set-enable-rubberband(True);
 
@@ -309,16 +308,18 @@ method run-palapeli (
   Hash :$object, Gnome::Gtk4::Label :$label-progress,
   Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
-  note "run palapeli with $object<Filename>";
+#note "run palapeli with $object<Filename>";
 
   my $exec = $!config.get-pala-executable;
 
   my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
 
-  $!main.statusbar.remove-message;
-  $!main.statusbar.set-status("$exec '$puzzle-path'");
+#TODO, gtk events are not processed here -> status bar not updated
+#  $!main.statusbar.remove-message;
+#  $!main.statusbar.set-status("$exec '$puzzle-path.IO.basename()'");
 
+#TODO display freezes until Palapeli ends
   # Start playing the puzzle
   shell "$exec '$puzzle-path'";
 
@@ -337,28 +338,6 @@ method show-tooltip (
   $tooltip.set-markup($tip);
   True
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method item-clicked ( guint $position ) {
-note "$?LINE $position";
-  my Gnome::Gtk4::N-Bitset $bitset .= new(
-    :native-object($!multi-select.get-selection)
-  );
-
-#  $bitset.add($position);
-  my Int $n = $bitset.get-size;
-note "$?LINE n $n";
-  for ^$n -> $i {
-    print " ", $bitset.get-nth;
-  }
-print "\n";
-
-#  $!multi-select.set-selection( $bitset, $bitset);
-#  $!multi-select.set-select-item($position);
-#  $!multi-select.selection-changed( 1, 1);
-}
-}}
 
 #-------------------------------------------------------------------------------
 method selection-changed ( guint $position, guint $n-items ) {
