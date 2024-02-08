@@ -75,6 +75,7 @@ method add-puzzle-to-table ( Hash $object ) {
   $object<Name>:delete;
   $object<SourceFile>:delete;
 
+#TODO process events in between
   $!current-table-objects{$index} = $object;
   $!puzzle-objects.append($index);
 
