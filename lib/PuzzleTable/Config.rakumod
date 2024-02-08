@@ -261,21 +261,30 @@ method add-puzzle (
   # Get source file info
   my Str $basename = $puzzle-path.IO.basename;
 
+  # If one is dumping the puzzles in the same dir all the time
+  # using the sam file names, one can run into a clash with older
+  # puzzles, sha1 does not help enough with that.
+  my Str $extra-change = DateTime.now.Str;
+
+#`{{
   # Check if source file is copied before
   my Hash $cat := $*puzzle-data<categories>{$category}<members>;
   for $cat.keys -> $puzzle-id {
     if $puzzle-path eq $cat{$puzzle-id}<SourceFile> {
       note "Puzzle $puzzle-id '$basename' already added in category '$category'";
       self.check-pala-progress-file(
-        $basename, sha1-hex($puzzle-path) ~ ".puzzle", $cat{$puzzle-id},
-        :$from-collection
+        $basename,
+        sha1-hex($puzzle-path ~ $extra-change) ~ ".puzzle",
+        $cat{$puzzle-id}, :$from-collection
       );
       self.save-puzzle-admin unless $from-collection;
       return;
     }
   }
+}}
 
   # Get free entry
+  my Hash $cat := $*puzzle-data<categories>{$category}<members>;
   my Str $puzzle-id;
   loop ( my Int $count = 1; $count < 1000; $count++ ) {
     $puzzle-id = $count.fmt('p%03d');
@@ -287,7 +296,7 @@ method add-puzzle (
 
   # Store the puzzle using a unique filename. It is possible that
   # puzzle name is the same found in other directories.
-  my Str $unique-name = sha1-hex($puzzle-path) ~ ".puzzle";
+  my Str $unique-name = sha1-hex($puzzle-path ~ $extra-change) ~ ".puzzle";
   $puzzle-path.IO.copy( "$destination/$unique-name", :createonly)
     unless "$destination/$unique-name".IO.e;
 
@@ -318,7 +327,7 @@ method add-puzzle (
       '-resize', '400x400', "$destination/image400.jpg";
 
   self.check-pala-progress-file(
-    $basename, sha1-hex($puzzle-path), $cat{$puzzle-id}
+    $basename, sha1-hex($puzzle-path ~ $extra-change), $cat{$puzzle-id}
   );
   self.calculate($cat{$puzzle-id});
 
