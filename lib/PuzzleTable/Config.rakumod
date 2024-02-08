@@ -15,7 +15,7 @@ use Gnome::N::X:api<2>;
 
 use Archive::Libarchive;
 use Archive::Libarchive::Constants;
-use Digest::SHA1::Native;
+use Digest::SHA256::Native;
 use YAMLish;
 
 #-------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ method get-password ( --> Str ) {
 #-------------------------------------------------------------------------------
 method check-password ( Str $password --> Bool ) {
   my Bool $ok = True;
-  $ok = (sha1-hex($password) eq $*puzzle-data<settings><password>).Bool
+  $ok = (sha256-hex($password) eq $*puzzle-data<settings><password>).Bool
     if $*puzzle-data<settings><password>:exists;
 
   $ok
@@ -84,7 +84,7 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
   return $is-set if $old-password eq '' and ?self.get-password;
 
   # Check if old password matches before a new one is set
-  $*puzzle-data<settings><password> = sha1-hex($new-password)
+  $*puzzle-data<settings><password> = sha256-hex($new-password)
     if $is-set = self.check-password($old-password);
 
   self.save-puzzle-admin;
@@ -263,7 +263,7 @@ method add-puzzle (
 
   # If one is dumping the puzzles in the same dir all the time
   # using the sam file names, one can run into a clash with older
-  # puzzles, sha1 does not help enough with that.
+  # puzzles, sha256 does not help enough with that.
   my Str $extra-change = DateTime.now.Str;
 
 #`{{
@@ -274,7 +274,7 @@ method add-puzzle (
       note "Puzzle $puzzle-id '$basename' already added in category '$category'";
       self.check-pala-progress-file(
         $basename,
-        sha1-hex($puzzle-path ~ $extra-change) ~ ".puzzle",
+        sha256-hex($puzzle-path ~ $extra-change) ~ ".puzzle",
         $cat{$puzzle-id}, :$from-collection
       );
       self.save-puzzle-admin unless $from-collection;
@@ -296,7 +296,7 @@ method add-puzzle (
 
   # Store the puzzle using a unique filename. It is possible that
   # puzzle name is the same found in other directories.
-  my Str $unique-name = sha1-hex($puzzle-path ~ $extra-change) ~ ".puzzle";
+  my Str $unique-name = sha256-hex($puzzle-path ~ $extra-change) ~ ".puzzle";
   $puzzle-path.IO.copy( "$destination/$unique-name", :createonly)
     unless "$destination/$unique-name".IO.e;
 
@@ -327,7 +327,7 @@ method add-puzzle (
       '-resize', '400x400', "$destination/image400.jpg";
 
   self.check-pala-progress-file(
-    $basename, sha1-hex($puzzle-path ~ $extra-change), $cat{$puzzle-id}
+    $basename, sha256-hex($puzzle-path ~ $extra-change), $cat{$puzzle-id}
   );
   self.calculate($cat{$puzzle-id});
 
