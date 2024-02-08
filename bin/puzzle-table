@@ -28,17 +28,14 @@ use PuzzleTable::Gui::MainWindow;
 my Hash $*puzzle-data = %();
 $*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
 
-# Check categories
+# Create categories
 $*puzzle-data<categories> = %() unless $*puzzle-data<categories>:exists;
 
 # Check for the Default category and set lockable to False
 $*puzzle-data<categories><Default> = %( members => %(), :!lockable)
   unless $*puzzle-data<categories><Default>:exists;
 
-# Check for the Trash category and set lockable to False
-$*puzzle-data<categories><Trash> = %( members => %(), :!lockable)
-  unless $*puzzle-data<categories><Trash>:exists;
-
+# Create settings
 $*puzzle-data<settings> = %() unless $*puzzle-data<settings>:exists;
 
 # Force lockable categories locked at the start of the program
