@@ -52,7 +52,14 @@ method settings-unlock-categories ( N-Object $parameter ) {
   say 'unlock';
   if $!config.is-locked {
     my Str $password = $!config.get-password;
-    self.show-dialog-password() if ?$password;
+    if ?$password {
+      self.show-dialog-password();
+    }
+
+    else {
+      $!config.unlock(Str);
+      $!category.fill-sidebar;
+    }
   }
 }
 
