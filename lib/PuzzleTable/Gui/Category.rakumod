@@ -17,6 +17,7 @@ use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Button:api<2>;
+use Gnome::Gtk4::ToggleButton:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
@@ -466,7 +467,7 @@ method fill-sidebar ( ) {
     .set-size-request( 200, 100);
 
     for $!config.get-categories(:filter<lockable>) -> $category {
-      my Gnome::Gtk4::Button $cat-name .= new-button($category);
+      my Gnome::Gtk4::ToggleButton $cat-name .= new-togglebutton($category);
       $!config.set-css(
         $cat-name.get-style-context, :css-class<sidebar-label>
       );
@@ -485,6 +486,7 @@ method fill-sidebar ( ) {
       .append($cat-name);
     }
   }
+
   self.set-child($!cat-grid);
   self.select-category(:category<Default>);
 }
