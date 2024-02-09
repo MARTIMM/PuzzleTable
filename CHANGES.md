@@ -1,4 +1,8 @@
 
+* 2024-02-08 0.4.1
+  * Use sha256 instead of sha1.
+  * Original puzzle path is extended with a unique DateTime value before applying sha256.
+
 * 2024-02-06 0.4.0
   * Use selections to remove puzzles. The puzzle data is archived in a trash directory in a bzipped tar file.
   * Calculation of progress is improved.

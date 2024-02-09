@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -29,7 +29,7 @@
 
   "depends": [
     "Gnome::Gtk4:api<2>", "Archive::Libarchive", "Getopt::Long",
-    "Digest::SHA1::Native"
+    "Digest::SHA256::Native"
   ],
   "test-depends": [ ],
   "build-depends": [ ],
