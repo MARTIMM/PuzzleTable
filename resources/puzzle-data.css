@@ -114,15 +114,25 @@
   margin-bottom: 5px;
 }
 
+/*
 #puzzle-image {
-  /*
-  border-width: 30px;
-  border-radius: 5px;
-  border-style: solid;
-  border-color: #ffee00;
-  */
-  background-color: #f0a080;
+  background-color: #680000;
 }
+*/
+
+.sidebar-label {
+  background-color: rgb(255, 182, 182);
+}
+
+.sidebar-label label {
+  color: rgb(255, 193, 193);
+}
+
+/*
+.sidebar-label:activated {
+  background-color: #5e0303;
+}
+*/
 /*
 #sidebar text-button {
   border-width: 0px;
