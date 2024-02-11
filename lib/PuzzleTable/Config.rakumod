@@ -112,12 +112,8 @@ method is-locked ( --> Bool ) {
 
 #-------------------------------------------------------------------------------
 # Set the puzzle table locking state
-method lock ( Str $password --> Bool ) {
-  my Bool $ok;
-  $*puzzle-data<settings><locked> = True
-    if $ok = self.check-password($password);
-
-  $ok
+method lock ( ) {
+  $*puzzle-data<settings><locked> = True;
 }
 
 #-------------------------------------------------------------------------------
