@@ -36,7 +36,7 @@ submethod BUILD ( :$!main ) {
 
 #-------------------------------------------------------------------------------
 method settings-set-password ( N-Object $parameter ) {
-  say 'set password';
+#  say 'set password';
   my Str $password = $!config.get-password;
   if ?$password {
     self.show-dialog-with-old-entry();
@@ -49,7 +49,7 @@ method settings-set-password ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method settings-unlock-categories ( N-Object $parameter ) {
-  say 'unlock';
+#  say 'unlock';
   if $!config.is-locked {
     my Str $password = $!config.get-password;
     if ?$password {
@@ -65,7 +65,7 @@ method settings-unlock-categories ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method settings-lock-categories ( N-Object $parameter ) {
-  say 'lock';
+#  say 'lock';
   $!config.lock;
   $!category.fill-sidebar;
 }
