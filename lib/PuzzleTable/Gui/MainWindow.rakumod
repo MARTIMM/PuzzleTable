@@ -140,6 +140,11 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     $lock = $o<lock>;
   }
 
+  my Str $filter = '';
+  if $o<filter>:exists and ?$o<filter> {
+    $filter = $o<filter>;
+  }
+
   my Str $opt-category = 'Default';
   if $o<category>:exists {
     $opt-category = $o<category>.tc;
@@ -152,12 +157,12 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
       next unless $puzzle-path ~~ m/ \. puzzle $/;
-      $!config.add-puzzle( $opt-category, $puzzle-path);
+      $!config.add-puzzle( $opt-category, $puzzle-path, :$filter);
     }
   }
 
   if $o<pala-collection>:exists {
-    $!config.get-pala-puzzles( $opt-category, $o<pala-collection>);
+    $!config.get-pala-puzzles( $opt-category, $o<pala-collection>, :$filter);
   }
 
   $!application.activate unless $command-line.get-is-remote;
@@ -243,13 +248,15 @@ method usage ( ) {
   Usage:
     puzzle-table --version
     puzzle-table --help
-    puzzle-table --puzzles <puzzle-path> …
-    puzzle-table --pala-collection <collection-path>
+    puzzle-table [--filter='regex'] --puzzles <puzzle-path> …
+    puzzle-table [--filter='regex'] --pala-collection <collection-path>
 
   Options:
     --category <name>. By default `Default`. Select the category to work
       with. The category is created if not available. When `--import` or
       `--puzzle` is used, the imported puzzles are placed in that category.
+
+    --filter <regex>. Make a selection on the 'source' field of the puzzle.
 
     -h --help. Show this information. This is also shown, with an error,
       when there are faulty arguments or options.
