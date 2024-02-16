@@ -29,7 +29,7 @@
 
   "depends": [
     "Gnome::Gtk4:api<2>", "Archive::Libarchive", "Getopt::Long",
-    "Digest::SHA256::Native"
+    "Digest::SHA256::Native", "Semaphore::ReadersWriters"
   ],
   "test-depends": [ ],
   "build-depends": [ ],
