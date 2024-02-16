@@ -68,9 +68,11 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
 * Gnome::GObject:api<2>
 * Gnome::Glib:api<2>
 * Gnome::Pango:api<2>
+
 * Digest::SHA1::Native
 * Archive::Libarchive
 * Getopt::Long
+
 <!--
 * Gnome::Cairo:api<2>
 * Gnome::Gsk4:api<2>
