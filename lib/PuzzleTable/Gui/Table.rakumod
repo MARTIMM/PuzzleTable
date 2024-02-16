@@ -25,6 +25,8 @@ use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::ProgressBar:api<2>;
 use Gnome::Gtk4::Adjustment:api<2>;
 
+use Gnome::Glib::N-MainContext:api<2>;
+
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
@@ -52,9 +54,11 @@ has Gnome::Gtk4::GridView $!puzzle-grid;
 
 # The objects from the current selected category
 has Hash $!current-table-objects;
+has Gnome::Glib::N-MainContext $!main-context;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
+  $!main-context .= new-maincontext;
   $!config = $!main.config;
 
   self.set-halign(GTK_ALIGN_FILL);
@@ -98,6 +102,10 @@ method add-puzzles-to-table ( Seq $objects ) {
 
     $!current-table-objects{$index} = $object;
     $indices.push: $index;
+
+    while $!main-context.pending {
+      $!main-context.iteration(False);
+    }
   }
 
   my $is = CArray[Str].new( |$indices, Str);
@@ -317,18 +325,20 @@ method run-palapeli (
          '/', $object<Puzzle-index>, '/',  $object<Filename>;
 
 #TODO, gtk events are not processed here -> status bar not updated
-#  $!main.statusbar.remove-message;
-#  $!main.statusbar.set-status("$exec '$puzzle-path.IO.basename()'");
+  $!main.statusbar.remove-message;
+  $!main.statusbar.set-status("$exec '$puzzle-path.IO.basename()'");
 
-#TODO display freezes until Palapeli ends
-  # Start playing the puzzle
-  shell "$exec '$puzzle-path'";
+  start {
+  #TODO display freezes until Palapeli ends
+    # Start playing the puzzle
+    shell "$exec '$puzzle-path'";
 
-  # Returning from puzzle
-  # Calculate progress
-  my Str $progress = $!config.calculate-progress($object);
-  $label-progress.set-text("Progress: $progress \%");
-  $progress-bar.set-fraction($progress.Num / 100e0);
+    # Returning from puzzle
+    # Calculate progress
+    my Str $progress = $!config.calculate-progress($object);
+    $label-progress.set-text("Progress: $progress \%");
+    $progress-bar.set-fraction($progress.Num / 100e0);
+  }
 }
 
 #-------------------------------------------------------------------------------
