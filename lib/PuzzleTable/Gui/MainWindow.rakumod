@@ -18,6 +18,7 @@ use Gnome::Gtk4::ApplicationWindow:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
 
 use Gnome::Glib::N-Error;
+use Gnome::Glib::T-error;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;

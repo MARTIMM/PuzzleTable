@@ -8,7 +8,8 @@ use Gnome::Gtk4::CssProvider:api<2>;
 use Gnome::Gtk4::StyleContext:api<2>;
 use Gnome::Gtk4::T-StyleProvider:api<2>;
 
-use Gnome::Glib::N-MainContext:api<2>;
+#use Gnome::Glib::N-MainContext:api<2>;
+#use Gnome::Glib::N-MainLoop:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -33,7 +34,7 @@ has Array $.options = [<
 >];
 
 has Semaphore::ReadersWriters $!semaphore;
-has Gnome::Glib::N-MainContext $!main-context;
+#has Gnome::Glib::N-MainContext $!main-context;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
