@@ -507,12 +507,17 @@ method show-tooltip (
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category ( Str :$category ) {
+
+my $t0 = now;
+
   $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
+note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
 
   # Clear the puzzletable before showing the puzzles of this category
   $!main.table.clear-table;
+note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
 
   # Get the puzzles and send them to the table
   my Seq $puzzles = $!config.get-puzzles($category).sort(
@@ -523,5 +528,7 @@ method select-category ( Str :$category ) {
     }
   );
 
+note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
   $!main.table.add-puzzles-to-table($puzzles);
+note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
 }
