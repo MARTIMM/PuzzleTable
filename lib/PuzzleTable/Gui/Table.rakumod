@@ -25,6 +25,7 @@ use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::ProgressBar:api<2>;
 use Gnome::Gtk4::Adjustment:api<2>;
 
+use Gnome::Glib::N-MainLoop:api<2>;
 use Gnome::Glib::N-MainContext:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
@@ -58,7 +59,14 @@ has Gnome::Glib::N-MainContext $!main-context;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
-  $!main-context .= new-maincontext;
+Gnome::N::debug(:on);
+  $!main-context .= new-maincontext(
+    :native-object(
+      Gnome::Glib::N-MainLoop.new-mainloop( N-Object, True).get-context()
+    )
+  );
+Gnome::N::debug(:off);
+
   $!config = $!main.config;
 
   self.set-halign(GTK_ALIGN_FILL);
@@ -91,25 +99,33 @@ method add-puzzle-to-table ( Hash $object ) {
 
 #-------------------------------------------------------------------------------
 # Add puzzles to the table
-method add-puzzles-to-table ( Seq $objects ) {
+method add-puzzles-to-table ( Seq $puzzles ) {
+
+my $t0 = now;
 
   my Array $indices = [];
-  for @$objects -> $object {
+  for @$puzzles -> $puzzle {
     # Save the index and drop some other fields to save memory
-    my Str $index = $object<Puzzle-index>;
-    $object<Name>:delete;
-    $object<SourceFile>:delete;
+    my Str $index = $puzzle<Puzzle-index>;
+    $puzzle<Name>:delete;
+    $puzzle<SourceFile>:delete;
 
-    $!current-table-objects{$index} = $object;
+    $!current-table-objects{$index} = $puzzle;
     $indices.push: $index;
 
+note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
+    $!puzzle-objects.append($index);
+note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
+
     while $!main-context.pending {
+note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
       $!main-context.iteration(False);
     }
+note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
   }
 
-  my $is = CArray[Str].new( |$indices, Str);
-  $!puzzle-objects.splice( 0, 0, $is);
+#  my $is = CArray[Str].new( |$indices, Str);
+#  $!puzzle-objects.splice( 0, 0, $is);
 
   $!main.statusbar.remove-message;
   $!main.statusbar.set-status(
@@ -119,6 +135,9 @@ method add-puzzles-to-table ( Seq $objects ) {
 
 #-------------------------------------------------------------------------------
 method clear-table ( Bool :$init = False ) {
+
+my $t0 = now;
+
   $!current-table-objects = %();
 
   unless $init {
@@ -126,12 +145,14 @@ method clear-table ( Bool :$init = False ) {
     $!multi-select.clear-object;
     $!signal-factory.clear-object;
   }
+note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
   $!multi-select.register-signal(
     self, 'selection-changed', 'selection-changed'
   );
+note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   with $!signal-factory .= new-signallistitemfactory {
     .register-signal( self, 'setup-object', 'setup');
@@ -139,6 +160,7 @@ method clear-table ( Bool :$init = False ) {
     .register-signal( self, 'unbind-object', 'unbind');
     .register-signal( self, 'destroy-object', 'teardown');
   }
+note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
     .set-model($!multi-select);
@@ -149,8 +171,10 @@ method clear-table ( Bool :$init = False ) {
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
+note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   self.set-child($!puzzle-grid);
+note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 }
 
 #-------------------------------------------------------------------------------
@@ -289,6 +313,8 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     $label-progress.set-text("Progress: $progress \%");
     $progress-bar.set-text("Progress: $progress \%");
     $progress-bar.set-fraction($progress.Num / 100e0);
+
+    .show;
   }
 
   $string-object.clear-object;
