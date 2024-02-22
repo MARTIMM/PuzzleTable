@@ -303,6 +303,7 @@ method move-category ( $cat-from, $cat-to ) {
 method add-puzzle (
   Str:D $category, Str:D $puzzle-path,
   Bool :$from-collection = False, Str :$filter = ''
+  --> Str
 ) {
   # Get source file info
   my Str $basename = $puzzle-path.IO.basename;
@@ -383,7 +384,10 @@ method add-puzzle (
 
   else {
     self.remove-dir($destination);
+    $puzzle-id = '';
   }
+
+  $puzzle-id
 }
 
 #-------------------------------------------------------------------------------
@@ -530,6 +534,21 @@ method get-puzzles ( Str $category --> Array ) {
   });
 
   $cat-puzzle-data
+}
+
+#-------------------------------------------------------------------------------
+# Return an array of hashes. Basic info comes from
+# $*puzzle-data<categories>{$category}<members> where info of Image and the
+# index of the puzzle is added.
+method get-puzzle ( Str $category, Str $puzzle-id --> Hash ) {
+
+  my Hash $puzzle = %();
+  $!semaphore.reader( 'puzzle-data', {
+    $puzzle = $*puzzle-data<categories>{$category}<members>{$puzzle-id}
+      if $*puzzle-data<categories>{$category}<members>{$puzzle-id}:exists;
+  });
+
+  $puzzle
 }
 
 #-------------------------------------------------------------------------------
