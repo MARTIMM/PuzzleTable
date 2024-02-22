@@ -51,7 +51,7 @@ submethod BUILD ( :$!main ) {
   self.set-min-content-width(0);
   self.set-max-content-width(450);
 
-  self.fill-sidebar;
+  self.fill-sidebar(:init);
 }
 
 #-------------------------------------------------------------------------------
@@ -456,7 +456,7 @@ method set-cat-lock-info (
 }
 
 #-------------------------------------------------------------------------------
-method fill-sidebar ( ) {
+method fill-sidebar ( Bool :$init = False ) {
 
   if ?$!cat-grid and $!cat-grid.is-valid {
     $!cat-grid.clear-object;
@@ -489,7 +489,7 @@ method fill-sidebar ( ) {
   }
 
   self.set-child($!cat-grid);
-  self.select-category(:category<Default>);
+  self.select-category(:category<Default>) if $init;
 }
 
 #-------------------------------------------------------------------------------
@@ -508,16 +508,12 @@ method show-tooltip (
 # Method to handle a category selection
 method select-category ( Str :$category ) {
 
-my $t0 = now;
-
   $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
-note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
 
   # Clear the puzzletable before showing the puzzles of this category
   $!main.table.clear-table;
-note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
 
   # Get the puzzles and send them to the table
   my Seq $puzzles = $!config.get-puzzles($category).sort(
@@ -528,7 +524,14 @@ note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
     }
   );
 
-note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
   $!main.table.add-puzzles-to-table($puzzles);
-note "$?LINE sc: ", (now - $t0).fmt('%0.2f');
+}
+
+#-------------------------------------------------------------------------------
+# Method to handle a category selection
+method set-category ( Str $category ) {
+
+  # Fill the sidebar in case there is a new entry
+  self.fill-sidebar;
+  self.select-category(:$category);
 }
