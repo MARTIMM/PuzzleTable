@@ -16,6 +16,7 @@ use Gnome::Gtk4::T-Enums:api<2>;
 
 use Gnome::Glib::N-MainLoop:api<2>;
 
+use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Dialog:auth<github:MARTIMM>;
@@ -37,7 +38,7 @@ method new ( |c ) {
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
-  $!main-loop .= new-mainloop;
+  $!main-loop .= new-mainloop( N-Object, True);
 
   $!content-count = 0;
   $!content .= new-grid;
