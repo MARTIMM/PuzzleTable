@@ -33,6 +33,7 @@ unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
 has Gnome::Gtk4::Application $.application;
 has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::Grid $!top-grid;
+has Bool $!table-is-displayed = False;
 
 has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
@@ -155,10 +156,17 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     );
   }
 
+  #TODO select category if registered
+  $!category.set-category($opt-category);
+
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
       next unless $puzzle-path ~~ m/ \. puzzle $/;
-      $!config.add-puzzle( $opt-category, $puzzle-path, :$filter);
+      my Str $puzzle-id =
+        $!config.add-puzzle( $opt-category, $puzzle-path, :$filter);
+
+      $!table.add-puzzle-to-table( $opt-category, $puzzle-id)
+        if ?$puzzle-id and $!table-is-displayed;
     }
   }
 
@@ -166,10 +174,12 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     $!config.get-pala-puzzles( $opt-category, $o<pala-collection>, :$filter);
   }
 
-  $!application.activate unless $command-line.get-is-remote;
+  # Activate unless table is already displayed
+  $!application.activate unless $!table-is-displayed;
   $command-line.clear-object;
 
-  $!category.fill-sidebar;
+  # Refill the sidebar unless there is no change
+  #$!category.fill-sidebar unless $!table-is-displayed;
 
   $exit-code
 }
@@ -217,6 +227,9 @@ method puzzle-table-display ( ) {
     .set-child($!top-grid);
     .set-visible(True);
   }
+
+  $!category.fill-sidebar;
+  $!table-is-displayed = True;
 }
 
 #-------------------------------------------------------------------------------

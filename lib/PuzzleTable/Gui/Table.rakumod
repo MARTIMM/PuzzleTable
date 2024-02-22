@@ -59,13 +59,13 @@ has Gnome::Glib::N-MainContext $!main-context;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
-Gnome::N::debug(:on);
+#Gnome::N::debug(:on);
   $!main-context .= new-maincontext(
     :native-object(
       Gnome::Glib::N-MainLoop.new-mainloop( N-Object, True).get-context()
     )
   );
-Gnome::N::debug(:off);
+#Gnome::N::debug(:off);
 
   $!config = $!main.config;
 
@@ -79,53 +79,45 @@ Gnome::N::debug(:off);
 }
 
 #-------------------------------------------------------------------------------
-# Add puzzle to the table
-method add-puzzle-to-table ( Hash $object ) {
-
-  # Save the index and drop some other fields to save memory
-  my Str $index = $object<Puzzle-index>;
-  $object<Name>:delete;
-  $object<SourceFile>:delete;
-
-#TODO process events in between
-  $!current-table-objects{$index} = $object;
-  $!puzzle-objects.append($index);
-
-  $!main.statusbar.remove-message;
-  $!main.statusbar.set-status(
-    "Number of puzzles: " ~ $!puzzle-objects.get-n-items
-  );
-}
-
-#-------------------------------------------------------------------------------
 # Add puzzles to the table
 method add-puzzles-to-table ( Seq $puzzles ) {
 
-my $t0 = now;
-
   my Array $indices = [];
   for @$puzzles -> $puzzle {
-    # Save the index and drop some other fields to save memory
-    my Str $index = $puzzle<Puzzle-index>;
-    $puzzle<Name>:delete;
-    $puzzle<SourceFile>:delete;
-
-    $!current-table-objects{$index} = $puzzle;
-    $indices.push: $index;
-
-note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
-    $!puzzle-objects.append($index);
-note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
-
-    while $!main-context.pending {
-note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
-      $!main-context.iteration(False);
-    }
-note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
+    self.add-puzzle-to-table($puzzle);
   }
+}
 
-#  my $is = CArray[Str].new( |$indices, Str);
-#  $!puzzle-objects.splice( 0, 0, $is);
+#-------------------------------------------------------------------------------
+# Add a puzzle to the table
+multi method add-puzzle-to-table ( Str $category, Str $puzzle-id ) {
+  my Hash $puzzle = $!config.get-puzzle( $category, $puzzle-id);
+  # Coming from MainWindow.remote-options() it needs some more fields
+  if ?$puzzle {
+    $puzzle<Puzzle-index> = $puzzle-id;
+    $puzzle<Category> = $category;
+    $puzzle<Image> = PUZZLE_TABLE_DATA ~ "$category/$puzzle-id/image400.jpg";
+    self.add-puzzle-to-table($puzzle);
+  }
+}
+
+#-------------------------------------------------------------------------------
+# Add a puzzle to the table
+multi method add-puzzle-to-table ( Hash $puzzle ) {
+#  my @puzzles = $puzzle,;
+#  self.add-puzzles-to-table(@puzzles);
+
+  # Save the index and drop some other fields to save memory
+  my Str $puzzle-id = $puzzle<Puzzle-index>;
+  $puzzle<Name>:delete;
+  $puzzle<SourceFile>:delete;
+
+  $!current-table-objects{$puzzle-id} = $puzzle;
+  $!puzzle-objects.append($puzzle-id);
+
+  while $!main-context.pending {
+    $!main-context.iteration(False);
+  }
 
   $!main.statusbar.remove-message;
   $!main.statusbar.set-status(
@@ -136,8 +128,6 @@ note "$?LINE aptt: ", (now - $t0).fmt('%0.2f');
 #-------------------------------------------------------------------------------
 method clear-table ( Bool :$init = False ) {
 
-my $t0 = now;
-
   $!current-table-objects = %();
 
   unless $init {
@@ -145,14 +135,12 @@ my $t0 = now;
     $!multi-select.clear-object;
     $!signal-factory.clear-object;
   }
-note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
   $!multi-select .= new-multiselection($!puzzle-objects);
   $!multi-select.register-signal(
     self, 'selection-changed', 'selection-changed'
   );
-note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   with $!signal-factory .= new-signallistitemfactory {
     .register-signal( self, 'setup-object', 'setup');
@@ -160,7 +148,6 @@ note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
     .register-signal( self, 'unbind-object', 'unbind');
     .register-signal( self, 'destroy-object', 'teardown');
   }
-note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
     .set-model($!multi-select);
@@ -171,10 +158,8 @@ note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
-note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 
   self.set-child($!puzzle-grid);
-note "$?LINE ct: ", (now - $t0).fmt('%0.2f');
 }
 
 #-------------------------------------------------------------------------------
