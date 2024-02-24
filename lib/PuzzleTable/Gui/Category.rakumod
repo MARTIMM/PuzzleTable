@@ -17,7 +17,8 @@ use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Button:api<2>;
-#use Gnome::Gtk4::ToggleButton:api<2>;
+use Gnome::Gtk4::Label:api<2>;
+use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
@@ -35,7 +36,7 @@ also is Gnome::Gtk4::ScrolledWindow;
 has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Statusbar $!statusbar;
-has Gnome::Gtk4::Box $!cat-grid;
+has Gnome::Gtk4::Grid $!cat-grid;
 has Str $!current-category;
 
 #-------------------------------------------------------------------------------
@@ -462,29 +463,52 @@ method fill-sidebar ( Bool :$init = False ) {
     $!cat-grid.clear-object;
   }
 
-  with $!cat-grid .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
+  
+  my $row-count = 0;
+  with $!cat-grid .= new-grid {      #new-box( GTK_ORIENTATION_VERTICAL, 0) {
     .set-name('sidebar');
     .set-size-request( 200, 100);
 
+    my Gnome::Gtk4::Label $l;
+
     for $!config.get-categories(:filter<lockable>) -> $category {
-      my Gnome::Gtk4::Button $cat-name .= new-button($category);
-#      my Gnome::Gtk4::ToggleButton $cat-name .= new-togglebutton($category);
-      $!config.set-css(
-        $cat-name.get-style-context, :css-class<sidebar-label>
-      );
-      $cat-name.set-label($category);
-      $cat-name.set-hexpand(True);
-      $cat-name.set-halign(GTK_ALIGN_FILL);
-      $cat-name.set-has-tooltip(True);
-      $cat-name.register-signal(
-        self, 'show-tooltip', 'query-tooltip', :$category
-      );
+      with my Gnome::Gtk4::Button $cat-button .= new-button {
+        $!config.set-css( .get-style-context, :css-class<sidebar-label>);
 
-      $cat-name.register-signal(
-        self, 'select-category', 'clicked', :$category
-      );
+        given $l .= new-label {
+          .set-text($category);
+          .set-hexpand(True);
+          .set-halign(GTK_ALIGN_START);
+        }
+        .set-child($l);
 
-      .append($cat-name);
+#        .set-label($category);
+        .set-hexpand(True);
+        .set-halign(GTK_ALIGN_FILL);
+        .set-has-tooltip(True);
+        .register-signal( self, 'show-tooltip', 'query-tooltip', :$category);
+        .register-signal( self, 'select-category', 'clicked', :$category);
+      }
+
+      .attach( $cat-button, 0, $row-count, 1, 1);
+      #.append($cat-button);
+
+      my Array $cat-status = $!config.get-category-status($category);
+#note "$?LINE $cat-status.gist(), $cat-status[0].fmt('%3d')";
+      $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
+      .attach( $l, 1, $row-count, 1, 1);
+
+      $l .= new-label; $l.set-text($cat-status[1].fmt('%3d'));
+      .attach( $l, 2, $row-count, 1, 1);
+
+      $l .= new-label; $l.set-text($cat-status[2].fmt('%3d'));
+      .attach( $l, 3, $row-count, 1, 1);
+
+      $l .= new-label; $l.set-text($cat-status[3].fmt('%3d'));
+      $l.set-margin-end(10);
+      .attach( $l, 4, $row-count, 1, 1);
+
+      $row-count++;
     }
   }
 

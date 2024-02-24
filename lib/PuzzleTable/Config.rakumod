@@ -504,6 +504,26 @@ method store-puzzle-info( $object, $comment, $source) {
 }
 
 #-------------------------------------------------------------------------------
+method get-category-status ( Str $category --> Array ) {
+  my Array $cat-status = [ 0, 0, 0, 0];
+  $!semaphore.reader( 'puzzle-data', {
+    my Str $preference-program = $*puzzle-data<palapeli><preference>;
+    my Hash $cat := $*puzzle-data<categories>{$category}<members>;
+    $cat-status[0] = $cat.elems;
+    for $cat.keys -> $puzzle-id {
+#note "$?LINE $category, $puzzle-id, $preference-program, $cat{$puzzle-id}<Progress>{$preference-program}";
+      my Num() $progress =
+        $cat{$puzzle-id}<Progress>{$preference-program} // 0e0;
+      $cat-status[1]++ if $progress == 0e0;
+      $cat-status[2]++ if 0e0 < $progress < 1e2;
+      $cat-status[3]++ if $progress == 1e2;
+    }
+  });
+
+  $cat-status
+}
+
+#-------------------------------------------------------------------------------
 # Return an array of hashes. Basic info comes from
 # $*puzzle-data<categories>{$category}<members> where info of Image and the
 # index of the puzzle is added.
