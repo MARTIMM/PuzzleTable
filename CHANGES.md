@@ -1,3 +1,6 @@
+* 2024-02-24 0.4.3
+  * Added information to each category button
+
 * 2024-02-22 0.4.2
   * Puzzle table changes are made visible by processing events while modifications take place/
   * Table is shown to build up when new puzzles are added.
