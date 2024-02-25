@@ -2,16 +2,20 @@
 use v6.d;
 use NativeCall;
 
+use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::PuzzleHandling;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Settings;
+use PuzzleTable::Gui::IconButton;
 
 #use Gnome::Glib::N-VariantType:api<2>;
 
 use Gnome::Gio::Menu:api<2>;
 use Gnome::Gio::MenuItem:api<2>;
 use Gnome::Gio::SimpleAction:api<2>;
+
+use Gnome::Gtk4::Button:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -37,7 +41,7 @@ submethod BUILD ( :$!main ) {
 
   $!bar .= new-menu;
   $!menus = [
-    self.make-menu(:menu-name<File>),
+    self.make-menu(:menu-name<File>, :shortcut),
     self.make-menu(:menu-name<Categories>),
     self.make-menu(:menu-name<Puzzles>),
     self.make-menu(:menu-name<Settings>),
@@ -46,38 +50,48 @@ submethod BUILD ( :$!main ) {
 }
 
 #-------------------------------------------------------------------------------
-method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
+method make-menu (
+  Str :$menu-name, Bool :$shortcut = False --> Gnome::Gio::Menu
+) {
   my Gnome::Gio::Menu $menu .= new-menu;
-  $!bar.append-submenu( $menu-name, $menu);
+  $!bar.append-submenu( $shortcut ?? "_$menu-name" !! "$menu-name", $menu);
 
 #  my PuzzleTable::Config $config = $!main.config;
 
   with $menu-name {
     when 'File' {
-      self.bind-action( $menu, $menu-name, self, 'Quit', 'app.quit');
+      self.bind-action(
+        $menu, $menu-name, self, 'Quit', 'app.quit', :icon<application-exit>,
+        :tooltip('Quit application')
+      );
     }
 
     when 'Categories' {
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Add Category', 'app.add-category'
+        $menu, $menu-name, $!cat, 'Add Category', 'app.add-category',
+        :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
       );
       self.bind-action(
         $menu, $menu-name, $!cat, 'Lock Category', 'app.lock-category'
       );
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Rename Category', 'app.rename-category'
+        $menu, $menu-name, $!cat, 'Rename Category', 'app.rename-category',
+        :path(DATA_DIR ~ 'images/ren-cat.png'), :tooltip('Rename a category')
       );
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Remove Category', 'app.remove-category'
+        $menu, $menu-name, $!cat, 'Remove Category', 'app.remove-category',
+        :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
       );
     }
 
     when 'Puzzles' {
       self.bind-action(
-        $menu, $menu-name, $!phandling, 'Move Puzzles', 'app.move-puzzles'
+        $menu, $menu-name, $!phandling, 'Move Puzzles', 'app.move-puzzles',
+        :path(DATA_DIR ~ 'images/move-64.png'), :tooltip('Move puzzles')
       );
       self.bind-action(
-        $menu, $menu-name, $!phandling, 'Remove Puzzles', 'app.remove-puzzles'
+        $menu, $menu-name, $!phandling, 'Remove Puzzles', 'app.remove-puzzles',
+#        :path(DATA_DIR ~ 'images/remove-64.png'), :tooltip('Remove puzzles')
       );
     }
 
@@ -86,10 +100,13 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
         $menu, $menu-name, $!set, 'Set Password', 'app.set-password'
       );
       self.bind-action(
-        $menu, $menu-name, $!set, 'Unlock Categories', 'app.unlock-categories'
+        $menu, $menu-name, $!set, 'Unlock Categories', 'app.unlock-categories', 
+        :shortcut
+#        :icon<changes-allow>, :tooltip('Unlock locked categories')
       );
       self.bind-action(
-        $menu, $menu-name, $!set, 'Lock Categories', 'app.lock-categories'
+        $menu, $menu-name, $!set, 'Lock Categories', 'app.lock-categories', 
+        :shortcut
       );
     }
 
@@ -105,9 +122,12 @@ method make-menu ( Str :$menu-name --> Gnome::Gio::Menu ) {
 #-------------------------------------------------------------------------------
 method bind-action (
   Gnome::Gio::Menu $menu, Str $menu-name, Mu $object,
-  Str $name is copy, Str $action-name
+  Str $name is copy, Str $action-name,
+  Str :$icon, Str :$path, Str :$tooltip, Bool :$shortcut = False
 ) {
-  my Gnome::Gio::MenuItem $menu-item .= new-menuitem( $name, $action-name);
+  my Gnome::Gio::MenuItem $menu-item .= new-menuitem(
+    $shortcut ?? "_$name" !! $name, $action-name
+  );
   $menu.append-item($menu-item);
 
   $name ~~ s:g/ \s+ /-/;
@@ -116,8 +136,27 @@ method bind-action (
   $!application.add-action($action);
 
   my Str $method = [~] $menu-name.lc, '-', $name.lc;
-#note "$?LINE $menu-name, $name, $action-name, $method";
   $action.register-signal( $object, $method, 'activate');
+
+  if ?$icon {
+    my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
+      :$icon, :$action-name, :config($!main.config)
+    );
+
+    $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
+
+    $!main.toolbar.append($toolbar-button);
+  }
+
+  elsif ?$path {
+    my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
+      :$path, :$action-name, :config($!main.config)
+    );
+
+    $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
+
+    $!main.toolbar.append($toolbar-button);
+  }
 }
 
 #-------------------------------------------------------------------------------

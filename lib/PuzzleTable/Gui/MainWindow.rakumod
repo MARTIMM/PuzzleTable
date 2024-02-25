@@ -14,6 +14,7 @@ use Gnome::Gio::ApplicationCommandLine:api<2>;
 
 use Gnome::Gtk4::Application:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
+use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ApplicationWindow:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
 
@@ -33,6 +34,7 @@ unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
 has Gnome::Gtk4::Application $.application;
 has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::Grid $!top-grid;
+has Gnome::Gtk4::Box $.toolbar;
 has Bool $!table-is-displayed = False;
 
 has PuzzleTable::Config $.config;
@@ -180,7 +182,7 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
   # Refill the sidebar unless there is no change
   #$!category.fill-sidebar unless $!table-is-displayed;
-
+note "$?LINE $exit-code";
   $exit-code
 }
 
@@ -203,16 +205,20 @@ method puzzle-table-display ( ) {
 #say 'display table';
 #  $!sidebar .= new-scrolledwindow(:main(self));
 
+  $!toolbar .= new-box( GTK_ORIENTATION_HORIZONTAL, 2);
+
   with $!top-grid .= new-grid {
     $!config.set-css( .get-style-context, :css-class<main-view>);
+
     .set-margin-top(10);
     .set-margin-bottom(10);
     .set-margin-start(10);
     .set-margin-end(10);
-    .attach( $!category, 0, 0, 1, 2);
-#    .attach( $!category, 1, 0, 1, 1);
-    .attach( $!table, 1, 1, 1, 1);
-    .attach( $!statusbar, 1, 2, 1, 1);
+
+    .attach( $!toolbar, 0, 0, 1, 1);
+    .attach( $!category, 0, 1, 1, 2);
+    .attach( $!table, 1, 2, 1, 1);
+    .attach( $!statusbar, 1, 3, 1, 1);
   }
 
   with $!application-window .= new-applicationwindow($!application) {
