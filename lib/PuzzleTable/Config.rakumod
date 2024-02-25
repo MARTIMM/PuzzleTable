@@ -28,13 +28,12 @@ unit class PuzzleTable::Config:auth<github:MARTIMM>;
 my Gnome::Gtk4::CssProvider $css-provider;
 
 has PuzzleTable::ExtractDataFromPuzzle $!extracter;
-has Version $.version = v0.3.1; 
+has Version $.version = v0.4.3;
 has Array $.options = [<
   category=s pala-collection=s puzzles lock h help version filter=s
 >];
 
 has Semaphore::ReadersWriters $!semaphore;
-#has Gnome::Glib::N-MainContext $!main-context;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -42,10 +41,13 @@ submethod BUILD ( ) {
   $!semaphore .= new;
   $!semaphore.add-mutex-names('puzzle-data');
 
-  my Str $png-file = DATA_DIR ~ 'start-puzzle-64.png';
-  %?RESOURCES<start-puzzle-64.png>.copy($png-file) unless $png-file.IO.e;
-  $png-file = DATA_DIR ~ 'edit-puzzle-64.png';
-  %?RESOURCES<edit-puzzle-64.png>.copy($png-file) unless $png-file.IO.e;
+  my Str $png-file;
+  for <start-puzzle-64.png edit-puzzle-64.png add-cat.png ren-cat.png
+       rem-cat.png move-64.png remove-64.png archive-64.png config-64.png
+      > -> $i {
+    $png-file = [~] DATA_DIR, 'images/', $i;
+    %?RESOURCES{$i}.copy($png-file) unless $png-file.IO.e;
+  }
 
   my Str $css-file = DATA_DIR ~ 'puzzle-data.css';
   %?RESOURCES<puzzle-data.css>.copy($css-file);
@@ -66,11 +68,6 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
     $css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
   );
   $style-context.add-class($css-class) if ?$css-class;
-}
-
-#-------------------------------------------------------------------------------
-method find-palapeli-info ( ) {
-
 }
 
 #-------------------------------------------------------------------------------
