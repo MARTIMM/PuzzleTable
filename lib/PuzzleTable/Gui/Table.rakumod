@@ -166,7 +166,7 @@ method clear-table ( Bool :$init = False ) {
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 #say 'setup-object';
 
-  my Str $png-file = DATA_DIR ~ 'start-puzzle-64.png';
+  my Str $png-file = DATA_DIR ~ 'images/start-puzzle-64.png';
   with my Gnome::Gtk4::Button $run-palapeli .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($png-file);
@@ -184,7 +184,7 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
   }
 
-  $png-file = DATA_DIR ~ 'edit-puzzle-64.png';
+  $png-file = DATA_DIR ~ 'images/edit-puzzle-64.png';
   with my Gnome::Gtk4::Button $edit-palapeli .= new-button {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($png-file);
@@ -282,9 +282,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
     $image.set-filename($object<Image>);
     $label-comment.set-text($object<Comment>);
-    $label-size.set-text(
-      [~] 'Picture size: ', $object<Width>, ' x ', $object<Height>
-    );
+    $label-size.set-text('Picture size: ' ~ $object<ImageSize>);
     $label-npieces.set-text(
       'Nbr pieces: ' ~ $object<PieceCount> ~ ($object<SlicerMode>//'')
     );
