@@ -13,6 +13,7 @@
     "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
     "PuzzleTable::Gui::DialogLabel": "lib/PuzzleTable/Gui/DialogLabel.rakumod",
+    "PuzzleTable::Gui::IconButton": "lib/PuzzleTable/Gui/IconButton.rakumod",
     "PuzzleTable::Gui::MainWindow": "lib/PuzzleTable/Gui/MainWindow.rakumod",
     "PuzzleTable::Gui::MenuBar": "lib/PuzzleTable/Gui/MenuBar.rakumod",
     "PuzzleTable::Gui::PuzzleHandling": "lib/PuzzleTable/PuzzleHandling.rakumod",
@@ -34,6 +35,7 @@
   "test-depends": [ ],
   "build-depends": [ ],
   "resources": [
-    "start-puzzle-64.png", "edit-puzzle-64.png", "puzzle-data.css"
+    "start-puzzle-64.png", "edit-puzzle-64.png", "puzzle-data.css",
+    "add-cat.png", "ren-cat.png", "rem-cat.png", "move-64.png", "remove-64.png"
   ]
 }

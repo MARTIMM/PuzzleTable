@@ -81,6 +81,15 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
 
 # Attribution
 ## Icons
+* Ions from
+  * ['FlatIcon - bayu015'](https://www.flaticon.com/free-icons/category)
+  * ['FlatIcon - twentyfour'](https://www.flaticon.com/free-icons/grid)
+  * ['FlatIcon - Anggara'](https://www.flaticon.com/free-icons/categories)
+  * ['FlatIcon - mynamepong'](https://www.flaticon.com/free-icons/puzzle)
+  * ['FlatIcon - paonkz'](https://www.flaticon.com/free-icons/files-and-folders)
+
+<!--
 * Icon from set ['Run icons created by Smashicons'](https://www.flaticon.com/free-icons/run).
 
 * Icon from [Icons8](https://icons8.com/icon/ddoMPxn5moeM/girl-running).
+-->
