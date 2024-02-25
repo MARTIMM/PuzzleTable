@@ -459,15 +459,22 @@ method set-cat-lock-info (
 #-------------------------------------------------------------------------------
 method fill-sidebar ( Bool :$init = False ) {
 
+  # Remove all buttons and info from sidebar
   if ?$!cat-grid and $!cat-grid.is-valid {
     $!cat-grid.clear-object;
   }
 
-  
+  # Create new sidebar
   my $row-count = 0;
-  with $!cat-grid .= new-grid {      #new-box( GTK_ORIENTATION_VERTICAL, 0) {
+  with $!cat-grid .= new-grid {
     .set-name('sidebar');
     .set-size-request( 200, 100);
+    .set-tooltip-text(Q:q:to/EOTT/);
+      Number of puzzles
+      Untouched puzzles
+      Unfinished puzzles
+      Finished puzzles
+      EOTT
 
     my Gnome::Gtk4::Label $l;
 
