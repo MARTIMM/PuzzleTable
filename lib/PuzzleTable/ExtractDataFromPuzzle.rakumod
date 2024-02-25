@@ -73,8 +73,9 @@ method palapeli-info( Str:D $store-path --> Hash ) {
       when 'ImageSize' {
         my $size = $val // '';
         my ( $width, $height) = $size.split(',');
-        $h<Width> = $width.Int;
-        $h<Height> = $height.Int;
+#        $h<Width> = $width.Int;
+#        $h<Height> = $height.Int;
+        $h<ImageSize> = "$width x $height";
       }
 
       when 'Slicer' {

@@ -1,0 +1,62 @@
+#!/usr/bin/env rakudo
+
+use v6.d;
+
+# Setup temporary paths to Gtk4 development area
+use lib
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-native/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-glib/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gobject/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gio/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gdkpixbuf/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-pango/lib",
+#  "/gnome-cairo/lib",
+#  "/gnome-atk/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gtk4/lib",
+  "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gdk4/lib",
+#  "/gnome-gsk4/lib"
+  ;
+
+use PuzzleTable::Types;
+use PuzzleTable::ExtractDataFromPuzzle;
+
+use YAMLish;
+
+#-------------------------------------------------------------------------------
+my PuzzleTable::ExtractDataFromPuzzle $extracter .= new;
+
+# Load puzzle data in global Hash
+my Hash $*puzzle-data = %();
+$*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
+
+for $*puzzle-data<categories>.keys -> $category {
+  for $*puzzle-data<categories>{$category}<members>.keys -> $puzzle-id {
+    my Str $destination = PUZZLE_TABLE_DATA ~ $category ~ "/$puzzle-id";
+
+    # Get the image and desktop file from the puzzle file, a tar archive.
+    #$extracter.extract( $destination, "$destination/$unique-name");
+
+    # Get some info from the desktop file
+    my Hash $info = $extracter.palapeli-info($destination);
+
+    note "\n$?LINE $info.gist()";
+    note "\n$?LINE $*puzzle-data<categories>{$category}<members>{$puzzle-id}.gist()";
+
+    with $*puzzle-data<categories>{$category}<members>{$puzzle-id} {
+      .<ImageSize> = $info<ImageSize>;
+      .<SlicerMode> = $info<SlicerMode>;
+      .<Slicer> = $info<Slicer>;
+      .<Source> = $info<Source> unless ?.<Source>;
+      .<Comment> = $info<Comment> unless ?.<Comment>;
+
+      .<Width>:delete;
+      .<Height>:delete;
+    }
+
+    note "\n$?LINE $*puzzle-data<categories>{$category}<members>{$puzzle-id}.gist()";
+
+#    exit;
+  }
+}
+
+PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
