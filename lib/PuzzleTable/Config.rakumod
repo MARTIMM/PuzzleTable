@@ -148,6 +148,34 @@ method unlock ( Str $password --> Bool ) {
   $ok
 }
 
+#`{{
+#-------------------------------------------------------------------------------
+# Lock to prevent double start of palapeli with same puzzle
+method is-puzzle-locked ( Str $category, Str $puzzle-id --> Bool ) {
+  $!semaphore.reader( 'puzzle-data', {
+    ?$*puzzle-data<categories>{$category}<members>{$puzzle-id}<play-lock>.Bool;
+  });
+}
+
+#-------------------------------------------------------------------------------
+# Set the puzzle table locking state
+method lock-puzzle ( Str $category, Str $puzzle-id ) {
+  $!semaphore.writer( 'puzzle-data', {
+    $*puzzle-data<settings><locked> = True;
+  });
+  self.save-puzzle-admin;
+}
+
+#-------------------------------------------------------------------------------
+# Set the puzzle table locking state
+method unlock-puzzle ( Str $category, Str $puzzle-id ) {
+  $!semaphore.writer( 'puzzle-data', {
+    $*puzzle-data<settings><locked> = True;
+  });
+  self.save-puzzle-admin;
+}
+}}
+
 #-------------------------------------------------------------------------------
 method get-palapeli-preference ( --> Str ) {
   $!semaphore.reader( 'puzzle-data', {
@@ -342,8 +370,7 @@ method add-puzzle (
     :Source($info<Source>),
     :Comment($info<Comment>),
     :Name($info<Name>),
-    :Width($info<Width>),
-    :Height($info<Height>),
+    :ImageSize($info<ImageSize>),
     :PieceCount($info<PieceCount>),
     :Slicer($info<Slicer>),
     :SlicerMode($info<SlicerMode>),
@@ -357,7 +384,7 @@ method add-puzzle (
       $cat{$puzzle-id} = $temp-data;
     });
 
-    note "Add new puzzle: $puzzle-id, $basename, $temp-data<Name>, $temp-data<Width> x $temp-data<Height>, ", "$temp-data<PieceCount> pieces";
+    note "Add new puzzle: $puzzle-id, $basename, $temp-data<Name>, $temp-data<ImageSize>, ", "$temp-data<PieceCount> pieces";
 
     # Convert the image into a smaller one to be displayed on the puzzle table
     run '/usr/bin/convert', "$destination/image.jpg",

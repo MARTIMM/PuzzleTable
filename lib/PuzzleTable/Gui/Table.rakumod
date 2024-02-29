@@ -57,6 +57,8 @@ has Gnome::Gtk4::GridView $!puzzle-grid;
 has Hash $!current-table-objects;
 has Gnome::Glib::N-MainContext $!main-context;
 
+has Hash $!puzzles-playing = %();
+
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
 #Gnome::N::debug(:on);
@@ -84,6 +86,12 @@ method add-puzzles-to-table ( Seq $puzzles ) {
 
   my Array $indices = [];
   for @$puzzles -> $puzzle {
+    my Str $category = $puzzle<Category>;
+    my Str $puzzle-id = $puzzle<Puzzle-index>;
+    $!puzzles-playing{$category} = %()
+      unless $!puzzles-playing{$category}:exists;
+    $!puzzles-playing{$category}{$puzzle-id} //= False;
+
     self.add-puzzle-to-table($puzzle);
   }
 }
@@ -255,7 +263,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
   my Gnome::Gtk4::StringObject $string-object .= new(
     :native-object($list-item.get-item)
   );
-  my Hash $object = $!current-table-objects{$string-object.get-string};
+  my Hash $puzzle = $!current-table-objects{$string-object.get-string};
 
   with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
     my Gnome::Gtk4::Box() $button-box = .get-child-at( 1, 0);
@@ -270,29 +278,29 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
     my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
     $run-palapeli.register-signal(
-      self, 'run-palapeli', 'clicked', :$object, :$label-progress,
-      :$progress-bar
+      self, 'run-palapeli', 'clicked', :$puzzle, :$label-progress,
+      :$progress-bar, :$label-comment
     );
 
     my Gnome::Gtk4::Button() $edit-palapeli = $run-palapeli.get-next-sibling;
     $edit-palapeli.register-signal(
-      self, 'edit-palapeli', 'clicked', :$object,
+      self, 'edit-palapeli', 'clicked', :$puzzle,
       :$label-comment, :$label-source
     );
 
-    $image.set-filename($object<Image>);
-    $label-comment.set-text($object<Comment>);
-    $label-size.set-text('Picture size: ' ~ $object<ImageSize>);
+    $image.set-filename($puzzle<Image>);
+    $label-comment.set-text($puzzle<Comment>);
+    $label-size.set-text('Picture size: ' ~ $puzzle<ImageSize>);
     $label-npieces.set-text(
-      'Nbr pieces: ' ~ $object<PieceCount> ~ ($object<SlicerMode>//'')
+      'Nbr pieces: ' ~ $puzzle<PieceCount> ~ ($puzzle<SlicerMode>//'')
     );
-    $label-source.set-text('Source: ' ~ $object<Source>);
+    $label-source.set-text('Source: ' ~ $puzzle<Source>);
 
     # Init if the values aren't there
     my Str $preference = $!config.get-palapeli-preference;
-    $object<Progress> = %() unless $object<Progress>:exists;
-    $object<Progress>{$preference} //= '0';
-    my Str $progress = $object<Progress>{$preference}.Str;
+    $puzzle<Progress> = %() unless $puzzle<Progress>:exists;
+    $puzzle<Progress>{$preference} //= '0';
+    my Str $progress = $puzzle<Progress>{$preference}.Str;
     $label-progress.set-text("Progress: $progress \%");
     $progress-bar.set-text("Progress: $progress \%");
     $progress-bar.set-fraction($progress.Num / 100e0);
@@ -323,30 +331,44 @@ method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
 
 #-------------------------------------------------------------------------------
 method run-palapeli (
-  Hash :$object, Gnome::Gtk4::Label :$label-progress,
-  Gnome::Gtk4::ProgressBar :$progress-bar
+  Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
+  Gnome::Gtk4::ProgressBar :$progress-bar, Gnome::Gtk4::Label :$label-comment
 ) {
-#note "run palapeli with $object<Filename>";
-
-  my $exec = $!config.get-pala-executable;
-
-  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $object<Category>,
-         '/', $object<Puzzle-index>, '/',  $object<Filename>;
-
-#TODO, gtk events are not processed here -> status bar not updated
+#note "run palapeli with $puzzle<Filename>";
   $!main.statusbar.remove-message;
-  $!main.statusbar.set-status("$exec '$puzzle-path.IO.basename()'");
+
+  # Check if puzzle is started
+  my Str $comment = $label-comment.get-text() // '';
+  if $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} {
+    $!main.statusbar.set-status(
+      "You are playing puzzle{$comment ?? " '$comment'" !! ''} already. Cannot start twice!"
+    );
+    return;
+  }
+
+  # Prevent puzzle started twice
+  $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = True;
+
+  # Information becomes visible after starting the thread.
+  $!main.statusbar.set-status(
+    "Play puzzle{$comment ?? " '$comment'" !! ''}, enjoy"
+  );
 
   start {
-  #TODO display freezes until Palapeli ends
+    my $exec = $!config.get-pala-executable;
+    my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
+          '/', $puzzle<Puzzle-index>, '/',  $puzzle<Filename>;
+
     # Start playing the puzzle
     shell "$exec '$puzzle-path'";
 
     # Returning from puzzle
     # Calculate progress
-    my Str $progress = $!config.calculate-progress($object);
+    my Str $progress = $!config.calculate-progress($puzzle);
     $label-progress.set-text("Progress: $progress \%");
     $progress-bar.set-fraction($progress.Num / 100e0);
+
+    $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
   }
 }
 
@@ -377,20 +399,20 @@ method selection-changed ( guint $position, guint $n-items ) {
 
 #-------------------------------------------------------------------------------
 method edit-palapeli (
-  Hash :$object,
+  Hash :$puzzle,
   Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
 ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Edit Puzzle Info Dialog')
   ) {
     .add-content( 'Title', my Gnome::Gtk4::Entry $comment .= new-entry);
-    $comment.set-text($object<Comment>);
+    $comment.set-text($puzzle<Comment>);
     .add-content( 'Source', my Gnome::Gtk4::Entry $source .= new-entry);
-    $source.set-text($object<Source>);
+    $source.set-text($puzzle<Source>);
 
     .add-button(
       self, 'do-store-puzzle-info', 'Change Text',
-      :$comment, :$source, :$dialog, :$object,
+      :$comment, :$source, :$dialog, :$puzzle,
       :$label-comment, :$label-source
     );
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -401,12 +423,12 @@ method edit-palapeli (
 
 #-------------------------------------------------------------------------------
 method do-store-puzzle-info (
-  PuzzleTable::Gui::Dialog :$dialog, Hash :$object,
+  PuzzleTable::Gui::Dialog :$dialog, Hash :$puzzle,
   Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source,
   Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
 ) {
   $!main.config.store-puzzle-info(
-    $object, $comment.get-text, $source.get-text
+    $puzzle, $comment.get-text, $source.get-text
   );
   $label-comment.set-text($comment.get-text);
   $label-source.set-text('Source: ' ~ $source.get-text);
