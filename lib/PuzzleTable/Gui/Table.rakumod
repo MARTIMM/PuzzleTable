@@ -33,6 +33,8 @@ use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
+use Semaphore::ReadersWriters;
+
 #`{{
 A note from https://developer-old.gnome.org/gtk4/stable/ListContainers.html;
 
@@ -57,6 +59,7 @@ has Gnome::Gtk4::GridView $!puzzle-grid;
 has Hash $!current-table-objects;
 has Gnome::Glib::N-MainContext $!main-context;
 
+has Semaphore::ReadersWriters $!semaphore;
 has Hash $!puzzles-playing = %();
 
 #-------------------------------------------------------------------------------
@@ -68,6 +71,9 @@ submethod BUILD ( :$!main ) {
     )
   );
 #Gnome::N::debug(:off);
+
+  $!semaphore .= new;
+  $!semaphore.add-mutex-names('puzzles-playing');
 
   $!config = $!main.config;
 
@@ -88,9 +94,12 @@ method add-puzzles-to-table ( Seq $puzzles ) {
   for @$puzzles -> $puzzle {
     my Str $category = $puzzle<Category>;
     my Str $puzzle-id = $puzzle<Puzzle-index>;
-    $!puzzles-playing{$category} = %()
-      unless $!puzzles-playing{$category}:exists;
-    $!puzzles-playing{$category}{$puzzle-id} //= False;
+
+    $!semaphore.writer( 'puzzles-playing', {
+      $!puzzles-playing{$category} = %()
+        unless $!puzzles-playing{$category}:exists;
+      $!puzzles-playing{$category}{$puzzle-id} //= False;
+    });
 
     self.add-puzzle-to-table($puzzle);
   }
@@ -339,7 +348,9 @@ method run-palapeli (
 
   # Check if puzzle is started
   my Str $comment = $label-comment.get-text() // '';
-  if $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} {
+  if $!semaphore.reader( 'puzzles-playing', {
+      $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>}}
+  ) {
     $!main.statusbar.set-status(
       "You are playing puzzle{$comment ?? " '$comment'" !! ''} already. Cannot start twice!"
     );
@@ -347,7 +358,9 @@ method run-palapeli (
   }
 
   # Prevent puzzle started twice
-  $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = True;
+  $!semaphore.writer( 'puzzles-playing', {
+    $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = True;
+  });
 
   # Information becomes visible after starting the thread.
   $!main.statusbar.set-status(
@@ -368,7 +381,9 @@ method run-palapeli (
     $label-progress.set-text("Progress: $progress \%");
     $progress-bar.set-fraction($progress.Num / 100e0);
 
-    $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
+    $!semaphore.writer( 'puzzles-playing', {
+      $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
+    });
   }
 }
 
