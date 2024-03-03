@@ -498,10 +498,8 @@ method fill-sidebar ( Bool :$init = False ) {
       }
 
       .attach( $cat-button, 0, $row-count, 1, 1);
-      #.append($cat-button);
 
       my Array $cat-status = $!config.get-category-status($category);
-#note "$?LINE $cat-status.gist(), $cat-status[0].fmt('%3d')";
       $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
       .attach( $l, 1, $row-count, 1, 1);
 
