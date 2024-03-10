@@ -1,5 +1,6 @@
 * 2024-02-24 0.4.3
   * Added information to each category button
+  * Changed css by taking a complete dark gtk.css theme from version 4. It is much more complete. E.g. selections are properly visible.
 
 * 2024-02-22 0.4.2
   * Puzzle table changes are made visible by processing events while modifications take place/
