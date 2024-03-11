@@ -374,14 +374,16 @@ method run-palapeli (
 
     # Start playing the puzzle
     shell "$exec '$puzzle-path'";
-
     # Returning from puzzle
+
     # Calculate progress
     my Str $progress = $!config.calculate-progress($puzzle);
-    $label-progress.set-text("Progress: $progress \%");
-    $progress-bar.set-fraction($progress.Num / 100e0);
 
     $!semaphore.writer( 'puzzles-playing', {
+      #TODO must set reader/writer above
+      $label-progress.set-text("Progress: $progress \%");
+      $progress-bar.set-fraction($progress.Num / 100e0);
+
       $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
     });
   }

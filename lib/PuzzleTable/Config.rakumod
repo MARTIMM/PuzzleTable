@@ -393,7 +393,11 @@ method add-puzzle (
     self.check-pala-progress-file(
       $basename, sha256-hex($puzzle-path ~ $extra-change), $cat{$puzzle-id}
     );
-    self.calculate($cat{$puzzle-id});
+    my $progress = self.calculate($cat{$puzzle-id});
+    my $p = self.get-palapeli-preference;
+    $!semaphore.writer( 'puzzle-data', {
+      $cat{$puzzle-id}<Progress>{$p} = $progress;
+    });
 
     # Save admin
     self.save-puzzle-admin unless $from-collection;
@@ -406,6 +410,7 @@ method add-puzzle (
     }
   }
 
+  # When filtered out, some greated data must be removed again
   else {
     self.remove-dir($destination);
     $puzzle-id = '';
@@ -464,12 +469,23 @@ method check-pala-progress-file (
 # the following fields: Puzzle-index, Category and Image (see get-puzzles()
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
-method calculate-progress ( Hash $object --> Str) {
-  my Hash $puzzle := $!semaphore.reader( 'puzzle-data', {
-    $*puzzle-data<categories>{$object<Category>}<members>{$object<Puzzle-index>};
+method calculate-progress ( Hash $object --> Str ) {
+  my $c = $object<Category>;
+  my $i = $object<Puzzle-index>;
+  my $p = self.get-palapeli-preference;
+
+  my Hash $puzzle = $!semaphore.reader( 'puzzle-data', {
+    $*puzzle-data<categories>{$c}<members>{$i};
   });
 
-  self.calculate($puzzle)
+  my $progress = self.calculate($puzzle);
+  $!semaphore.writer( 'puzzle-data', {
+    $*puzzle-data<categories>{$c}<members>{$i}<Progress>{$p} = $progress;
+  });
+
+  self.save-puzzle-admin;
+
+  $progress
 }
 
 #-------------------------------------------------------------------------------
@@ -482,6 +498,9 @@ method calculate ( Hash $puzzle --> Str ) {
          '/', $collection-filename;
 
   my Str $progress = "0.0";
+
+  # Puzzle progress admin is maintained by Palapeli in its collection directory
+  # When puzzle is never started, this file does not yet exist.
   if $collection-path.IO.r {
     my $nbr-pieces = $!semaphore.reader( 'puzzle-data', {$puzzle<PieceCount>;});
     my Bool $get-lines = False;
@@ -498,28 +517,33 @@ method calculate ( Hash $puzzle --> Str ) {
       }
     }
 
-  # A puzzle of n pieces has n different pieces at the start and only one
-  # when finished. To calculate the progress substract one from the numbers
-  # before deviding.
-  my Rat $p = 100.0 - ($piece-coordinates.elems -1) / ($nbr-pieces -1) * 100.0;
+    # A puzzle of n pieces has n different pieces at the start and only one
+    # when finished. To calculate the progress substract one from the numbers
+    # before deviding.
+    my Rat $p;
+    $p = 100.0 - ($piece-coordinates.elems -1) / ($nbr-pieces -1) * 100.0;
     $progress = $p.fmt('%3.1f');
   }
 
+#`{{
   my $p = self.get-palapeli-preference;
-  $!semaphore.writer( 'puzzle-data', {$puzzle<Progress>{$p} = $progress;});
+  $!semaphore.writer( 'puzzle-data', {
+    $puzzle<Progress>{$p} = $progress;
+  });
 
   # Save admin
   self.save-puzzle-admin;
+}}
 
   $progress
 }
 
 #-------------------------------------------------------------------------------
 method store-puzzle-info( $object, $comment, $source) {
+  my $c = $object<Category>;
+  my $i = $object<Puzzle-index>;
   my Hash $puzzle = $!semaphore.reader( 'puzzle-data', {
-    $*puzzle-data<categories>{
-        $object<Category>
-      }<members>{$object<Puzzle-index>};
+    $*puzzle-data<categories>{$c}<members>{$i};
   });
 
   $puzzle<Comment> = $comment;
@@ -656,6 +680,12 @@ method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
     $!semaphore.writer( 'puzzle-data', {
       my Hash $puzzle =
         $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
+
+      #TODO should not have come into the $*puzzle-data hash
+      $puzzle<Category>:delete;
+      $puzzle<Image>:delete;
+      $puzzle<Puzzle-index>:delete;
+
       $*puzzle-data<categories>{$to-cat}<members>{$p-id} = $puzzle;
 
 
