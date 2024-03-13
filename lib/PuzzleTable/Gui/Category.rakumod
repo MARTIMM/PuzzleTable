@@ -469,15 +469,10 @@ method fill-sidebar ( Bool :$init = False ) {
   with $!cat-grid .= new-grid {
     .set-name('sidebar');
     .set-size-request( 200, 100);
-    .set-tooltip-text(Q:q:to/EOTT/);
-      Number of puzzles
-      Untouched puzzles
-      Unfinished puzzles
-      Finished puzzles
-      EOTT
 
     my Gnome::Gtk4::Label $l;
 
+    my Array $totals = [ 0, 0, 0, 0];
     for $!config.get-categories(:filter<lockable>) -> $category {
       with my Gnome::Gtk4::Button $cat-button .= new-button {
         $!config.set-css( .get-style-context, :css-class<sidebar-label>);
@@ -502,19 +497,33 @@ method fill-sidebar ( Bool :$init = False ) {
       my Array $cat-status = $!config.get-category-status($category);
       $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
       .attach( $l, 1, $row-count, 1, 1);
+      $totals[0] += $cat-status[0];
 
       $l .= new-label; $l.set-text($cat-status[1].fmt('%3d'));
       .attach( $l, 2, $row-count, 1, 1);
+      $totals[1] += $cat-status[1];
 
       $l .= new-label; $l.set-text($cat-status[2].fmt('%3d'));
       .attach( $l, 3, $row-count, 1, 1);
+      $totals[2] += $cat-status[2];
 
       $l .= new-label; $l.set-text($cat-status[3].fmt('%3d'));
       $l.set-margin-end(10);
       .attach( $l, 4, $row-count, 1, 1);
+      $totals[3] += $cat-status[3];
 
       $row-count++;
     }
+
+    .set-tooltip-text(Q:qq:to/EOTT/);
+      Number of puzzles
+      Untouched puzzles
+      Unfinished puzzles
+      Finished puzzles
+
+      Totals
+      [ $totals.join(', ') ]
+      EOTT
   }
 
   self.set-child($!cat-grid);
