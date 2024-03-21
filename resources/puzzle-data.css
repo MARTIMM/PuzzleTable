@@ -4289,6 +4289,7 @@ assistant .sidebar label.highlight {
   padding: 0px;
   padding-left: 10px;
 }
+*/
 
 .table-item-comment {
   background-color: rgba(108, 5, 5, 1);
@@ -4298,6 +4299,7 @@ assistant .sidebar label.highlight {
   margin-bottom: 5px;
 }
 
+/*
 .sidebar-label {
   background-color: rgb(255, 182, 182);
 }
@@ -4305,11 +4307,11 @@ assistant .sidebar label.highlight {
 .sidebar-label label {
   color: rgb(255, 193, 193);
 }
+*/
 
 .toolbar-icon {
-  -gtk-icon-size: 64px;
+  -gtk-icon-size: 48px;
 }
-*/
 
 
 
