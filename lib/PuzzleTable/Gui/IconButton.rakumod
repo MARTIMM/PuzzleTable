@@ -13,7 +13,7 @@ multi submethod BUILD ( Str:D :$icon!, Str:D :$action-name, :$config ) {
   with self {
     $config.set-css( .get-style-context, :css-class<toolbar-icon>);
     .set-icon-name($icon);
-#    .set-size-request( 64, 64);
+    .set-size-request( 64, 64);
     .set-action-name($action-name);
   }
 }
