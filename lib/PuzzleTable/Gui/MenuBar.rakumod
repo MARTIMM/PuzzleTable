@@ -82,6 +82,10 @@ method make-menu (
         $menu, $menu-name, $!cat, 'Remove Category', 'app.remove-category',
         :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
       );
+      self.bind-action(
+        $menu, $menu-name, $!cat, 'Refresh Sidebar', 'app.refresh-sidebar',
+        :icon<view-refresh>, :tooltip('Refresh sidebar')
+      );
     }
 
     when 'Puzzles' {

@@ -398,6 +398,12 @@ method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
   $dialog.destroy;
 }
 
+#-------------------------------------------------------------------------------
+# Select from menu to refresh the sidebar
+method categories-refresh-sidebar ( N-Object $parameter ) {
+  self.fill-sidebar;
+}
+
 #`{{
 #-------------------------------------------------------------------------------
 method renew ( ) {
