@@ -499,6 +499,7 @@ method fill-sidebar ( Bool :$init = False ) {
 
       .attach( $cat-button, 0, $row-count, 1, 1);
 
+      # Get information of each category
       my Array $cat-status = $!config.get-category-status($category);
       $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
       .attach( $l, 1, $row-count, 1, 1);
@@ -520,6 +521,7 @@ method fill-sidebar ( Bool :$init = False ) {
       $row-count++;
     }
 
+    # Display gathered information in a tooltip
     .set-tooltip-text(Q:qq:to/EOTT/);
       Number of puzzles
       Untouched puzzles
