@@ -77,6 +77,12 @@ submethod BUILD ( ) {
   my $e = CArray[N-Error].new(N-Error);
   $!application.register( N-Object, $e);
   die $e[0].message if ?$e[0];
+
+  # Trap ctrl-c signal to close program orderly
+  signal(SIGINT).tap( {
+      $!application.quit;
+    }
+  );
 }
 
 #-------------------------------------------------------------------------------
@@ -197,7 +203,7 @@ say 'open a file';
 method app-shutdown ( ) {
 #  say 'shutdown, saving configuration';
 #  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
-  $!config.save-puzzle-admin;
+#  $!config.save-puzzle-admin;
 }
 
 #-------------------------------------------------------------------------------
