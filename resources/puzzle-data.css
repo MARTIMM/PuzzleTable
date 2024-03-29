@@ -4260,7 +4260,47 @@ assistant .sidebar label.highlight {
   background-color: blue;
   min-height: 13px;
 }
+*/
+/*
+progressbar {
+  font-size: smaller;
+  color: alpha(@theme_button_foreground_normal_breeze,0.3);
+}
 
+progressbar.horizontal trough, progressbar.horizontal progress {
+  min-height: 4px;
+}
+
+progressbar.vertical trough, progressbar.vertical progress {
+  min-width: 4px;
+}
+
+progressbar trough {
+  border: 1px solid;
+  border-radius: 0.75mm;
+  background: linear-gradient(alpha(@theme_button_foreground_normal_breeze,0.1),alpha(@theme_button_foreground_normal_breeze,0.1)), linear-gradient(@theme_bg_color_breeze,@theme_bg_color_breeze);
+  border-color: alpha(@theme_button_foreground_normal_breeze,0.2);
+}
+
+progressbar progress {
+  border: 1px solid;
+  margin: -1px;
+  border-radius: 0.75mm;
+  box-shadow: none;
+  background: linear-gradient(alpha(@theme_button_decoration_hover_breeze,0.5),alpha(@theme_button_decoration_hover_breeze,0.5)), linear-gradient(@theme_bg_color_breeze,@theme_bg_color_breeze);
+  border: 1px solid @theme_button_decoration_hover_breeze;
+}
+
+progressbar:backdrop progress {
+  background: linear-gradient(alpha(@theme_unfocused_selected_bg_color_breeze,0.5),alpha(@theme_unfocused_selected_bg_color_breeze,0.5)), linear-gradient(@theme_bg_color_breeze,@theme_bg_color_breeze);
+  border-color: @theme_unfocused_selected_bg_color_breeze;
+}
+
+progressbar.osd {
+  background-color: transparent;
+}
+*/
+/*
 .puzzle-table {
   padding: 10px;
 }
