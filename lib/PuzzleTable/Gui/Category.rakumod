@@ -488,9 +488,8 @@ method fill-sidebar ( Bool :$init = False ) {
           .set-hexpand(True);
           .set-halign(GTK_ALIGN_START);
         }
-        .set-child($l);
 
-#        .set-label($category);
+        .set-child($l);
         .set-hexpand(True);
         .set-halign(GTK_ALIGN_FILL);
         .set-has-tooltip(True);
