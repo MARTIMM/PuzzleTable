@@ -22,7 +22,6 @@ use YAMLish;
 use PuzzleTable::Types;
 use PuzzleTable::Gui::MainWindow;
 
-
 #-------------------------------------------------------------------------------
 # Load puzzle data in global Hash
 my Hash $*puzzle-data = %();
