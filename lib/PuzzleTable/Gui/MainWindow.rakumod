@@ -79,10 +79,10 @@ submethod BUILD ( ) {
   die $e[0].message if ?$e[0];
 
   # Trap ctrl-c signal to close program orderly
-  signal(SIGINT).tap( {
-      $!application.quit;
-    }
-  );
+#  signal(SIGINT).tap( {
+#      $!application.quit;
+#    }
+#  );
 }
 
 #-------------------------------------------------------------------------------
@@ -155,13 +155,14 @@ method remote-options ( N-Object $n-command-line --> Int ) {
     $filter = $o<filter>;
   }
 
+  # Process category option. It is set to 'Default' otherwise.
   my Str $opt-category = 'Default';
+
   if $o<category>:exists {
     $opt-category = $o<category>.tc;
-    # Keep lockable True when it is set to True
-    $!config.add-category(
-      $opt-category, ($lock or $!config.is-category-lockable($opt-category))
-    );
+    # Create category if does not exist. Keep lockable property of the category
+    # True when it is set to True
+    $!config.add-category( $opt-category, $lock);
   }
 
   #TODO select category if registered

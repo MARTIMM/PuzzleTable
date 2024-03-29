@@ -65,11 +65,11 @@ submethod BUILD ( ) {
 
   $!extracter .= new;
 
-  signal(SIGINT).tap( {
-      say "Save config";
+#  signal(SIGINT).tap( {
+#      say "Save config";
 #      exit 0;
-    }
-  );
+#    }
+# );
 }
 
 #`{{
@@ -259,7 +259,8 @@ method get-pala-executable ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method add-category ( Str:D $category, Bool $lock ) {
+method add-category ( Str:D $category, Bool $lock is copy ) {
+  $lock = ($lock or $*puzzle-data<categories>{$category}<lockable>.Bool);
 #say 'add category';
 #  $!semaphore.writer( 'puzzle-data', {
     # Add category to list if not available
