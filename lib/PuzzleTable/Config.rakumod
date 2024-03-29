@@ -20,7 +20,7 @@ use Archive::Libarchive;
 use Archive::Libarchive::Constants;
 use Digest::SHA256::Native;
 use YAMLish;
-use Semaphore::ReadersWriters;
+#use Semaphore::ReadersWriters;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config:auth<github:MARTIMM>;
@@ -33,13 +33,19 @@ has Array $.options = [<
   category=s pala-collection=s puzzles lock h help version filter=s
 >];
 
-has Semaphore::ReadersWriters $!semaphore;
+# To get info from other modules
+#has Hash $!supply-taps = %();
+
+# To provide info to other modules
+#has Suplier $!supplier .= new;
+
+#has Semaphore::ReadersWriters $!semaphore;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
 
-  $!semaphore .= new;
-  $!semaphore.add-mutex-names('puzzle-data');
+#  $!semaphore .= new;
+#  $!semaphore.add-mutex-names('puzzle-data');
 
   my Str $png-file;
   for <start-puzzle-64.png edit-puzzle-64.png add-cat.png ren-cat.png
@@ -58,7 +64,22 @@ submethod BUILD ( ) {
   }
 
   $!extracter .= new;
+
+  signal(SIGINT).tap( {
+      say "Save config";
+#      exit 0;
+    }
+  );
 }
+
+#`{{
+#-------------------------------------------------------------------------------
+# Set a tap for users of config info
+method set-tap ( Callable $tap-routine ) {
+  my $supply = $!supplier.Supply;
+  $supply.tap($tap-routine);
+}
+}}
 
 #-------------------------------------------------------------------------------
 method set-css ( N-Object $context, Str :$css-class = '' ) {
@@ -72,16 +93,18 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
 
 #-------------------------------------------------------------------------------
 method get-password ( --> Str ) {
-  $!semaphore.reader( 'puzzle-data', {$*puzzle-data<settings><password> // ''});
+#  $!semaphore.reader( 'puzzle-data', {
+    $*puzzle-data<settings><password> // ''
+#  });
 }
 
 #-------------------------------------------------------------------------------
 method check-password ( Str $password --> Bool ) {
   my Bool $ok = True;
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     $ok = (sha256-hex($password) eq $*puzzle-data<settings><password>).Bool
       if $*puzzle-data<settings><password>:exists;
-  });
+#  });
 
   $ok
 }
@@ -93,11 +116,11 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
   # Return fault when old one is empty while there should be one given.
   return $is-set if $old-password eq '' and ?self.get-password;
 
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     # Check if old password matches before a new one is set
     $is-set = self.check-password($old-password);
     $*puzzle-data<settings><password> = sha256-hex($new-password) if $is-set;
-  });
+#  });
 
   self.save-puzzle-admin if $is-set;
   $is-set
@@ -106,33 +129,33 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 #-------------------------------------------------------------------------------
 # Get the category lockable state
 method is-category-lockable ( Str:D $category --> Bool ) {
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<categories>{$category}<lockable>.Bool
-  });
+#  });
 }
 
 #-------------------------------------------------------------------------------
 method set-category-lockable ( Str:D $category, Bool:D $lockable ) {
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     $*puzzle-data<categories>{$category}<lockable> = $lockable;
-  });
+#  });
   self.save-puzzle-admin;
 }
 
 #-------------------------------------------------------------------------------
 # Get the puzzle table locking state
 method is-locked ( --> Bool ) {
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     ?$*puzzle-data<settings><locked>.Bool;
-  });
+#  });
 }
 
 #-------------------------------------------------------------------------------
 # Set the puzzle table locking state
 method lock ( ) {
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     $*puzzle-data<settings><locked> = True;
-  });
+#  });
   self.save-puzzle-admin;
 }
 
@@ -140,9 +163,9 @@ method lock ( ) {
 # Reset the puzzle table locking state
 method unlock ( Str $password --> Bool ) {
   my Bool $ok = self.check-password($password);
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     $*puzzle-data<settings><locked> = False if $ok;
-  });
+#  });
 
   self.save-puzzle-admin;
   $ok
@@ -178,25 +201,25 @@ method unlock-puzzle ( Str $category, Str $puzzle-id ) {
 
 #-------------------------------------------------------------------------------
 method get-palapeli-preference ( --> Str ) {
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<palapeli><preference> // 'standard'
-  });
+#  });
 }
 
 #-------------------------------------------------------------------------------
 method get-palapeli-image-size ( --> List ) {
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<palapeli><puzzle-image-width>//300,
     $*puzzle-data<palapeli><puzzle-image-height>//300
-  });
+#  });
 }
 
 #-------------------------------------------------------------------------------
 method get-pala-collection ( --> Str ) {
   my Str $preference = self.get-palapeli-preference;
-  my Str $collection = $!semaphore.reader( 'puzzle-data', {
+  my Str $collection = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<palapeli><collections>{$preference};
-  });
+#  });
 
   [~] $*HOME, '/', $collection, '/'
 }
@@ -213,15 +236,15 @@ method get-pala-executable ( --> Str ) {
     }
 
     when 'Snap' {
-      $h = $!semaphore.reader( 'puzzle-data', {
+      $h = #$!semaphore.reader( 'puzzle-data', {
         $*puzzle-data<palapeli><execute><Snap>
-      });
+#      });
     }
 
     when 'Standard' {
-      $h = $!semaphore.reader( 'puzzle-data', {
+      $h = #$!semaphore.reader( 'puzzle-data', {
         $*puzzle-data<palapeli><execute><Standard>
-      });
+#      });
     }
   }
 
@@ -238,7 +261,7 @@ method get-pala-executable ( --> Str ) {
 #-------------------------------------------------------------------------------
 method add-category ( Str:D $category, Bool $lock ) {
 #say 'add category';
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     # Add category to list if not available
     unless $*puzzle-data<categories>{$category}:exists {
       $*puzzle-data<categories>{$category} = %(members => %());
@@ -249,7 +272,7 @@ method add-category ( Str:D $category, Bool $lock ) {
     }
 
     $*puzzle-data<categories>{$category}<lockable> = $lock;
-  });
+#  });
 
   self.save-puzzle-admin;
 }
@@ -257,9 +280,9 @@ method add-category ( Str:D $category, Bool $lock ) {
 #-------------------------------------------------------------------------------
 method check-category ( Str:D $category --> Bool ) {
 #  say 'check category';
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<categories>{$category}:exists
-  });
+#  });
 }
 
 #-------------------------------------------------------------------------------
@@ -269,7 +292,7 @@ method check-category ( Str:D $category --> Bool ) {
 # categories when the puzzle table is locked.
 method get-categories ( Str :$filter --> Seq ) {
   my @cat = ();
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     if $filter eq 'default' {
       for $*puzzle-data<categories>.keys -> $category {
   #      next if $category ~~ m/ [Trash | Default] /;
@@ -293,7 +316,7 @@ method get-categories ( Str :$filter --> Seq ) {
         @cat.push: $category;
       }
     }
-  });
+#  });
 
   @cat.sort
 }
@@ -312,14 +335,14 @@ method remove-category ( Str:D $category ) {
 
 #-------------------------------------------------------------------------------
 method move-category ( $cat-from, $cat-to ) {
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     $*puzzle-data<categories>{$cat-to} =
     $*puzzle-data<categories>{$cat-from}:delete;
 
     my Str $dir-from = PUZZLE_TABLE_DATA ~ $cat-from;
     my Str $dir-to = PUZZLE_TABLE_DATA ~ $cat-to;
     $dir-from.IO.rename( $dir-to, :createonly);
-  });
+#  });
 
   self.save-puzzle-admin;
 }
@@ -340,14 +363,14 @@ method add-puzzle (
 
   my Str $puzzle-id;
   my Hash $cat;
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     # Get free entry
     $cat := $*puzzle-data<categories>{$category}<members>;
     loop ( my Int $count = 1; $count < 1000; $count++ ) {
       $puzzle-id = $count.fmt('p%03d');
       last unless $cat{$puzzle-id}:exists;
     }
-  });
+#  });
 
   my Str $destination = PUZZLE_TABLE_DATA ~ $category ~ "/$puzzle-id";
   mkdir $destination, 0o700;
@@ -379,10 +402,10 @@ method add-puzzle (
   my Bool $accept = True;
   $accept = False if ?$filter and $temp-data<Source> !~~ m/ $filter /;
   if $accept {
-    $!semaphore.writer( 'puzzle-data', {
+#    $!semaphore.writer( 'puzzle-data', {
       # Store data in $*puzzle-data admin
       $cat{$puzzle-id} = $temp-data;
-    });
+#    });
 
     note "Add new puzzle: $puzzle-id, $basename, $temp-data<Name>, $temp-data<ImageSize>, ", "$temp-data<PieceCount> pieces";
 
@@ -395,9 +418,9 @@ method add-puzzle (
     );
     my $progress = self.calculate($cat{$puzzle-id});
     my $p = self.get-palapeli-preference;
-    $!semaphore.writer( 'puzzle-data', {
+#    $!semaphore.writer( 'puzzle-data', {
       $cat{$puzzle-id}<Progress>{$p} = $progress;
-    });
+#    });
 
     # Save admin
     self.save-puzzle-admin unless $from-collection;
@@ -424,9 +447,9 @@ method check-pala-progress-file (
   Str $basename, Str $unique-name, Hash $puzzle-info,
   Bool :$from-collection = False
 ) {
-  my Hash $collections = $!semaphore.reader( 'puzzle-data', {
+  my Hash $collections = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<palapeli><collections>;
-  });
+#  });
 
   # Check in pala collections for this name
   my Str $collection-name;
@@ -452,9 +475,9 @@ method check-pala-progress-file (
       unless $col-unique-path.IO.e {
         say "$collection-name.IO.basename() found in $col-key collection";
         say "Copy $col-path.IO.basename() to $col-unique-path.IO.basename()";
-        $!semaphore.writer( 'puzzle-data', {
+#        $!semaphore.writer( 'puzzle-data', {
           $col-path.IO.copy( $col-unique-path, :createonly);
-        });
+#        });
       }
 
       last;
@@ -474,14 +497,14 @@ method calculate-progress ( Hash $object --> Str ) {
   my $i = $object<Puzzle-index>;
   my $p = self.get-palapeli-preference;
 
-  my Hash $puzzle = $!semaphore.reader( 'puzzle-data', {
+  my Hash $puzzle = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<categories>{$c}<members>{$i};
-  });
+#  });
 
   my $progress = self.calculate($puzzle);
-  $!semaphore.writer( 'puzzle-data', {
+#  $!semaphore.writer( 'puzzle-data', {
     $*puzzle-data<categories>{$c}<members>{$i}<Progress>{$p} = $progress;
-  });
+#  });
 
   self.save-puzzle-admin;
 
@@ -492,7 +515,9 @@ method calculate-progress ( Hash $object --> Str ) {
 # Called from check-pala-progress-file()
 method calculate ( Hash $puzzle --> Str ) {
 
-  my Str $filename = $!semaphore.reader( 'puzzle-data', {$puzzle<Filename>;});
+  my Str $filename = #$!semaphore.reader( 'puzzle-data', {
+    $puzzle<Filename>;
+#  });
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
   my Str $collection-path = [~] self.get-pala-collection,
          '/', $collection-filename;
@@ -502,7 +527,9 @@ method calculate ( Hash $puzzle --> Str ) {
   # Puzzle progress admin is maintained by Palapeli in its collection directory
   # When puzzle is never started, this file does not yet exist.
   if $collection-path.IO.r {
-    my $nbr-pieces = $!semaphore.reader( 'puzzle-data', {$puzzle<PieceCount>;});
+    my $nbr-pieces = #$!semaphore.reader( 'puzzle-data', {
+      $puzzle<PieceCount>;
+#    });
     my Bool $get-lines = False;
     my Hash $piece-coordinates = %();
     for $collection-path.IO.slurp.lines -> $line {
@@ -542,9 +569,9 @@ method calculate ( Hash $puzzle --> Str ) {
 method store-puzzle-info( $object, $comment, $source) {
   my $c = $object<Category>;
   my $i = $object<Puzzle-index>;
-  my Hash $puzzle = $!semaphore.reader( 'puzzle-data', {
+  my Hash $puzzle = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<categories>{$c}<members>{$i};
-  });
+#  });
 
   $puzzle<Comment> = $comment;
   $puzzle<Source> = $source;
@@ -554,7 +581,7 @@ method store-puzzle-info( $object, $comment, $source) {
 #-------------------------------------------------------------------------------
 method get-category-status ( Str $category --> Array ) {
   my Array $cat-status = [ 0, 0, 0, 0];
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     my Str $preference-program = $*puzzle-data<palapeli><preference>;
     my Hash $cat := $*puzzle-data<categories>{$category}<members>;
     $cat-status[0] = $cat.elems;
@@ -566,7 +593,7 @@ method get-category-status ( Str $category --> Array ) {
       $cat-status[2]++ if 0e0 < $progress < 1e2;
       $cat-status[3]++ if $progress == 1e2;
     }
-  });
+#  });
 
   $cat-status
 }
@@ -580,13 +607,18 @@ method get-puzzles ( Str $category --> Array ) {
   my Str $pi;
   my Int $found-count = 0;
   my Array $cat-puzzle-data = [];
-  $!semaphore.reader( 'puzzle-data', {
-    my Hash $cat := $*puzzle-data<categories>{$category}<members>;
+#  $!semaphore.reader( 'puzzle-data', {
+    my Hash $cat = $*puzzle-data<categories>{$category}<members>;
     my Int $count = $cat.elems;
 
     loop ( my Int $i = 1; $i < 1000; $i++) {
       $pi = $i.fmt('p%03d');
       if ?$cat{$pi} {
+        #TODO old info seems to stick, must remove for the moment
+        $cat{$pi}<Puzzle-index>:delete;
+        $cat{$pi}<Category>:delete;
+        $cat{$pi}<Image>:delete;
+
         $cat-puzzle-data.push: %(
           :Puzzle-index($pi),
           :Category($category),
@@ -599,7 +631,7 @@ method get-puzzles ( Str $category --> Array ) {
       
       last if $found-count >= $count;
     }
-  });
+#  });
 
   $cat-puzzle-data
 }
@@ -611,10 +643,10 @@ method get-puzzles ( Str $category --> Array ) {
 method get-puzzle ( Str $category, Str $puzzle-id --> Hash ) {
 
   my Hash $puzzle = %();
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     $puzzle = $*puzzle-data<categories>{$category}<members>{$puzzle-id}
       if $*puzzle-data<categories>{$category}<members>{$puzzle-id}:exists;
-  });
+#  });
 
   $puzzle
 }
@@ -627,7 +659,7 @@ method get-puzzle-image ( Str $category --> Str ) {
 
   my Str $pi;
   my Str $puzzle-image;
-  $!semaphore.reader( 'puzzle-data', {
+#  $!semaphore.reader( 'puzzle-data', {
     my Hash $cat := $*puzzle-data<categories>{$category}<members>;
 
     loop ( my Int $i = 1; $i < 1000; $i++) {
@@ -637,7 +669,7 @@ method get-puzzle-image ( Str $category --> Str ) {
         last;
       }
     }
-  });
+#  });
 
   $puzzle-image
 }
@@ -673,18 +705,19 @@ method get-pala-puzzles (
 method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
   for 1..999 -> $count {
     my Str $p-id = $count.fmt('p%03d');
-    next if $!semaphore.reader( 'puzzle-data', {
+    next if #$!semaphore.reader( 'puzzle-data', {
       $*puzzle-data<categories>{$to-cat}<members>{$p-id}:exists;
-    });
+    #});
 
-    $!semaphore.writer( 'puzzle-data', {
+    #$!semaphore.writer( 'puzzle-data', {
       my Hash $puzzle =
         $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
 
-      #TODO should not have come into the $*puzzle-data hash
-      $puzzle<Category>:delete;
-      $puzzle<Image>:delete;
-      $puzzle<Puzzle-index>:delete;
+      ##TODO should not have come into the $*puzzle-data hash
+      # Taken care of elsewhere
+      #$puzzle<Category>:delete;
+      #$puzzle<Image>:delete;
+      #$puzzle<Puzzle-index>:delete;
 
       $*puzzle-data<categories>{$to-cat}<members>{$p-id} = $puzzle;
 
@@ -692,7 +725,7 @@ method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
       my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
       my Str $to-dir = [~] PUZZLE_TABLE_DATA, $to-cat, '/', $p-id;
       $from-dir.IO.rename( $to-dir, :createonly);
-    });
+    #});
 
     self.save-puzzle-admin;
 
@@ -717,16 +750,16 @@ method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
 
   # Get the puzzle data from the config
   my Hash $puzzle;
-  $!semaphore.reader( 'puzzle-data', {
+  #$!semaphore.reader( 'puzzle-data', {
     $puzzle = $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
-  });
+  #});
 
   # Create the name of the progress file in any of the Palapeli collections
   my Str $progress-file = [~] '__FSC_', $puzzle<Filename>, '_0_.save';
 
   # Search for progress file. If found move it also to destination dir
   my Str $colection-dir;
-  $!semaphore.writer( 'puzzle-data', {
+  #$!semaphore.writer( 'puzzle-data', {
     for $*puzzle-data<palapeli><collections>.keys -> $key {
       $colection-dir = $*puzzle-data<palapeli><collections>{$key};
       my Str $progress-path =
@@ -737,7 +770,7 @@ method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
         last;
       }
     }
-  });
+  #});
 
   # Following doesn't need protection because paths are always unique
 
@@ -793,9 +826,9 @@ method save-puzzle-admin ( ) {
 #  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
 
 #  start {
-    $!semaphore.writer( 'puzzle-data', {
+#    $!semaphore.writer( 'puzzle-data', {
       PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
-    });
+#    });
 #  }
 }
 

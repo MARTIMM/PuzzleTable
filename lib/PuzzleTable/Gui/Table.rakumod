@@ -33,7 +33,7 @@ use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
-use Semaphore::ReadersWriters;
+#use Semaphore::ReadersWriters;
 
 #`{{
 A note from https://developer-old.gnome.org/gtk4/stable/ListContainers.html;
@@ -59,7 +59,7 @@ has Gnome::Gtk4::GridView $!puzzle-grid;
 has Hash $!current-table-objects;
 has Gnome::Glib::N-MainContext $!main-context;
 
-has Semaphore::ReadersWriters $!semaphore;
+#has Semaphore::ReadersWriters $!semaphore;
 has Hash $!puzzles-playing = %();
 
 #-------------------------------------------------------------------------------
@@ -72,8 +72,8 @@ submethod BUILD ( :$!main ) {
   );
 #Gnome::N::debug(:off);
 
-  $!semaphore .= new;
-  $!semaphore.add-mutex-names('puzzles-playing');
+#  $!semaphore .= new;
+#  $!semaphore.add-mutex-names('puzzles-playing');
 
   $!config = $!main.config;
 
@@ -87,6 +87,43 @@ submethod BUILD ( :$!main ) {
 }
 
 #-------------------------------------------------------------------------------
+method clear-table ( Bool :$init = False ) {
+
+  $!current-table-objects = %();
+
+  unless $init {
+    $!puzzle-objects.clear-object;
+    $!multi-select.clear-object;
+    $!signal-factory.clear-object;
+  }
+
+  $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
+  $!multi-select .= new-multiselection($!puzzle-objects);
+  $!multi-select.register-signal(
+    self, 'selection-changed', 'selection-changed'
+  );
+
+  with $!signal-factory .= new-signallistitemfactory {
+    .register-signal( self, 'setup-object', 'setup');
+    .register-signal( self, 'bind-object', 'bind');
+    .register-signal( self, 'unbind-object', 'unbind');
+    .register-signal( self, 'destroy-object', 'teardown');
+  }
+
+  with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
+    .set-model($!multi-select);
+    .set-factory($!signal-factory);
+    .set-min-columns(3);
+    .set-max-columns(10);
+    .set-enable-rubberband(True);
+
+    $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
+  }
+
+  self.set-child($!puzzle-grid);
+}
+
+#-------------------------------------------------------------------------------
 # Add puzzles to the table
 method add-puzzles-to-table ( Seq $puzzles ) {
 
@@ -95,11 +132,11 @@ method add-puzzles-to-table ( Seq $puzzles ) {
     my Str $category = $puzzle<Category>;
     my Str $puzzle-id = $puzzle<Puzzle-index>;
 
-    $!semaphore.writer( 'puzzles-playing', {
+#    $!semaphore.writer( 'puzzles-playing', {
       $!puzzles-playing{$category} = %()
         unless $!puzzles-playing{$category}:exists;
       $!puzzles-playing{$category}{$puzzle-id} //= False;
-    });
+#    });
 
     self.add-puzzle-to-table($puzzle);
   }
@@ -140,43 +177,6 @@ multi method add-puzzle-to-table ( Hash $puzzle ) {
   $!main.statusbar.set-status(
     "Number of puzzles: " ~ $!puzzle-objects.get-n-items
   );
-}
-
-#-------------------------------------------------------------------------------
-method clear-table ( Bool :$init = False ) {
-
-  $!current-table-objects = %();
-
-  unless $init {
-    $!puzzle-objects.clear-object;
-    $!multi-select.clear-object;
-    $!signal-factory.clear-object;
-  }
-
-  $!puzzle-objects .= new-stringlist(CArray[Str].new(Str));
-  $!multi-select .= new-multiselection($!puzzle-objects);
-  $!multi-select.register-signal(
-    self, 'selection-changed', 'selection-changed'
-  );
-
-  with $!signal-factory .= new-signallistitemfactory {
-    .register-signal( self, 'setup-object', 'setup');
-    .register-signal( self, 'bind-object', 'bind');
-    .register-signal( self, 'unbind-object', 'unbind');
-    .register-signal( self, 'destroy-object', 'teardown');
-  }
-
-  with $!puzzle-grid .= new-gridview( N-Object, N-Object) {
-    .set-model($!multi-select);
-    .set-factory($!signal-factory);
-    .set-min-columns(3);
-    .set-max-columns(10);
-    .set-enable-rubberband(True);
-
-    $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
-  }
-
-  self.set-child($!puzzle-grid);
 }
 
 #-------------------------------------------------------------------------------
@@ -348,9 +348,11 @@ method run-palapeli (
 
   # Check if puzzle is started
   my Str $comment = $label-comment.get-text() // '';
-  if $!semaphore.reader( 'puzzles-playing', {
-      $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>}}
-  ) {
+  if #$!semaphore.reader( 'puzzles-playing', {
+    $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>}
+    #}
+  #)
+  {
     $!main.statusbar.set-status(
       "You are playing puzzle{$comment ?? " '$comment'" !! ''} already. Cannot start twice!"
     );
@@ -358,16 +360,16 @@ method run-palapeli (
   }
 
   # Prevent puzzle started twice
-  $!semaphore.writer( 'puzzles-playing', {
+#  $!semaphore.writer( 'puzzles-playing', {
     $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = True;
-  });
+#  });
 
   # Information becomes visible after starting the thread.
   $!main.statusbar.set-status(
     "Play puzzle{$comment ?? " '$comment'" !! ''}, enjoy"
   );
 
-  start {
+#  start {
     my $exec = $!config.get-pala-executable;
     my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
           '/', $puzzle<Puzzle-index>, '/',  $puzzle<Filename>;
@@ -379,14 +381,14 @@ method run-palapeli (
     # Calculate progress
     my Str $progress = $!config.calculate-progress($puzzle);
 
-    $!semaphore.writer( 'puzzles-playing', {
+#    $!semaphore.writer( 'puzzles-playing', {
       #TODO must set reader/writer above
       $label-progress.set-text("Progress: $progress \%");
       $progress-bar.set-fraction($progress.Num / 100e0);
 
       $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
-    });
-  }
+#    });
+#  }
 }
 
 #-------------------------------------------------------------------------------
