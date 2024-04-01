@@ -19,3 +19,4 @@ enum InstallType is export < FlatPak Snap Standard >;
 mkdir( DATA_DIR, 0o700) unless DATA_DIR.IO.e;
 mkdir( PUZZLE_TABLE_DATA, 0o700) unless PUZZLE_TABLE_DATA.IO.e;
 mkdir( PUZZLE_TRASH, 0o700) unless PUZZLE_TRASH.IO.e;
+
