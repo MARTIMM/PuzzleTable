@@ -263,6 +263,7 @@ method go-ahead ( ) {
 
 #-------------------------------------------------------------------------------
 method quit-application ( ) {
+  await $!config.save-puzzle-admin(:force);
   $!application.quit;
 }
 

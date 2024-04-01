@@ -31,8 +31,9 @@ $*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
 $*puzzle-data<categories> = %() unless $*puzzle-data<categories>:exists;
 
 # Check for the Default category and set lockable to False
-$*puzzle-data<categories><Default> = %( members => %(), :!lockable)
+$*puzzle-data<categories><Default> = %(members => %())
   unless $*puzzle-data<categories><Default>:exists;
+$*puzzle-data<categories><Default><lockable> = False;
 
 # Create settings
 $*puzzle-data<settings> = %() unless $*puzzle-data<settings>:exists;

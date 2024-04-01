@@ -65,11 +65,15 @@ submethod BUILD ( ) {
 
   $!extracter .= new;
 
-#  signal(SIGINT).tap( {
-#      say "Save config";
-#      exit 0;
-#    }
-# );
+  # Raku bug? dynamic not visible within code of .tap(), must copy.
+  my Hash $p := $*puzzle-data;
+  signal(SIGINT).tap( {
+      my $*puzzle-data = $p;
+      say "Save config";
+      await self.save-puzzle-admin(:force);
+      exit 0;
+    }
+  );
 }
 
 #`{{
@@ -822,14 +826,36 @@ method remove-dir ( $path ) {
 }
 
 #-------------------------------------------------------------------------------
-method save-puzzle-admin ( ) {
-#  # No need for protection be semaphore, done within callers
-#  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
+method save-puzzle-admin ( Bool :$force = False --> Promise ) {
+  state $save-count = 0;
+  state $lock = Lock.new;
+  my Promise $promise;
 
-#  start {
-#    $!semaphore.writer( 'puzzle-data', {
-      PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
-#    });
-#  }
+note "$?LINE $save-count, $force";
+  # If $save-count == 0 and $force == True then there were no changes to save
+  # It was done before or there weren't any.
+  # $force is only used at the end of the program on exit.
+  return start {} if $save-count == 0 and $force;
+
+  if $save-count++ > 5 or $force {
+note "$?LINE save";
+    # Make a deep copy first
+    my Hash $puzzle-data-clone = $*puzzle-data.deepmap(-> $c is copy {$c});
+
+    # Save it to disk using a thread
+    $promise = start {
+      $lock.protect: {
+        PUZZLE_DATA.IO.spurt(save-yaml($puzzle-data-clone));
+        
+        # Nake sure the memory is freed beforehand
+        $puzzle-data-clone = %();
+      }
+    }
+
+    # Always set to 0, even if $force triggered the save.
+    $save-count = 0;
+  }
+  
+  $promise
 }
 
