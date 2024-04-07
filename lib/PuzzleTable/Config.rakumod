@@ -831,14 +831,13 @@ method save-puzzle-admin ( Bool :$force = False --> Promise ) {
   state $lock = Lock.new;
   my Promise $promise;
 
-note "$?LINE $save-count, $force";
   # If $save-count == 0 and $force == True then there were no changes to save
   # It was done before or there weren't any.
   # $force is only used at the end of the program on exit.
   return start {} if $save-count == 0 and $force;
 
   if $save-count++ > 5 or $force {
-note "$?LINE save";
+    note "Save puzzle admin";
     # Make a deep copy first
     my Hash $puzzle-data-clone = $*puzzle-data.deepmap(-> $c is copy {$c});
 
