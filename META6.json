@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.4.3",
+  "version": "0.4.5",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -13,6 +13,7 @@
     "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
     "PuzzleTable::Gui::DialogLabel": "lib/PuzzleTable/Gui/DialogLabel.rakumod",
+    "PuzzleTable::Gui::Help": "lib/PuzzleTable/Gui/Help.rakumod",
     "PuzzleTable::Gui::IconButton": "lib/PuzzleTable/Gui/IconButton.rakumod",
     "PuzzleTable::Gui::MainWindow": "lib/PuzzleTable/Gui/MainWindow.rakumod",
     "PuzzleTable::Gui::MenuBar": "lib/PuzzleTable/Gui/MenuBar.rakumod",

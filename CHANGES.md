@@ -1,3 +1,9 @@
+* 2024-04-07 0.4.5
+  * Adding an about dialog in a new module **PuzzleTable::Gui::Help**.
+
+* 2024-04-01 0.4.4
+  * Speeding up actions by not saving the admin at every change. Also changes are save in a thread.
+
 * 2024-02-24 0.4.3
   * Added information to each category button
   * Changed css by taking a complete dark gtk.css theme from version 4. It is much more complete. E.g. selections are properly visible.
