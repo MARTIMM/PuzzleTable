@@ -8,6 +8,7 @@ use PuzzleTable::Gui::PuzzleHandling;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Settings;
 use PuzzleTable::Gui::IconButton;
+use PuzzleTable::Gui::Help;
 
 #use Gnome::Glib::N-VariantType:api<2>;
 
@@ -31,6 +32,7 @@ has Array $!menus;
 has PuzzleTable::Gui::PuzzleHandling $!phandling;
 has PuzzleTable::Gui::Category $!cat;
 has PuzzleTable::Gui::Settings $!set;
+has PuzzleTable::Gui::Help $!help;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
@@ -38,6 +40,7 @@ submethod BUILD ( :$!main ) {
   $!cat = $!main.category;
   $!phandling .= new(:$!main);
   $!set .= new(:$!main);
+  $!help .= new;
 
   $!bar .= new-menu;
   $!menus = [
@@ -115,8 +118,8 @@ method make-menu (
     }
 
     when 'Help' {
-      self.bind-action( $menu, $menu-name, self, 'About', 'app.about');
-#      self.bind-action( $menu, $menu-name, self, '', '');
+      self.bind-action( $menu, $menu-name, $!help, 'About', 'app.about');
+#      self.bind-action( $menu, $menu-name, $!help, '', '');
     }
   }
 
@@ -169,9 +172,3 @@ method file-quit ( N-Object $parameter ) {
   await $!main.config.save-puzzle-admin(:force);
   $!application.quit;
 }
-
-#-------------------------------------------------------------------------------
-method help-about ( N-Object $parameter ) {
-  say 'help about';
-}
-
