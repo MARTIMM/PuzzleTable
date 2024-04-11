@@ -1,5 +1,5 @@
 use v6.d;
-#use NativeCall;
+use NativeCall;
 
 use PuzzleTable::Types;
 
@@ -40,7 +40,7 @@ method help-about ( N-Object $parameter ) {
   with $!about-dialog .= new-aboutdialog {
     .set-program-name('puzzle-table');
     .set-version('0.4.5');
-    .set-copyright('© Marcel Timmerman - MARTIMM on github');
+    .set-copyright('© 2023 - ∞ 😉 Marcel Timmerman - MARTIMM on github');
     .set-comments(q:to/EOC/);
         The puzzle table program is used to display a number of
         puzzles separated in several categories. The Palapeli
@@ -48,8 +48,34 @@ method help-about ( N-Object $parameter ) {
         EOC
     .set-wrap-license(True);
     .set-license-type(GTK_LICENSE_ARTISTIC);
-    .set-authors(['Marcel Timmerman']);
+    .set-authors([ 'Marcel Timmerman', Pointer[void]]);
     .set-logo($logo);
+
+    .add-credit-section(
+      'Raku, Rakudo, Moarvm, NQP', [
+        'Larry Wall', 'Rakudo developers',
+        'Rakudo testers', 'Rakudo documenters',
+        Pointer[void]
+      ]
+    );
+
+    .add-credit-section(
+      'Gnome Project', [ 'Miguel de Icaza', 'Federico Mena', Pointer[void]]
+    );
+
+    # From https://www.gtk.org/about/
+    .add-credit-section(
+      'Gtk, Gdk, Gsk, …', [
+        'Peter Mattis', 'Spencer Kimbal', 'Josh McDonald', 'Marius Vollmer',
+        'Lars Hamann', 'Stefan Jeske', 'Carsten Haitzler', 'Shawn Amundson',
+        Pointer[void]
+      ]
+    );
+
+    .add-credit-section(
+      'Palapeli', [ 'Friedrich W. H. Kossebau', Pointer[void]]
+    );
+
 
     .show;
   }
