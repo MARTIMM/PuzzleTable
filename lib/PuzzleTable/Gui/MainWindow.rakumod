@@ -17,6 +17,8 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ApplicationWindow:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::Builder:api<2>;
+use Gnome::Gtk4::T-builder:api<2>;
 
 use Gnome::Glib::N-Error;
 use Gnome::Glib::T-error;
@@ -209,8 +211,12 @@ method app-shutdown ( ) {
 
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
-#say 'display table';
-#  $!sidebar .= new-scrolledwindow(:main(self));
+
+  # Note; not in Config module because that is instanciated multiple times
+  my Str $ui = %?RESOURCES<shortcuts-window.ui>.slurp;
+  my $err = CArray[N-Error].new(N-Error);
+  my Gnome::Gtk4::Builder $builder .= new-builder;
+  $builder.add-from-string( $ui, $ui.chars, $err);
 
   $!toolbar .= new-box( GTK_ORIENTATION_HORIZONTAL, 2);
 

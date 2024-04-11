@@ -115,10 +115,16 @@ method make-menu (
         $menu, $menu-name, $!set, 'Lock Categories', 'app.lock-categories', 
         :shortcut
       );
+      self.bind-action(
+        $menu, $menu-name, $!set, 'Show Shortcuts Window',
+        'app.show-shortcuts-window'
+      );
     }
 
     when 'Help' {
-      self.bind-action( $menu, $menu-name, $!help, 'About', 'app.about');
+      self.bind-action( $menu, $menu-name, $!help, 'About', 'app.about',
+        :icon<help-about>, :tooltip('About Info')
+      );
 #      self.bind-action( $menu, $menu-name, $!help, '', '');
     }
   }

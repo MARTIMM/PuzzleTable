@@ -14,9 +14,13 @@ use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
 use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::ShortcutsWindow:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
+use Gnome::N::X:api<2>;
+
+#Gnome::N::debug(:on);
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Settings:auth<github:MARTIMM>;
@@ -26,6 +30,7 @@ has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 has PuzzleTable::Gui::Category $!category;
+has Gnome::Gtk4::ShortcutsWindow $!shortcuts-window;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
@@ -68,6 +73,16 @@ method settings-lock-categories ( N-Object $parameter ) {
 #  say 'lock';
   $!config.lock;
   $!category.fill-sidebar;
+}
+
+#-------------------------------------------------------------------------------
+method settings-show-shortcuts-window ( N-Object $parameter ) {
+
+  $!shortcuts-window.clear-object
+    if ?$!shortcuts-window and $!shortcuts-window.is-valid;
+
+  $!shortcuts-window .= new(:build-id<shortcuts-overview>);
+  $!shortcuts-window.show;
 }
 
 #`{{
