@@ -37,6 +37,7 @@
   "build-depends": [ ],
   "resources": [
     "start-puzzle-64.png", "edit-puzzle-64.png", "puzzle-data.css",
-    "add-cat.png", "ren-cat.png", "rem-cat.png", "move-64.png", "remove-64.png"
+    "add-cat.png", "ren-cat.png", "rem-cat.png", "move-64.png", "remove-64.png",
+    "shortcuts-window.ui"
   ]
 }
