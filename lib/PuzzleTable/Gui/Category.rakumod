@@ -23,7 +23,7 @@ use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;

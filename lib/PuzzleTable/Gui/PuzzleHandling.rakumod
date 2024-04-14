@@ -12,7 +12,7 @@ use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::MessageDialog:api<2>;
 use Gnome::Gtk4::T-MessageDialog:api<2>;

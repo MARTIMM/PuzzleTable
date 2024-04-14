@@ -12,7 +12,7 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::Label:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 
 use Gnome::Glib::N-MainLoop:api<2>;
 

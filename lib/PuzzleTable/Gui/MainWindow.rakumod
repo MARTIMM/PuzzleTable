@@ -16,7 +16,7 @@ use Gnome::Gtk4::Application:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ApplicationWindow:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::Builder:api<2>;
 use Gnome::Gtk4::T-builder:api<2>;
 

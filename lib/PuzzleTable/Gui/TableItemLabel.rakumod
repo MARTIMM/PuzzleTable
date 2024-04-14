@@ -1,7 +1,7 @@
 use v6.d;
 
 use Gnome::Gtk4::Label:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::TableItemLabel:auth<github:MARTIMM>;

@@ -18,7 +18,7 @@ use lib
 
 use Gnome::Gtk4::Label:api<2>;
 use PuzzleTable::Gui::DialogLabel;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 
 use Gnome::N::X:api<2>;
 Gnome::N::debug(:on);

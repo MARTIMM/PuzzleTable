@@ -19,7 +19,7 @@ use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::ProgressBar:api<2>;
