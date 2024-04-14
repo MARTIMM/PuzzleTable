@@ -5,6 +5,7 @@ use PuzzleTable::Types;
 
 use Gnome::Gtk4::AboutDialog:api<2>;
 use Gnome::Gtk4::T-AboutDialog:api<2>;
+use Gnome::Gtk4::ShortcutsWindow:api<2>;
 
 use Gnome::Gdk4::Texture:api<2>;
 
@@ -21,6 +22,7 @@ use Gnome::N::X:api<2>;
 unit class PuzzleTable::Gui::Help:auth<github:MARTIMM>;
 
 has Gnome::Gtk4::AboutDialog $!about-dialog;
+has Gnome::Gtk4::ShortcutsWindow $!shortcuts-window;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -79,5 +81,22 @@ method help-about ( N-Object $parameter ) {
 
     .show;
   }
+}
+
+#-------------------------------------------------------------------------------
+method help-show-shortcuts-window ( N-Object $parameter ) {
+
+#  $!shortcuts-window.clear-object if ?$!shortcuts-window;
+  state $no;
+  if ?$no {
+    $!shortcuts-window .= new(:native-object($no));
+  }
+
+  else {
+    $!shortcuts-window .= new(:build-id<shortcuts-overview>);
+    $no = $!shortcuts-window.get-native-object;
+  }
+
+  $!shortcuts-window.show;
 }
 

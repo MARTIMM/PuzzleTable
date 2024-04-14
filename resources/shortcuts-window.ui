@@ -5,24 +5,24 @@
   <object class="GtkShortcutsWindow" id="shortcuts-overview">
     <property name="modal">1</property>
     <child>
-      <object class="GtkShortcutsSection" id="sid">
+      <object class="GtkShortcutsSection">
         <property name="section-name">shortcuts</property>
         <property name="max-height">12</property>
         <child>
           <object class="GtkShortcutsGroup">
-            <property name="title" translatable="yes">Touchpad gestures</property>
+            <property name="title" translatable="yes">General</property>
             <child>
               <object class="GtkShortcutsShortcut">
-                <property name="shortcut-type">gesture-two-finger-swipe-right</property>
-                <property name="title" translatable="yes">Switch to the next document</property>
+                <property name="accelerator">&lt;ctrl&gt;Q</property>
+                <property name="title" translatable="yes">End Program</property>
               </object>
             </child>
-            <child>
+            <!--child>
               <object class="GtkShortcutsShortcut">
                 <property name="shortcut-type">gesture-two-finger-swipe-left</property>
                 <property name="title" translatable="yes">Switch to the previous document</property>
               </object>
-            </child>
+            </child-->
           </object>
         </child>
       </object>
