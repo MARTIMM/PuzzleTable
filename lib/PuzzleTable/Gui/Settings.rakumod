@@ -13,8 +13,15 @@ use Gnome::Gtk4::Box:api<2>;
 #use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
-use Gnome::Gtk4::T-Enums:api<2>;
-use Gnome::Gtk4::ShortcutsWindow:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
+use Gnome::Gtk4::ShortcutController:api<2>;
+use Gnome::Gtk4::Shortcut:api<2>;
+use Gnome::Gtk4::KeyvalTrigger:api<2>;
+use Gnome::Gtk4::CallbackAction:api<2>;
+
+use Gnome::Gdk4::T-enums:api<2>;
+use Gnome::Gdk4::T-keysyms:api<2>;
+
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -30,13 +37,34 @@ has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
 has PuzzleTable::Gui::Statusbar $!statusbar;
 has PuzzleTable::Gui::Category $!category;
-has Gnome::Gtk4::ShortcutsWindow $!shortcuts-window;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
   $!table = $!main.table;
   $!category = $!main.category;
+
+  self.set-shortcut-keys;
+}
+
+#-------------------------------------------------------------------------------
+method  set-shortcut-keys ( ) {
+  my Gnome::Gtk4::ShortcutController $controller .= new-shortcutcontroller;
+  $controller.set-scope(GTK_SHORTCUT_SCOPE_GLOBAL);
+  $!main.application-window.add-controller($controller);
+
+  # Create 
+  my Gnome::Gtk4::KeyvalTrigger $trigger .=
+    new-keyvaltrigger( GDK_KEY_Q, GDK_CONTROL_MASK);
+  my Gnome::Gtk4::CallbackAction $action .= new-callbackaction(
+    sub ( N-Object $no-widget, N-Object $, gpointer $ ) {
+      $!main.quit-application;
+    }
+  );
+
+  my Gnome::Gtk4::Shortcut $shortcut .= new-shortcut( $trigger, $action);
+
+  $controller.add-shortcut($shortcut);
 }
 
 #-------------------------------------------------------------------------------
@@ -73,16 +101,6 @@ method settings-lock-categories ( N-Object $parameter ) {
 #  say 'lock';
   $!config.lock;
   $!category.fill-sidebar;
-}
-
-#-------------------------------------------------------------------------------
-method settings-show-shortcuts-window ( N-Object $parameter ) {
-
-  $!shortcuts-window.clear-object
-    if ?$!shortcuts-window and $!shortcuts-window.is-valid;
-
-  $!shortcuts-window .= new(:build-id<shortcuts-overview>);
-  $!shortcuts-window.show;
 }
 
 #`{{
@@ -335,16 +353,20 @@ method do-password-check (
 #-------------------------------------------------------------------------------
 method show-dialog-password ( ) {
 
-  my DialogLabel $label-pw .= new( 'Type password', :$!config);
-  my Gnome::Gtk4::PasswordEntry $entry-pw .= new-passwordentry;
-  $!statusbar .= new-statusbar(:context<password>);
-
   my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
     'Password Change Dialog', $!main.application-window,
     GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
          'Change', GEnum, GTK_RESPONSE_ACCEPT,
     Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
   );
+
+  my DialogLabel $label-pw .= new( 'Type password', :$!config);
+  with my Gnome::Gtk4::PasswordEntry $entry-pw .= new-passwordentry {
+    .register-signal(
+      self, 'do-password-unlock-check-enter', 'activate', :$entry-pw, :$dialog
+    );
+  }
+  $!statusbar .= new-statusbar(:context<password>);
 
   with my Gnome::Gtk4::Box $box .= new(
     :native-object($dialog.get-content-area)
@@ -364,16 +386,28 @@ method show-dialog-password ( ) {
 
   with $dialog {
     .set-size-request( 400, 100);
-    .register-signal( self, 'do-password-unlock-check', 'response', :$entry-pw);
+    .register-signal(
+      self, 'do-password-unlock-check-button', 'response', :$entry-pw, :$dialog
+    );
     .register-signal( self, 'destroy-dialog', 'destroy');
     $!config.set-css( .get-style-context, :css-class<dialog>);
     my $r = .show;
   }
+  }
+
+#-------------------------------------------------------------------------------
+method do-password-unlock-check-enter (
+  Gnome::Gtk4::Dialog :$dialog,
+  Gnome::Gtk4::PasswordEntry :$entry-pw,
+) {
+  self.do-password-unlock-check-button(
+    GTK_RESPONSE_ACCEPT, :$dialog, :$entry-pw
+  );
 }
 
 #-------------------------------------------------------------------------------
-method do-password-unlock-check (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+method do-password-unlock-check-button (
+  Int $response-id, Gnome::Gtk4::Dialog :$dialog,
   Gnome::Gtk4::PasswordEntry :$entry-pw,
 ) {
   my Bool $sts-ok = False;
