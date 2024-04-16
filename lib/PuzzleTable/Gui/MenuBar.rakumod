@@ -40,7 +40,7 @@ submethod BUILD ( :$!main ) {
   $!cat = $!main.category;
   $!phandling .= new(:$!main);
   $!set .= new(:$!main);
-  $!help .= new;
+  $!help .= new(:$!main);
 
   $!bar .= new-menu;
   $!menus = [
