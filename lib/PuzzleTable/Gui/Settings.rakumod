@@ -265,6 +265,7 @@ method do-password-check-with-old (
 #-------------------------------------------------------------------------------
 method show-dialog-first-entry ( ) {
 
+#`{{
   my DialogLabel $label-newpw .= new( 'Type password', :$!config);
   my DialogLabel $label-reppw .= new( 'Repeat password', :$!config);
 
@@ -309,18 +310,41 @@ method show-dialog-first-entry ( ) {
     $!config.set-css( .get-style-context, :css-class<dialog>);
     my $r = .show;
   }
+}}
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Password Change Dialog')
+  ) {
+    .add-content(
+      'Type password',
+      my Gnome::Gtk4::PasswordEntry $entry-newpw .= new-passwordentry
+    );
+
+    .add-content(
+      'Repeat password',
+      my Gnome::Gtk4::PasswordEntry $entry-reppw .= new-passwordentry
+    );
+
+    .add-button(
+      self, 'do-password-check', 'Set Password',
+      :$entry-newpw, :$entry-reppw, :$dialog
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
+  }
 }
 
 #-------------------------------------------------------------------------------
 method do-password-check (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::PasswordEntry :$entry-newpw,
   Gnome::Gtk4::PasswordEntry :$entry-reppw
 ) {
   my Bool $sts-ok = False;
-  $!statusbar.remove-message;
+#  $!statusbar.remove-message;
 
-  my GtkResponseType() $response-type = $response-id;  
+#  my GtkResponseType() $response-type = $response-id;  
+#`{{
   given $response-type {
     when GTK_RESPONSE_DELETE_EVENT {
       #ignore
@@ -328,11 +352,12 @@ method do-password-check (
     }
 
     when GTK_RESPONSE_ACCEPT {
+}}
       my Str $npw = $entry-newpw.get-text;
       my Str $rpw = $entry-reppw.get-text;
 
       if $npw ne $rpw {
-        $!statusbar.set-status('Password not equal to repeated one');
+        $dialog.set-status('Password not equal to repeated one');
       }
 
       # If returned False, the password is not set
@@ -340,12 +365,14 @@ method do-password-check (
         $!config.set-password( '', $npw);
         $sts-ok = True;
       }
+#`{{
     }
 
     when GTK_RESPONSE_CANCEL {
       $sts-ok = True;
     }
   }
+}}
 
   $dialog.destroy if $sts-ok;
 }
