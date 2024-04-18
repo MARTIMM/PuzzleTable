@@ -68,21 +68,10 @@ submethod BUILD ( ) {
   # Fired after g_application_run
   $!application.register-signal( self, 'puzzle-table-display', 'activate');
 
-#`{{
-  # Fired after detecting a file on commandline
-  $!application.register-signal( self, 'app-open-file', 'open');
-}}
-
   # Now we can register the application.
   my $e = CArray[N-Error].new(N-Error);
   $!application.register( N-Object, $e);
   die $e[0].message if ?$e[0];
-
-  # Trap ctrl-c signal to close program orderly
-#  signal(SIGINT).tap( {
-#      $!application.quit;
-#    }
-#  );
 }
 
 #-------------------------------------------------------------------------------
@@ -189,7 +178,6 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
   # Refill the sidebar unless there is no change
   #$!category.fill-sidebar unless $!table-is-displayed;
-note "$?LINE $exit-code";
   $exit-code
 }
 
@@ -202,9 +190,7 @@ say 'open a file';
 
 #-------------------------------------------------------------------------------
 method app-shutdown ( ) {
-#  say 'shutdown, saving configuration';
-#  PUZZLE_DATA.IO.spurt(save-yaml($*puzzle-data));
-#  $!config.save-puzzle-admin;
+  await $!config.save-puzzle-admin(:force);
 }
 
 #-------------------------------------------------------------------------------
