@@ -69,7 +69,6 @@ submethod BUILD ( ) {
   my Hash $p := $*puzzle-data;
   signal(SIGINT).tap( {
       my $*puzzle-data = $p;
-      say "Save config";
       await self.save-puzzle-admin(:force);
       exit 0;
     }
@@ -837,18 +836,22 @@ method save-puzzle-admin ( Bool :$force = False --> Promise ) {
   return start {} if $save-count == 0 and $force;
 
   if $save-count++ > 5 or $force {
-    note "Save puzzle admin";
-    # Make a deep copy first
-    my Hash $puzzle-data-clone = $*puzzle-data.deepmap(-> $c is copy {$c});
 
     # Save it to disk using a thread
     $promise = start {
+      note "Save puzzle admin";
+      my $t0 = now;
       $lock.protect: {
+        # Make a deep copy first
+        my Hash $puzzle-data-clone = $*puzzle-data.deepmap(-> $c is copy {$c});
+
         PUZZLE_DATA.IO.spurt(save-yaml($puzzle-data-clone));
         
         # Nake sure the memory is freed beforehand
         $puzzle-data-clone = %();
       }
+
+      note "Done saving puzzle admin. Needed {(now - $t0).fmt('%.1f sec')}.";
     }
 
     # Always set to 0, even if $force triggered the save.
