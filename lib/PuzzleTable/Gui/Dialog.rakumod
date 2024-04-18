@@ -5,7 +5,6 @@ use v6.d;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Statusbar;
-use PuzzleTable::Gui::Category;
 
 use Gnome::Gtk4::Window:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
