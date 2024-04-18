@@ -1,22 +1,19 @@
 use v6.d;
 
 use PuzzleTable::Config;
-use PuzzleTable::Gui::DialogLabel;
-use PuzzleTable::Gui::Statusbar;
+#use PuzzleTable::Gui::DialogLabel;
+#use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::Dialog;
 
-use Gnome::Gtk4::StringList:api<2>;
-use Gnome::Gtk4::N-Bitset:api<2>;
-use Gnome::Gtk4::T-types:api<2>;
-use Gnome::Gtk4::MultiSelection:api<2>;
+#use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
-#use Gnome::Gtk4::Dialog:api<2>;
 use Gnome::Gtk4::T-Dialog:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
-use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::MessageDialog:api<2>;
 use Gnome::Gtk4::T-MessageDialog:api<2>;
+use Gnome::Gtk4::N-Bitset:api<2>;
+use Gnome::Gtk4::T-types:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -28,7 +25,7 @@ unit class PuzzleTable::Gui::PuzzleHandling:auth<github:MARTIMM>;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-has PuzzleTable::Gui::Statusbar $!statusbar;
+#has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
@@ -37,10 +34,9 @@ submethod BUILD ( :$!main ) {
 
 #-------------------------------------------------------------------------------
 method puzzles-move-puzzles ( N-Object $parameter ) {
-  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
-  my Gnome::Gtk4::N-Bitset $bitset .= new(
-    :native-object($multi-select.get-selection)
-  );
+#  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
+  my Gnome::Gtk4::N-Bitset $bitset .=
+    new(:native-object($!main.table.multi-select.get-selection));
 
   my Int $n = $bitset.get-size;
   unless ?$n {
@@ -66,8 +62,7 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
     .add-content( 'Specify the category to move to', $combobox);
 
     .add-button(
-      self, 'do-move-puzzles', 'Move',
-      :$combobox, :$bitset, :$dialog
+      self, 'do-move-puzzles', 'Move', :$combobox, :$bitset, :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -82,8 +77,6 @@ method do-move-puzzles (
   Gnome::Gtk4::N-Bitset :$bitset
 ) {
 #  note "do move";
-
-  my Gnome::Gtk4::StringList $puzzle-objects = $!main.table.puzzle-objects;
   my Bool $sts-ok = False;
 
   my Str $current-cat = $!main.category.get-current-category;
@@ -98,18 +91,20 @@ method do-move-puzzles (
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
       $!config.move-puzzle(
-        $current-cat, $dest-cat, $puzzle-objects.get-string($item-pos)
+        $current-cat, $dest-cat,
+        $!main.table.puzzle-objects.get-string($item-pos)
       );
     }
 
     # Save admin and update puzzle table
     $!config.save-puzzle-admin;
-#    $!main.category.select-category(:category($current-cat));
+
+    # Selecting the category again will redraw the puzzle table
+    $!main.category.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles
-    $puzzle-objects = $!main.table.puzzle-objects;
     $!main.statusbar.set-status(
-      "Number of puzzles: " ~ $puzzle-objects.get-n-items
+      "Number of puzzles: " ~ $!main.table.puzzle-objects.get-n-items
     );
 
     $sts-ok = True;
@@ -122,10 +117,9 @@ method do-move-puzzles (
 method puzzles-remove-puzzles ( N-Object $parameter ) {
 #note "remove";
 
-  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
-  my Gnome::Gtk4::N-Bitset $bitset .= new(
-    :native-object($multi-select.get-selection)
-  );
+#  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
+  my Gnome::Gtk4::N-Bitset $bitset .=
+    new(:native-object($!main.table.multi-select.get-selection));
 
   my Int $n = $bitset.get-size;
   unless ?$n {
@@ -163,8 +157,6 @@ method do-remove-puzzles (
 ) {
 #note "do remove";
 
-#  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
-  my Gnome::Gtk4::StringList $puzzle-objects = $!main.table.puzzle-objects;
   my Bool $sts-ok = False;
   #my Str $category = $!config
 
@@ -176,7 +168,7 @@ method do-remove-puzzles (
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
       $!config.remove-puzzle(
-        $current-cat, $puzzle-objects.get-string($item-pos)
+        $current-cat, $!main.table.puzzle-objects.get-string($item-pos)
       );
     }
 
@@ -185,9 +177,8 @@ method do-remove-puzzles (
     $!main.category.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles
-    $puzzle-objects = $!main.table.puzzle-objects;
     $!main.statusbar.set-status(
-      "Number of puzzles: " ~ $puzzle-objects.get-n-items
+      "Number of puzzles: " ~ $!main.table.puzzle-objects.get-n-items
     );
 
     $sts-ok = True;
