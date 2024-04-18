@@ -10,6 +10,7 @@ use v6.d;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::DialogLabel;
+use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::PasswordEntry:api<2>;
@@ -59,218 +60,115 @@ submethod BUILD ( :$!main ) {
 # Select from menu to add a category
 method categories-add-category ( N-Object $parameter ) {
 
-  my DialogLabel $label .= new( 'Specify a new category', :$!config);
-  my Gnome::Gtk4::Entry $entry .= new-entry;
-  my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Locked');
-  $check-button.set-active(False);
-  $!statusbar .= new-statusbar(:context<category>);
-
-  my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
-    'Add Category Dialog', $!main.application-window,
-    GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
-         'Add', GEnum, GTK_RESPONSE_ACCEPT,
-    Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
-  );
-
-  with my Gnome::Gtk4::Box $box .= new(
-    :native-object($dialog.get-content-area)
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Add Category Dialog')
   ) {
-    .set-orientation(GTK_ORIENTATION_VERTICAL);
-    .set-margin-top(10);
-    .set-margin-bottom(10);
-    .set-margin-start(10);
-    .set-margin-end(10);
-    .append($label);
-    .append($entry);
-    .append($check-button);
-    .append($!statusbar);
-  }
-
-  with $dialog {
-    .set-size-request( 400, 100);
-    .register-signal(
-       self, 'do-category-add', 'response', :$entry, :$check-button
+    .add-content(
+      'Specify a new category', my Gnome::Gtk4::Entry $entry .= new-entry
     );
-    .register-signal( self, 'destroy-dialog', 'destroy');
-    $!config.set-css( .get-style-context, :css-class<dialog>);
-    .set-name('category-dialog');
-    my $r = .show;
+
+    .add-content(
+      '', my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
+        'Locked Category'
+      )
+    );
+
+    .add-button(
+      self, 'do-category-add', 'Add', :$entry, :$check-button, :$dialog
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
   }
 }
 
 #-------------------------------------------------------------------------------
 method do-category-add (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button
 ) {
   my Bool $sts-ok = False;
-  $!statusbar.remove-message;
+  my Str $cat-text = $entry.get-text.tc;
 
-  my GtkResponseType() $response-type = $response-id;  
-  given $response-type {
-    when GTK_RESPONSE_DELETE_EVENT {
-      #ignore
-      $sts-ok = True;
-    }
-
-    when GTK_RESPONSE_ACCEPT {
-      my Str $cat-text = $entry.get-text.tc;
-
-      if !$cat-text {
-        $!statusbar.set-status('No category name specified');
-      }
-
-      elsif $cat-text.lc eq 'default' {
-        $!statusbar.set-status(
-          'Category \'default\' is fixed in any form of text-case'
-        );
-      }
-
-      elsif $!config.check-category($cat-text.tc) {
-        $!statusbar.set-status('Category already defined');
-      }
-
-      else {
-        # Add category to list
-        $!main.config.add-category( $cat-text.tc, $check-button.get-active);
-        self.fill-sidebar;
-        $sts-ok = True;
-      }
-    }
-
-    when GTK_RESPONSE_CANCEL {
-      $sts-ok = True;
-    }
+  if !$cat-text {
+    $dialog.set-status('No category name specified');
   }
 
-  $dialog.destroy if $sts-ok;
+  elsif $cat-text.lc eq 'default' {
+    $dialog.set-status(
+      'Category \'default\' is fixed in any form of text-case'
+    );
+  }
+
+  elsif $!config.check-category($cat-text.tc) {
+    $dialog.set-status('Category already defined');
+  }
+
+  else {
+    # Add category to list
+    $!main.config.add-category( $cat-text.tc, $check-button.get-active);
+    self.fill-sidebar;
+    $sts-ok = True;
+  }
+
+  $dialog.destroy-dialog if $sts-ok;
 }
 
 #-------------------------------------------------------------------------------
 # Select from menu to lock or unlock a category
 method categories-lock-category ( N-Object $parameter ) {
 
-  my DialogLabel $ul-label .= new( 'Lock or unlock category', :$!config);
-#  my DialogLabel $pw-label .= new( 'Type password to change', :$!config);
-  my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
-    'Lock or unlock category'
-  );
-#  my Gnome::Gtk4::PasswordEntry $pw-entry .= new-passwordentry;
-  $check-button.set-active(False);
-
-  my Gnome::Gtk4::ComboBoxText $combobox .= new-comboboxtext;
-  $combobox.register-signal(
-    self, 'set-cat-lock-info', 'changed', :$check-button
-  );
-
-  $!statusbar .= new-statusbar(:context<category>);
-
-  # Fill the combobox in the dialog. Using this filter, it isn't necessary to
-  # check passwords. One is already authenticated or not.
-  for $!config.get-categories(:filter<lockable>) -> $category {
-    # skip 'default'
-    next if $category eq 'Default';
-    $combobox.append-text($category);
-  }
-  $combobox.set-active(0);
-
-  my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
-    'Add Category Dialog', $!main.application-window,
-    GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
-         'Change', GEnum, GTK_RESPONSE_ACCEPT,
-    Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
-  );
-
-  with my Gnome::Gtk4::Box $box .= new(
-    :native-object($dialog.get-content-area)
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('(Un)Lock Dialog')
   ) {
-    .set-orientation(GTK_ORIENTATION_VERTICAL);
-    .set-margin-top(10);
-    .set-margin-bottom(10);
-    .set-margin-start(10);
-    .set-margin-end(10);
-    .append($combobox);
-#    .append($ul-label);
-    .append($check-button);
-    
-    # Only ask for password if puzzletable is locked
-#    if $!config.is-locked {
-#      .append($pw-label);
-#      .append($pw-entry);
-#    }
-    .append($!statusbar);
-  }
+    my Gnome::Gtk4::CheckButton $check-button .=
+      new-with-label('Lock or unlock category');
+    $check-button.set-active(False);
 
-  with $dialog {
-    .set-size-request( 400, 100);
-    .register-signal(
-       self, 'do-category-lock', 'response', #, :$pw-entry,
-       :$check-button, :$combobox
+    my Gnome::Gtk4::ComboBoxText $combobox .= new-comboboxtext;
+    $combobox.register-signal(
+      self, 'set-cat-lock-info', 'changed', :$check-button
     );
-    .register-signal( self, 'destroy-dialog', 'destroy');
-    $!config.set-css( .get-style-context, :css-class<dialog>);
-    .set-name('category-dialog');
-    .show;
+
+    # Fill the combobox in the dialog. Using this filter, it isn't necessary to
+    # check passwords. One is already authenticated or not.
+    for $!config.get-categories(:filter<lockable>) -> $category {
+      # skip 'default'
+      next if $category eq 'Default';
+      $combobox.append-text($category);
+    }
+    $combobox.set-active(0);
+
+    .add-content( 'Category to (un)lock', $combobox);
+    .add-content( '', $check-button);
+
+    .add-button(
+      self, 'do-category-lock', 'Move', :$combobox, :$dialog
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
   }
 }
 
 #-------------------------------------------------------------------------------
 method do-category-lock (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  PuzzleTable::Gui::Dialog :_widget($dialog),
 #  Gnome::Gtk4::PasswordEntry :$pw-entry,
   Gnome::Gtk4::CheckButton :$check-button,
   Gnome::Gtk4::ComboBox :$combobox
 ) {
   my Bool $sts-ok = False;
-  $!statusbar.remove-message;
 
-  my GtkResponseType() $response-type = $response-id;  
-  given $response-type {
-    when GTK_RESPONSE_DELETE_EVENT {
-      #ignore
-      $sts-ok = True;
-    }
+  $!config.set-category-lockable(
+    $combobox.get-active-text, $check-button.get-active.Bool
+  );
 
-    when GTK_RESPONSE_ACCEPT {
-#`{{
-      if $!config.is-locked {
-        my Str $pw-text = $pw-entry.get-text.tc;
-        if ! $!config.check-password($pw-text) {
-          $!statusbar.set-status('Wrong password');
-        }
+  # Sidebar changes when a category is set lockable and table is locked
+  self.fill-sidebar if $check-button.get-active.Bool and $!config.is-locked;
+  $sts-ok = True;
 
-        # Modify lockable category
-        elsif $!config.set-category-lockable(
-          $combobox.get-active-text, $check-button.get-active.Bool, $pw-text
-        ) {
-          self.fill-sidebar;
-          $sts-ok = True;
-        }
-
-        else {
-          $!statusbar.set-status('Empty password while one is needed?');
-        }
-      }
-
-      else {
-}}
-        $!config.set-category-lockable(
-          $combobox.get-active-text, $check-button.get-active.Bool
-        );
-
-        # Sidebar changes when a category is set lockable and table is locked
-        self.fill-sidebar
-          if $check-button.get-active.Bool and $!config.is-locked;
-        $sts-ok = True;
-#      }
-    }
-
-    when GTK_RESPONSE_CANCEL {
-      $sts-ok = True;
-    }
-  }
-
-  $dialog.destroy if $sts-ok;
+  $dialog.destroy-dialog if $sts-ok;
 }
 
 #-------------------------------------------------------------------------------
@@ -376,7 +274,7 @@ method do-category-rename (
     }
   }
 
-  $dialog.destroy if $sts-ok;
+  $dialog.destroy-dialog if $sts-ok;
 }
 
 #-------------------------------------------------------------------------------
@@ -395,7 +293,7 @@ method do-category-remove (
 #-------------------------------------------------------------------------------
 method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
 #  say 'destroy cat dialog';
-  $dialog.destroy;
+  $dialog.destroy-dialog;
 }
 
 #-------------------------------------------------------------------------------
@@ -404,53 +302,10 @@ method categories-refresh-sidebar ( N-Object $parameter ) {
   self.fill-sidebar;
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method renew ( ) {
-  self.fill-sidebar;
-
-#`{{
-  # Get current setting first
-  my Str $current-cat = self.get-current-category;
-
-  # Empty list and then refill
-  self.remove-all;
-
-  my Int ( $idx, $idx-default, $idx-current ) = ( 0, 0, -1);
-  my Bool $not-locked = !$!config.is-locked;
-
-  # Add to combobox unless locking is on and category is lockable
-  for $!config.get-categories(:filter<lockable>) -> $category {
-    self.append-text($category);
-    $idx-default = $idx if $category eq 'Default';
-    $idx-current = $idx if $category eq $current-cat;
-    $idx++;
-  }
-
-  self.set-active($idx-current == -1 ?? $idx-default !! $idx-current);
-}}
-}
-}}
-
 #-------------------------------------------------------------------------------
 method get-current-category ( --> Str ) {
   $!current-category // '';
 }
-#`{{
-}}
-
-#`{{
-#-------------------------------------------------------------------------------
-method set-current-category ( Str $category-select ) {
-  my Int ( $idx, $idx-select) = ( 0, -1);
-  for $!config.get-categories(:filter<lockable>) -> $category {
-    $idx-select = $idx if $category eq $category-select;
-    $idx++;
-  }
-
-  self.set-active($idx-select);
-}
-}}
 
 #-------------------------------------------------------------------------------
 method set-cat-lock-info (
