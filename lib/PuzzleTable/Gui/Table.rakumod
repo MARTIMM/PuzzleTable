@@ -10,9 +10,6 @@ use Gnome::Gtk4::GridView:api<2>;
 use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::SignalListItemFactory:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
-use Gnome::Gtk4::ListItem:api<2>;
-use Gnome::Gtk4::StringList:api<2>;
-use Gnome::Gtk4::StringObject:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Entry:api<2>;
@@ -24,6 +21,9 @@ use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::ProgressBar:api<2>;
 use Gnome::Gtk4::Adjustment:api<2>;
+use Gnome::Gtk4::StringList:api<2>;
+use Gnome::Gtk4::ListItem:api<2>;
+use Gnome::Gtk4::StringObject:api<2>;
 
 use Gnome::Glib::N-MainLoop:api<2>;
 use Gnome::Glib::N-MainContext:api<2>;
@@ -269,9 +269,9 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 #say 'bind-object';
 
-  my Gnome::Gtk4::StringObject $string-object .= new(
-    :native-object($list-item.get-item)
-  );
+  my Gnome::Gtk4::StringObject $string-object .= 
+    new(:native-object($list-item.get-item));
+
   my Hash $puzzle = $!current-table-objects{$string-object.get-string};
 
   with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
