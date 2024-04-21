@@ -9,7 +9,7 @@ use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
 
 use Gnome::Gio::Application:api<2>;
-use Gnome::Gio::T-Ioenums:api<2>;
+use Gnome::Gio::T-ioenums:api<2>;
 use Gnome::Gio::ApplicationCommandLine:api<2>;
 
 use Gnome::Gtk4::Application:api<2>;
