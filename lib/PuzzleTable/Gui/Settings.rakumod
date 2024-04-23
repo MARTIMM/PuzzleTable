@@ -3,14 +3,10 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Table;
-#use PuzzleTable::Gui::Statusbar;
-#use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::PasswordEntry:api<2>;
-#use Gnome::Gtk4::ComboBoxText:api<2>;
-#use Gnome::Gtk4::T-Dialog:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ShortcutController:api<2>;
 use Gnome::Gtk4::Shortcut:api<2>;

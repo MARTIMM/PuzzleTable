@@ -8,7 +8,7 @@ use PuzzleTable::Gui::Dialog;
 #use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
-use Gnome::Gtk4::T-Dialog:api<2>;
+use Gnome::Gtk4::T-dialog:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::MessageDialog:api<2>;
 use Gnome::Gtk4::T-MessageDialog:api<2>;

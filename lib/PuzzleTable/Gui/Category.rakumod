@@ -8,8 +8,6 @@ page.
 use v6.d;
 
 use PuzzleTable::Config;
-use PuzzleTable::Gui::Statusbar;
-use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::Entry:api<2>;
@@ -22,8 +20,6 @@ use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
-use Gnome::Gtk4::Dialog:api<2>;
-use Gnome::Gtk4::T-Dialog:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
 
@@ -36,7 +32,6 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-has PuzzleTable::Gui::Statusbar $!statusbar;
 has Gnome::Gtk4::Grid $!cat-grid;
 has Str $!current-category;
 
@@ -176,11 +171,8 @@ method do-category-lock (
 method categories-rename-category ( N-Object $parameter ) {
 #  say 'category rename';
 
-  my DialogLabel $label1 .= new( 'Select category from list', :$!config);
-  my DialogLabel $label2 .= new( 'Text to rename category', :$!config);
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
-  $!statusbar .= new-statusbar(:context<categories>);
 
   # Fill the combobox in the dialog
   for $!config.get-categories(:filter<lockable>) -> $category {
@@ -189,94 +181,58 @@ method categories-rename-category ( N-Object $parameter ) {
   }
   $combobox.set-active(0);
 
-  my Gnome::Gtk4::Dialog $dialog .= new-with-buttons(
-    'Add Category dialog', $!main.application-window,
-    GTK_DIALOG_MODAL +| GTK_DIALOG_DESTROY_WITH_PARENT,
-         'Rename', GEnum, GTK_RESPONSE_ACCEPT,
-    Str, 'Cancel', GEnum, GTK_RESPONSE_CANCEL
-  );
-
-  with my Gnome::Gtk4::Box $box .= new(
-    :native-object($dialog.get-content-area)
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Rename Category dialog')
   ) {
-    .set-orientation(GTK_ORIENTATION_VERTICAL);
-    .set-margin-top(10);
-    .set-margin-bottom(10);
-    .set-margin-start(10);
-    .set-margin-end(10);
-    .append($label1);
-    .append($combobox);
-    .append($label2);
-    .append($entry);
-    .append($!statusbar);
-  }
+    .add-content( 'Specify the category to rename', $combobox);
+    .add-content( 'Text to rename category', $entry);
 
-  with $dialog {
-    .set-size-request( 400, 100);
-    .register-signal(
-      self, 'do-category-rename', 'response', :$entry, :$combobox
+    .add-button(
+      self, 'do-category-rename', 'Rename',
+      :$entry, :$combobox, :$dialog
     );
-    .register-signal( self, 'destroy-dialog', 'destroy');
-    $!config.set-css( .get-style-context, :css-class<dialog>);
-    .set-name('category-dialog');
-    .show;
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
   }
 }
 
 #-------------------------------------------------------------------------------
 method do-category-rename (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
 ) {
   my Bool $sts-ok = False;
-  $!statusbar.remove-message;
 
-  my GtkResponseType() $response-type = $response-id;
+  my Str $cat-text = $entry.get-text.tc;
 
-  given $response-type {
-    when GTK_RESPONSE_DELETE_EVENT {
-      note 'deleted';
-      #ignore
-      $sts-ok = True;
-    }
+  if !$cat-text {
+    $dialog.set-status('No category name specified');
+  }
 
-    when GTK_RESPONSE_ACCEPT {
-      my Str $cat-text = $entry.get-text.tc;
+  elsif $cat-text.lc eq 'default' {
+    $dialog.set-status('Category \'default\' cannot be renamed');
+  }
 
-      if !$cat-text {
-        $!statusbar.set-status('No category name specified');
-      }
+  elsif $!config.check-category($cat-text.tc) {
+    $dialog.set-status('Category already defined');
+  }
 
-      elsif $cat-text.lc eq 'default' {
-        $!statusbar.set-status(
-          'Category \'default\' is fixed in any form of text-case'
-        );
-      }
+  elsif $cat-text.tc eq $combobox.get-active-text {
+    $dialog.set-status('Category text same as selected');
+  }
 
-      elsif $!config.check-category($cat-text.tc) {
-        $!statusbar.set-status('Category already defined');
-      }
-
-      elsif $cat-text.tc eq $combobox.get-active-text {
-        $!statusbar.set-status('Category text same as selected');
-      }
-
-      else {
-        # Move members to other category
-        $!config.move-category( $combobox.get-active-text, $cat-text.tc);
-        self.fill-sidebar;
-        $sts-ok = True;
-      }
-    }
-
-    when GTK_RESPONSE_CANCEL {
-      $sts-ok = True;
-    }
+  else {
+    # Move members to other category
+    $!config.move-category( $combobox.get-active-text, $cat-text.tc);
+    self.fill-sidebar;
+    $sts-ok = True;
   }
 
   $dialog.destroy-dialog if $sts-ok;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 # Select from menu to remove a category
 method categories-remove-category ( N-Object $parameter ) {
@@ -285,16 +241,11 @@ method categories-remove-category ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-remove (
-  Int $response-id, Gnome::Gtk4::Dialog :_widget($dialog),
+  PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
 ) {
 }
-
-#-------------------------------------------------------------------------------
-method destroy-dialog ( Gnome::Gtk4::Dialog :_widget($dialog) ) {
-#  say 'destroy cat dialog';
-  $dialog.destroy-dialog;
-}
+}}
 
 #-------------------------------------------------------------------------------
 # Select from menu to refresh the sidebar
