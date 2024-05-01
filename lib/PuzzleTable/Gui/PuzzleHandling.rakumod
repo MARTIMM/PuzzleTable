@@ -1,8 +1,6 @@
 use v6.d;
 
 use PuzzleTable::Config;
-#use PuzzleTable::Gui::DialogLabel;
-#use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::Dialog;
 
 #use Gnome::Gtk4::MultiSelection:api<2>;
@@ -25,7 +23,6 @@ unit class PuzzleTable::Gui::PuzzleHandling:auth<github:MARTIMM>;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-#has PuzzleTable::Gui::Statusbar $!statusbar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
@@ -40,7 +37,7 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
 
   my Int $n = $bitset.get-size;
   unless ?$n {
-    my Gnome::Gtk4::MessageDialog() $message .= new-messagedialog(
+    my Gnome::Gtk4::MessageDialog $message .= new-messagedialog(
       $!main.application-window, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO,
       GTK_BUTTONS_OK, "There are no puzzles selected"
     );
