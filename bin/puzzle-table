@@ -2,6 +2,7 @@
 
 use v6.d;
 
+#`{{
 # Setup temporary paths to Gtk4 development area
 use lib
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-native/lib",
@@ -16,6 +17,7 @@ use lib
   "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-gdk4/lib",
 #  "/gnome-gsk4/lib"
   ;
+}}
 
 use YAMLish;
 
