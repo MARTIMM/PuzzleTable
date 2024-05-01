@@ -1,17 +1,13 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
 
   "raku-version": "6.d",
   "license": "Artistic-2.0",
-
-  "Xp": {
-    "PuzzleTable::Gui::DialogLabel": "lib/PuzzleTable/Gui/DialogLabel.rakumod"
-  },
 
   "provides": {
     "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
