@@ -256,7 +256,6 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .attach( $label-source, 0, 4, 2, 1);
     .attach( $progress-bar, 0, 5, 2, 1);
     .attach( $label-progress, 0, 6, 2, 1);
-    
     .attach( $button-box, 1, 0, 1, 1);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-object>);
