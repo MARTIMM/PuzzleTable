@@ -138,7 +138,7 @@ method categories-lock-category ( N-Object $parameter ) {
     .add-content( '', $check-button);
 
     .add-button(
-      self, 'do-category-lock', 'Move', :$combobox, :$dialog
+      self, 'do-category-lock', 'Lock / Unlock', :$combobox, :$dialog, :$check-button
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -148,8 +148,7 @@ method categories-lock-category ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-lock (
-  PuzzleTable::Gui::Dialog() :_native-object($dialog),
-#  Gnome::Gtk4::PasswordEntry :$pw-entry,
+  PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::CheckButton :$check-button,
   Gnome::Gtk4::ComboBox :$combobox
 ) {
