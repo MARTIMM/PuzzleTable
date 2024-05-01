@@ -40,7 +40,7 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
 
   my Int $n = $bitset.get-size;
   unless ?$n {
-    my Gnome::Gtk4::MessageDialog $message .= new-messagedialog(
+    my Gnome::Gtk4::MessageDialog() $message .= new-messagedialog(
       $!main.application-window, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO,
       GTK_BUTTONS_OK, "There are no puzzles selected"
     );
@@ -193,7 +193,7 @@ method do-remove-puzzles (
 
 #-------------------------------------------------------------------------------
 method move-message-dialog (
-  Int $response-id, Gnome::Gtk4::MessageDialog :_widget($message)
+  Int $response-id, Gnome::Gtk4::MessageDialog() :_native-object($message)
 ) {
   $message.destroy;
 }

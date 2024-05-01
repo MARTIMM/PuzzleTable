@@ -148,7 +148,7 @@ method categories-lock-category ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-lock (
-  PuzzleTable::Gui::Dialog :_widget($dialog),
+  PuzzleTable::Gui::Dialog() :_native-object($dialog),
 #  Gnome::Gtk4::PasswordEntry :$pw-entry,
   Gnome::Gtk4::CheckButton :$check-button,
   Gnome::Gtk4::ComboBox :$combobox
@@ -260,7 +260,7 @@ method get-current-category ( --> Str ) {
 
 #-------------------------------------------------------------------------------
 method set-cat-lock-info (
-  Gnome::Gtk4::ComboBoxText :_widget($combobox),
+  Gnome::Gtk4::ComboBoxText() :_native-object($combobox),
   Gnome::Gtk4::CheckButton :$check-button
 ) {
   $check-button.set-active(
