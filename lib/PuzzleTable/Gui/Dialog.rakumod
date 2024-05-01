@@ -3,7 +3,6 @@ use v6.d;
 # Dialog seems to be deprecated since 4.10 so here we have our own
 
 use PuzzleTable::Config;
-use PuzzleTable::Gui::DialogLabel;
 use PuzzleTable::Gui::Statusbar;
 
 use Gnome::Gtk4::Window:api<2>;

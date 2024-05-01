@@ -9,10 +9,13 @@
   "raku-version": "6.d",
   "license": "Artistic-2.0",
 
+  "Xp": {
+    "PuzzleTable::Gui::DialogLabel": "lib/PuzzleTable/Gui/DialogLabel.rakumod"
+  },
+
   "provides": {
     "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
-    "PuzzleTable::Gui::DialogLabel": "lib/PuzzleTable/Gui/DialogLabel.rakumod",
     "PuzzleTable::Gui::Help": "lib/PuzzleTable/Gui/Help.rakumod",
     "PuzzleTable::Gui::IconButton": "lib/PuzzleTable/Gui/IconButton.rakumod",
     "PuzzleTable::Gui::MainWindow": "lib/PuzzleTable/Gui/MainWindow.rakumod",
