@@ -6,7 +6,7 @@ use PuzzleTable::ExtractDataFromPuzzle;
 
 use Gnome::Gtk4::CssProvider:api<2>;
 use Gnome::Gtk4::StyleContext:api<2>;
-use Gnome::Gtk4::T-StyleProvider:api<2>;
+use Gnome::Gtk4::T-styleprovider:api<2>;
 
 #use Gnome::Glib::N-MainContext:api<2>;
 #use Gnome::Glib::N-MainLoop:api<2>;

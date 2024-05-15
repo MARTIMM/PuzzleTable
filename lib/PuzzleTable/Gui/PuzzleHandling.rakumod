@@ -9,7 +9,7 @@ use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::T-dialog:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::MessageDialog:api<2>;
-use Gnome::Gtk4::T-MessageDialog:api<2>;
+use Gnome::Gtk4::T-messagedialog:api<2>;
 use Gnome::Gtk4::N-Bitset:api<2>;
 use Gnome::Gtk4::T-types:api<2>;
 
