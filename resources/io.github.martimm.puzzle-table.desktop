@@ -1,0 +1,20 @@
+[Desktop Entry]
+Comment=Puzzel Table making use of Palapeli program
+Comment[en_US]=Puzzel table making use of Palapeli program
+Comment[nl]=Puzzel tafel gebruikmakend van Palapeli programma
+Exec=env GDK_BACKEND=x11 /home/marcel/Languages/Raku/Projects/PuzzleTable/bin/puzzle-table
+GenericName=
+GenericName[en_US]=
+Icon=/home/marcel/.config/io.github.martimm.puzzle-table/images/puzzle-table-logo.png
+MimeType=application/x-puzzle-table;
+Name=puzzle-table
+Name[en_US]=puzzle-table
+Name[nl]=puzzel-tafel
+Path=/home/marcel/Languages/Raku/Projects/PuzzleTable
+StartupNotify=true
+Terminal=false
+TerminalOptions=--noclose
+Type=Application
+X-KDE-SubstituteUID=false
+X-KDE-Username=
+StartupNotify=true
