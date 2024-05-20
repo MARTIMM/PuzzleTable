@@ -116,7 +116,9 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 }
 
 #-------------------------------------------------------------------------------
-method remote-options ( N-Object $n-command-line --> Int ) {
+method remote-options (
+  Gnome::Gio::ApplicationCommandLine() $command-line --> Int
+) {
 #say 'remote opts';
 
   # We need the table and category management here already
@@ -125,9 +127,9 @@ method remote-options ( N-Object $n-command-line --> Int ) {
   $!category .= new-scrolledwindow(:main(self)) unless $!category;
 
   my Int $exit-code = 0;
-  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
-    :native-object($n-command-line)
-  );
+#  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
+#    :native-object($n-command-line)
+#  );
 
   my Capture $o = get-options-from(
     $command-line.get-arguments(Pointer), |$!config.options
@@ -174,10 +176,13 @@ method remote-options ( N-Object $n-command-line --> Int ) {
 
   # Activate unless table is already displayed
   $!application.activate unless $!table-is-displayed;
+  $command-line.set-exit-status($exit-code);
+  $command-line.done;
   $command-line.clear-object;
 
   # Refill the sidebar unless there is no change
   #$!category.fill-sidebar unless $!table-is-displayed;
+#note "$?LINE exit with code $exit-code";
   $exit-code
 }
 
