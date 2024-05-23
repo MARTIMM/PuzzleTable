@@ -361,7 +361,7 @@ method add-puzzle (
   my Str $basename = $puzzle-path.IO.basename;
 
   # If one is dumping the puzzles in the same dir all the time
-  # using the sam file names, one can run into a clash with older
+  # using the same file names, one can run into a clash with older
   # puzzles, sha256 does not help enough with that.
   my Str $extra-change = DateTime.now.Str;
 
@@ -411,16 +411,19 @@ method add-puzzle (
       $cat{$puzzle-id} = $temp-data;
 #    });
 
-    note "Add new puzzle: $puzzle-id, $basename, $temp-data<Name>, $temp-data<ImageSize>, ", "$temp-data<PieceCount> pieces";
+    note "Add new puzzle: $puzzle-id, name: $temp-data<Name>, $temp-data<ImageSize>, ", "$temp-data<PieceCount> pieces";
 
     # Convert the image into a smaller one to be displayed on the puzzle table
     run '/usr/bin/convert', "$destination/image.jpg",
         '-resize', '400x400', "$destination/image400.jpg";
 
     self.check-pala-progress-file(
-      $basename, sha256-hex($puzzle-path ~ $extra-change), $cat{$puzzle-id}
+      $basename, sha256-hex($puzzle-path ~ $extra-change),
+      $cat{$puzzle-id}, $puzzle-path, $destination, :$from-collection
     );
-    my $progress = self.calculate($cat{$puzzle-id});
+    
+    # Add some more for the calculation
+    my $progress = self.calculate( $cat{$puzzle-id}, $category, $puzzle-id);
     my $p = self.get-palapeli-preference;
 #    $!semaphore.writer( 'puzzle-data', {
       $cat{$puzzle-id}<Progress>{$p} = $progress;
@@ -449,7 +452,7 @@ method add-puzzle (
 #-------------------------------------------------------------------------------
 method check-pala-progress-file (
   Str $basename, Str $unique-name, Hash $puzzle-info,
-  Bool :$from-collection = False
+  Str $source, Str $destination, Bool :$from-collection = False
 ) {
   my Hash $collections = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<palapeli><collections>;
@@ -457,36 +460,54 @@ method check-pala-progress-file (
 
   # Check in pala collections for this name
   my Str $collection-name;
+
+  # When puzzle is in the Palapeli collection, its name 
+  # will be like `{hexnums}.save`.
   if $from-collection {
     $collection-name = $basename ~ '.save';
     $collection-name ~~ s/ \. puzzle //;
   }
 
+  # When the puzzle is an exported one, its name
+  # is  like `__FSC_name.puzzle_0_.save`.
   else {
     $collection-name = [~] '__FSC_', $basename, '_0_.save';
   }
 
   # The name it must become in the preferred collection
-  my Str $pref-col = self.get-palapeli-preference;
-  my Str $collection-unique = [~] '__FSC_', $unique-name, '_0_.save';
-  my Str $col-unique-path = [~] $*HOME, '/', $collections{$pref-col},
-         '/', $collection-unique;
+#  my Str $pref-col = self.get-palapeli-preference;
+  my Str $progress-name = [~] '__FSC_', $unique-name, '.puzzle_0_.save';
+  my Str $puzzle-progress-path = [~] $destination, '/', $progress-name;
+  my Str $col-progress-path = [~] $source.IO.parent,
+         '/', $collection-name;
 
+#note "$?LINE $basename, $unique-name, $collection-name, $progress-name";
+#note "$?LINE from: $col-progress-path";
+#note "$?LINE to:   $puzzle-progress-path";
+
+if $col-progress-path.IO.r {
+  $col-progress-path.IO.copy( $puzzle-progress-path, :createonly);
+  note "Progress file '$progress-name' saved";
+}
+
+#exit;
+#`{{
   for $collections.keys -> $col-key {
     my Str $col-path = [~] $*HOME, '/', $collections{$col-key},
            '/', $collection-name;
     if $col-path.IO.r {
-      unless $col-unique-path.IO.e {
+      unless $progress-path.IO.e {
         say "$collection-name.IO.basename() found in $col-key collection";
-        say "Copy $col-path.IO.basename() to $col-unique-path.IO.basename()";
+        say "Copy $col-path.IO.basename() to $progress-path.IO.basename()";
 #        $!semaphore.writer( 'puzzle-data', {
-          $col-path.IO.copy( $col-unique-path, :createonly);
+          $col-path.IO.copy( $progress-path, :createonly);
 #        });
       }
 
       last;
     }
   }
+}}
 }
 
 #-------------------------------------------------------------------------------
@@ -496,16 +517,12 @@ method check-pala-progress-file (
 # the following fields: Puzzle-index, Category and Image (see get-puzzles()
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
-method calculate-progress ( Hash $object --> Str ) {
-  my $c = $object<Category>;
-  my $i = $object<Puzzle-index>;
+method calculate-progress ( Hash $puzzle --> Str ) {
+  my $c = $puzzle<Category>;
+  my $i = $puzzle<Puzzle-index>;
   my $p = self.get-palapeli-preference;
 
-  my Hash $puzzle = #$!semaphore.reader( 'puzzle-data', {
-    $*puzzle-data<categories>{$c}<members>{$i};
-#  });
-
-  my $progress = self.calculate($puzzle);
+  my $progress = self.calculate( $puzzle, $c, $i);
 #  $!semaphore.writer( 'puzzle-data', {
     $*puzzle-data<categories>{$c}<members>{$i}<Progress>{$p} = $progress;
 #  });
@@ -517,26 +534,30 @@ method calculate-progress ( Hash $object --> Str ) {
 
 #-------------------------------------------------------------------------------
 # Called from check-pala-progress-file()
-method calculate ( Hash $puzzle --> Str ) {
+method calculate ( Hash $puzzle, Str $category, Str $index --> Str ) {
 
   my Str $filename = #$!semaphore.reader( 'puzzle-data', {
     $puzzle<Filename>;
 #  });
-  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
-  my Str $collection-path = [~] self.get-pala-collection,
-         '/', $collection-filename;
+  my Str $progress-filename = [~] '__FSC_', $filename, '_0_.save';
+#  my Str $progress-path = [~] self.get-pala-collection,
+#         '/', $progress-filename;
+#note "$?LINE $progress-filename";
+#note "$?LINE $puzzle.gist()";
+  my Str $progress-path = [~] PUZZLE_TABLE_DATA, '/', $category, '/',
+    $index, '/', $progress-filename;
 
   my Str $progress = "0.0";
 
   # Puzzle progress admin is maintained by Palapeli in its collection directory
   # When puzzle is never started, this file does not yet exist.
-  if $collection-path.IO.r {
+  if $progress-path.IO.r {
     my $nbr-pieces = #$!semaphore.reader( 'puzzle-data', {
       $puzzle<PieceCount>;
 #    });
     my Bool $get-lines = False;
     my Hash $piece-coordinates = %();
-    for $collection-path.IO.slurp.lines -> $line {
+    for $progress-path.IO.slurp.lines -> $line {
       if $line eq '[XYCo-ordinates]' {
         $get-lines = True;
         next;
@@ -570,9 +591,9 @@ method calculate ( Hash $puzzle --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method store-puzzle-info( $object, $comment, $source) {
-  my $c = $object<Category>;
-  my $i = $object<Puzzle-index>;
+method store-puzzle-info( Hash $pt-puzzle, Str $comment, Str $source) {
+  my $c = $pt-puzzle<Category>;
+  my $i = $pt-puzzle<Puzzle-index>;
   my Hash $puzzle = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<categories>{$c}<members>{$i};
 #  });
@@ -679,33 +700,6 @@ method get-puzzle-image ( Str $category --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-pala-puzzles (
-  Str $category, Str $pala-collection-path, Str :$filter = ''
-) {
-  for $pala-collection-path.IO.dir -> $collection-file {
-    next if $collection-file.d;
-
-    # The puzzle is started from outside the Palapeli. This is only a saved file
-    # to keep track of progress of puzzle. Ends always in '.save'. Must be
-    # checked when --puzzles option is used.
-    #next if $collection-file.Str ~~ m/^ __FSC_ /;
-
-    # *.save files are matched later using a *.puzzle file
-    #next if $collection-file.Str ~~ m/ \. save $/;
-
-    # Skip any other file
-    next if $collection-file.Str !~~ m/ \. puzzle $/;
-    
-    # is protected
-    self.add-puzzle(
-      $category, $collection-file.Str, :from-collection, :$filter
-    );
-  }
-
-  self.save-puzzle-admin;;
-}
-
-#-------------------------------------------------------------------------------
 method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
   for 1..999 -> $count {
     my Str $p-id = $count.fmt('p%03d');
@@ -742,22 +736,27 @@ method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
 method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
 
   # Create the name of the archive
-  my Str $d = DateTime.now.Str;
-  $d ~~ s/ '.' (...) .* $/.$0/;
-  $d ~~ s:g/ <[:-]> //;
-  $d ~~ s:g/ <[T.]> /-/;
+  my Str $archive-name = DateTime.now.Str;
+  $archive-name ~~ s/ '.' (...) .* $/.$0/;
+  $archive-name ~~ s:g/ <[:-]> //;
+  $archive-name ~~ s:g/ <[T.]> /-/;
 
   # Get the source and destination of the puzzle
-  my Str $from-dir = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
-  my Str $to-dir = [~] PUZZLE_TRASH, $d;
-  $from-dir.IO.rename($to-dir);
+  my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $from-cat, '/', $puzzle-id;
+  my Str $archive-path = [~] PUZZLE_TRASH, $archive-name;
 
-  # Get the puzzle data from the config
+  # Rename the puzzle path into the archive path, effectively removing the
+  # puzzle data from the other puzzles.
+  $puzzle-path.IO.rename($archive-path);
+
+  # Get the configuration data of this puzzle and remove it from the
+  # configuration Hash.
   my Hash $puzzle;
   #$!semaphore.reader( 'puzzle-data', {
     $puzzle = $*puzzle-data<categories>{$from-cat}<members>{$puzzle-id}:delete;
   #});
 
+#`{{
   # Create the name of the progress file in any of the Palapeli collections
   my Str $progress-file = [~] '__FSC_', $puzzle<Filename>, '_0_.save';
 
@@ -770,30 +769,31 @@ method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
         [~] $*HOME, '/', $colection-dir, '/', $progress-file;
 
       if $progress-path.IO.r {
-        $progress-path.IO.move( "$to-dir/$progress-file", :createonly);
+        $progress-path.IO.move( "$archive-path/$progress-file", :createonly);
         last;
       }
     }
   #});
-
+}}
   # Following doesn't need protection because paths are always unique
+  # and only used here
 
   # Save config into a yaml file in the destination dir
-  "$to-dir/$puzzle-id.yaml".IO.spurt(save-yaml($puzzle));
+  "$archive-path/$puzzle-id.yaml".IO.spurt(save-yaml($puzzle));
 
-  # Change dir to destination dir
+  # Change dir to archive path
   my Str $cwd = $*CWD.Str;
-  chdir($to-dir);
+  chdir($archive-path);
 
   # Create a bzipped tar archive
   my Archive::Libarchive $a .= new(
     operation => LibarchiveWrite,
-    file => "{PUZZLE_TRASH}$d.tbz2",
+    file => "{PUZZLE_TRASH}$archive-name.tbz2",
     format => 'v7tar',
     filters => ['bzip2']
   );
 
-  # Archive each file in the destination
+  # Store each file in this path into the archive
   for dir('.') -> $file {
     $a.write-header($file.Str);
     $a.write-data($file.Str);
@@ -807,7 +807,7 @@ method remove-puzzle ( Str $from-cat, Str $puzzle-id ) {
     $file.IO.unlink;
   }
 
-  $to-dir.IO.rmdir;
+  $archive-path.IO.rmdir;
 
   # Return to dir where we started
   chdir($cwd);
