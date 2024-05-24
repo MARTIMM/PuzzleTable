@@ -13,6 +13,8 @@ my regex extract-regex {^ [ image \. | pala \. desktop ] };
 #submethod BUILD ( ) { }
 
 #-------------------------------------------------------------------------------
+# Extract image and desktop file from $puzzle-file, a tar file, and
+# store the data at $store-path.
 method extract ( Str:D $store-path, Str:D $puzzle-file ) {
   unless $puzzle-file.IO.r {
     note "file '$puzzle-file' not found";
