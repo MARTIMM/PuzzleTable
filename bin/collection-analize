@@ -1,0 +1,153 @@
+#!/usr/bin/env rakudo
+
+use v6.d;
+
+#use YAMLish;
+use Archive::Libarchive;
+use Archive::Libarchive::Constants;
+
+use PuzzleTable::Types;
+use PuzzleTable::ExtractDataFromPuzzle;
+
+#-------------------------------------------------------------------------------
+#`{{
+# Load puzzle data in global Hash
+my Hash $*puzzle-data = %();
+$*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
+
+# Create categories
+$*puzzle-data<categories> = %() unless $*puzzle-data<categories>:exists;
+
+# Check for the Default category and set lockable to False
+$*puzzle-data<categories><Default> = %(members => %())
+  unless $*puzzle-data<categories><Default>:exists;
+$*puzzle-data<categories><Default><lockable> = False;
+
+# Create settings
+$*puzzle-data<settings> = %() unless $*puzzle-data<settings>:exists;
+
+# Force lockable categories locked at the start of the program
+$*puzzle-data<settings><locked> = True;
+}}
+
+my regex extract-regex {^ [ image \. | pala \. desktop ] };
+
+#-------------------------------------------------------------------------------
+sub MAIN ( $collection-path ) {
+  mkdir './xt/analize', 0o700 unless './xt/analize'.IO.e;
+  mkdir './xt/analize/collection', 0o700 unless './xt/analize/collection'.IO.e;
+
+  for dir($collection-path).sort -> $f {
+    next if $f.d;
+    next unless $f.Str ~~ m/ '.save' $/;
+    say "\n", $f.basename;
+
+    my Str $puzzle-name = $f.Str;
+    if $puzzle-name ~~ m/^ '__FSC_' / {
+      say '  External puzzle result';
+      next;
+    }
+
+    else {
+      say '  Internal puzzle result';
+      $puzzle-name ~~ s/ '.save' $/.puzzle/;
+      if $puzzle-name.IO.e {
+        say "  Puzzle:      $puzzle-name.IO.basename()";
+      }
+
+      else {
+        say "  Result does not have a related puzzle";
+        next;
+      }
+    }
+
+    if calculate-progress( $puzzle-name, $f.Str) {
+      say "  Puzzle copied";
+      $puzzle-name.IO.copy(
+        './xt/analize/collection/' ~ $puzzle-name.IO.basename
+      );
+      $f.IO.copy('./xt/analize/collection/' ~ $f.basename);
+    }
+#last;
+  }
+}
+
+#-------------------------------------------------------------------------------
+sub calculate-progress ( Str $puzzle-path, Str $puzzel-save --> Bool ) {
+
+  my Bool $progress = False;
+  my PuzzleTable::ExtractDataFromPuzzle $extracter .= new;
+
+  # Get the image and desktop file from the puzzle file, a tar archive.
+  $extracter.extract( './xt/analize', $puzzle-path);
+
+  # Get some info from the desktop file
+  my Hash $info = $extracter.palapeli-info('./xt/analize');
+  say "  Source:      $info<Source>";
+  say "  Comment:     $info<Comment>";
+  say "  Name:        $info<Name>";
+  say "  ImageSize:   $info<ImageSize>";
+  say "  PieceCount:  $info<PieceCount>";
+  say "  Slicer:      $info<Slicer>";
+  say "  SlicerMode:  $info<SlicerMode>";
+
+  my $nbr-pieces = $info<PieceCount>;
+  my Bool $get-lines = False;
+  my Hash $piece-coordinates = %();
+
+  for $puzzel-save.IO.slurp.lines -> $line {
+#note $line;
+    if $line ~~ m/ '[' [ 'XYCo-ordinates' | 'Relations' ] ']' / {
+      $get-lines = True;
+      next;
+    }
+
+    last if $get-lines and $line ~~ m / '[' /;
+
+    if $get-lines {
+      my Str ( $, $piece-coordinate ) = $line.split('=');
+      $piece-coordinates{$piece-coordinate} = 1;
+    }
+  }
+
+  # A puzzle of n pieces has n different pieces at the start and only one
+  # when finished. To calculate the progress substract one from the numbers
+  # before deviding.
+  my Rat $p;
+  $p = 100.0 - ($piece-coordinates.elems -1) / ($nbr-pieces -1) * 100.0;
+  $progress = True if $p > 0.0;
+
+  say "  i:           $piece-coordinates.elems(), $nbr-pieces";
+  say '  Progress:    ', $p.fmt('%3.1f'), ' %';
+  
+  $progress
+}
+
+
+
+
+=finish
+#-------------------------------------------------------------------------------
+sub extract-from-archive ( Str:D $path ) {
+  my Archive::Libarchive $a .= new(
+    operation => LibarchiveExtract,
+    file => $path,
+    flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
+             ARCHIVE_EXTRACT_ACL +|  ARCHIVE_EXTRACT_FFLAGS
+  );
+
+  try {
+    $a.extract( &extract, $path);
+    CATCH {
+      say "Can't extract files: $_";
+    }
+  }
+
+  $a.close;
+}
+
+#-------------------------------------------------------------------------------
+sub extract ( Archive::Libarchive::Entry $e --> Bool ) {
+  $e.pathname ~~ m/ <extract-regex> /.Bool
+}
+
