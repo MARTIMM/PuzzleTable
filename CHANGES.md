@@ -1,3 +1,9 @@
+* 2024-05-20 0.4.7
+  * Lost a lot of progress files because I found it neccesary to reinstall the snap version of Palapeli, -sic-. So, a backup of the progresfile is needed. It will be placed in the directory where the puzzle resides after returning from the Palapeli program.
+
+* 2024-05-19 0.4.6
+  * Fixed a bug introduced with a newer version of Gio library.
+
 * 2024-04-07 0.4.5
   * Adding an about dialog in a new module **PuzzleTable::Gui::Help**.
 

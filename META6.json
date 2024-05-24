@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -37,6 +37,6 @@
   "resources": [
     "start-puzzle-64.png", "edit-puzzle-64.png", "puzzle-data.css",
     "add-cat.png", "ren-cat.png", "rem-cat.png", "move-64.png", "remove-64.png",
-    "shortcuts-window.ui"
+    "shortcuts-window.ui", "io.github.martimm.puzzle-table.desktop"
   ]
 }
