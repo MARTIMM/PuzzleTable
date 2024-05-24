@@ -1,0 +1,24 @@
+use v6.d;
+use Test;
+
+
+use PuzzleTable::Config::Puzzle;
+
+my PuzzleTable::Config::Puzzle $puzzle .= new;
+is $puzzle.calculate-progress( 't/test-data/p1.save', 315), '100.0',
+   ".calculate-progress()";
+
+
+
+
+
+
+
+
+
+
+
+done-testing;
+exit;
+
+
