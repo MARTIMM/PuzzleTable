@@ -124,6 +124,36 @@ method clear-table ( Bool :$init = False ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-pala-puzzles (
+  Str $category, Str $pala-collection-path, Str :$filter = ''
+) {
+  for $pala-collection-path.IO.dir -> $collection-file {
+    next if $collection-file.d;
+
+    # The puzzle is started from outside the Palapeli. This is only a saved file
+    # to keep track of progress of puzzle. Ends always in '.save'. Must be
+    # checked when --puzzles option is used.
+    #next if $collection-file.Str ~~ m/^ __FSC_ /;
+
+    # *.save files are matched later using a *.puzzle file
+    #next if $collection-file.Str ~~ m/ \. save $/;
+
+    # Skip any other file
+    next if $collection-file.Str !~~ m/ \. puzzle $/;
+
+    my Str $puzzle-id = $!config.add-puzzle(
+      $category, $collection-file.Str, :from-collection, :$filter
+    );
+#    my Hash $puzzle = $*puzzle-data<categories>{$category}<members>{$puzzle-id};
+    self.add-puzzle-to-table( $category, $puzzle-id);
+
+#last;
+  }
+
+  $!config.save-puzzle-admin;;
+}
+
+#-------------------------------------------------------------------------------
 # Add puzzles to the table
 method add-puzzles-to-table ( Seq $puzzles ) {
 
@@ -373,9 +403,13 @@ method run-palapeli (
     my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
           '/', $puzzle<Puzzle-index>, '/',  $puzzle<Filename>;
 
+
     # Start playing the puzzle
+    self.restore-progress-file($puzzle);
     shell "$exec '$puzzle-path'";
+    self.save-progress-file($puzzle);
     # Returning from puzzle
+
 
     # Calculate progress
     my Str $progress = $!config.calculate-progress($puzzle);
@@ -388,6 +422,66 @@ method run-palapeli (
       $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
 #    });
 #  }
+}
+
+#-------------------------------------------------------------------------------
+# Called from call-back in Table after playing a puzzle.
+# The object holds most of the fields of
+# $*puzzle-data<categories>{$category}<members><some puzzle index> added with
+# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# below) while Name and SourceFile are removed (see add-puzzle-to-table()
+# in Table).
+method restore-progress-file ( Hash $puzzle ) {
+
+  my $c = $puzzle<Category>;
+  my $i = $puzzle<Puzzle-index>;
+
+  my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
+  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
+  my Str $collection-path =
+     [~] $!config.get-pala-collection, '/', $collection-filename;
+
+  my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
+          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
+
+  if $backup-path.IO.e and $collection-path.IO.e and
+      $collection-path.IO.modified < $backup-path.IO.modified {
+    $backup-path.IO.copy($collection-path);
+  }
+
+  elsif $backup-path.IO.e {
+    $backup-path.IO.copy($collection-path);
+  }
+}
+
+#-------------------------------------------------------------------------------
+# Called from call-back in Table after playing a puzzle.
+# The object holds most of the fields of
+# $*puzzle-data<categories>{$category}<members><some puzzle index> added with
+# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# below) while Name and SourceFile are removed (see add-puzzle-to-table()
+# in Table).
+method save-progress-file ( Hash $puzzle  ) {
+
+  my $c = $puzzle<Category>;
+  my $i = $puzzle<Puzzle-index>;
+
+  my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
+  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
+  my Str $collection-path =
+     [~] $!config.get-pala-collection, '/', $collection-filename;
+
+  my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
+          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
+
+  if $backup-path.IO.e and $collection-path.IO.e and
+      $collection-path.IO.modified > $backup-path.IO.modified {
+    $collection-path.IO.copy($backup-path)
+  }
+
+  elsif $collection-path.IO.e {
+    $collection-path.IO.copy($backup-path)
+  }
 }
 
 #-------------------------------------------------------------------------------

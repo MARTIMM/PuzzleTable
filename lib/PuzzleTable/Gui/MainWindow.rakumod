@@ -171,7 +171,7 @@ method remote-options (
   }
 
   if $o<pala-collection>:exists {
-    $!config.get-pala-puzzles( $opt-category, $o<pala-collection>, :$filter);
+    $!table.get-pala-puzzles( $opt-category, $o<pala-collection>, :$filter);
   }
 
   # Activate unless table is already displayed
