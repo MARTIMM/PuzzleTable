@@ -1,22 +1,41 @@
 use v6.d;
 use Test;
 
-
 use PuzzleTable::Config::Puzzle;
 
+#-------------------------------------------------------------------------------
+constant TESTDATA = 't/test-data/';
+constant COLLDATA = TESTDATA ~ 'puzzle-collection/';
+constant EXPDATA = TESTDATA ~ 'exported-puzzles/';
+constant ARCHDATA = TESTDATA ~ 'archived-puzzles/';
+constant EXTRDATA = TESTDATA ~ 'puzzle-extract/';
+
+cleanup-extracted-puzzles;
+
+
 my PuzzleTable::Config::Puzzle $puzzle .= new;
-is $puzzle.calculate-progress( 't/test-data/p1.save', 315), '100.0',
-   ".calculate-progress()";
+
+my Hash $info = $puzzle.import-puzzle(
+  EXPDATA ~ 'e1.puzzle', EXTRDATA
+);
+
+is $info<PieceCount>, 77, '.import-exported-puzzle(): info';
+ok (EXTRDATA ~ $info<Filename>).IO.r,
+   '.import-exported-puzzle(): new puzzle name';
+
+my Str $progress = $puzzle.calculate-progress( TESTDATA ~ 'p1.save', 315);
+is $progress, '100.0', ".calculate-progress()";
 
 
 
 
 
-
-
-
-
-
+#-------------------------------------------------------------------------------
+sub cleanup-extracted-puzzles ( ) {
+  for dir(EXTRDATA) -> $f {
+    $f.unlink;
+  }
+}
 
 done-testing;
 exit;
