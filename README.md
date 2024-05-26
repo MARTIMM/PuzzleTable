@@ -1,8 +1,5 @@
 # Puzzle table display
 
-### Notice
-The program cannot be run yet because the Raku libraries, where this repository depends on, are not available. These libraries are still in development. For more info about that repo [please look here](https://github.com/MARTIMM/gnome-source-skim-tool).
-
 ## Purpose
 
 Display a table of puzzles made by Palapeli, a linux puzzle game.
@@ -14,7 +11,7 @@ I am also working on a language binding between Raku and the Gnome libraries to 
 
 ### What to implement
 
-Nothing that what works fine with Palapeli;
+Nothing which works fine with Palapeli;
 
 * Create new puzzles and export them.
 * Playing a puzzle.
@@ -60,18 +57,12 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
 * ImageMagick
 * Gtk4, Gio, GObject, Glib, Pango libraries
 
-### External modules used
+### Raku modules
 
 * Gnome::Gtk4:api<2>
-* Gnome::Gdk4:api<2>
-* Gnome::Gio:api<2>
-* Gnome::GObject:api<2>
-* Gnome::Glib:api<2>
-* Gnome::Pango:api<2>
-
-* Digest::SHA1::Native
 * Archive::Libarchive
 * Getopt::Long
+* Digest::SHA256::Native
 
 <!--
 * Gnome::Cairo:api<2>
