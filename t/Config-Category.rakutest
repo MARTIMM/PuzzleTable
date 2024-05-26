@@ -1,0 +1,64 @@
+use v6.d;
+use Test;
+
+use YAMLish;
+
+use PuzzleTable::Config::Category;
+
+#-------------------------------------------------------------------------------
+constant TESTDATA = 't/test-data/';
+constant COLLDATA = TESTDATA ~ 'puzzle-collection/';
+constant EXPDATA = TESTDATA ~ 'exported-puzzles/';
+constant ARCHDATA = TESTDATA ~ 'archived-puzzles/';
+constant EXTRDATA = TESTDATA ~ 'puzzle-extract/';
+constant CONFDATA = TESTDATA ~ 'puzzle-table-data/';
+
+cleanup-puzzle-table-data(CONFDATA);
+
+
+my PuzzleTable::Config::Category $category;
+
+with $category .= new( :category-name<cat-1>, :root-dir(CONFDATA)) {
+  lives-ok { .finish; }, '.finish()';
+  $category = Nil;
+
+  ok (CONFDATA ~ 'cat-1/puzzle-data.yaml').IO.r, '.new()';
+}
+
+with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
+  .import-collection(COLLDATA);
+  $category.save-category-config for ^5;
+  nok (CONFDATA ~ 'cat-2/puzzle-data.yaml').IO.r, '.save-category-config(): not yet saved';
+
+  .save-category-config;
+  ok (CONFDATA ~ 'cat-2/puzzle-data.yaml').IO.r, '.save-category-config(): now saved';
+
+#  .finish;
+#  $category = Nil;
+
+
+  # Check that two puzzles are imported
+  my Hash $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
+  is $config<members>.elems, 2, '.import-collection()';
+
+  .remove-puzzle( 'p001', ARCHDATA);
+}
+
+done-testing;
+exit;
+
+#-------------------------------------------------------------------------------
+sub cleanup-puzzle-table-data ( Str:D $d ) {
+  return unless $d.IO.d;
+
+  for dir($d) -> $f {
+    if $f.d {
+      cleanup-puzzle-table-data($f.Str);
+      $f.rmdir;
+    }
+
+    else {
+      $f.unlink;
+    }
+  }
+}
