@@ -1,5 +1,12 @@
 use v6.d;
-use PuzzleTable::Types:auth<github:MARTIMM>;
+
+use PuzzleTable::Types;
+use PuzzleTable::ExtractDataFromPuzzle;
+
+use Digest::SHA256::Native;
+use Archive::Libarchive;
+use Archive::Libarchive::Constants;
+use YAMLish;
 
 #-------------------------------------------------------------------------------
 =begin pod
@@ -24,22 +31,102 @@ The information stored in a Hash have the following keys
 =end pod
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::Config::Puzzle;
+unit class PuzzleTable::Config::Puzzle:auth<github:MARTIMM>;
 
 #-------------------------------------------------------------------------------
-method archive ( ) {
+method archive-puzzle (
+  Str:D $archive-trashbin, Str:D $puzzle-path,
+  Str:D $puzzle-id, Hash:D $puzzle-data
+) {
+
+  # Create the name of the archive
+  my Str $archive-name = DateTime.now.Str;
+  $archive-name ~~ s/ '.' (...) .* $/.$0/;
+  $archive-name ~~ s:g/ <[:-]> //;
+  $archive-name ~~ s:g/ <[T.]> /-/;
+
+  my Str $archive-path = [~] $archive-trashbin, $archive-name;
+
+  # Rename the puzzle path into the archive path, effectively removing the
+  # puzzle data from the other puzzles.
+  $puzzle-path.IO.rename($archive-path);
+
+  # Change dir to archive path
+  my Str $cwd = $*CWD.Str;
+  chdir($archive-path);
+
+  # Save config into a yaml file in the archive dir
+  "$puzzle-id.yaml".IO.spurt(save-yaml($puzzle-data));
+
+  # Create a bzipped tar archive
+  my Archive::Libarchive $a .= new(
+    operation => LibarchiveWrite,
+    file => "$archive-path.tbz2",
+    format => 'v7tar',
+    filters => ['bzip2']
+  );
+
+  # Store each file in this path into the archive
+  for dir('.') -> $file {
+    $a.write-header($file.Str);
+    $a.write-data($file.Str);
+  }
+
+  # And close the archive
+  $a.close;
+
+  # Cleanup the directory and leave tarfile in the trash dir
+  for dir('.') -> $file {
+    $file.IO.unlink;
+  }
+
+  # Return to dir where we started
+  chdir($cwd);
+note "A: $archive-path.tbz2";
+  $archive-path.IO.rmdir;
 }
 
 #-------------------------------------------------------------------------------
-method restore ( ) {
+method restore-puzzle ( ) {
 }
 
 #-------------------------------------------------------------------------------
-method import-exported-puzzle ( Str $puzzle-path --> Hash ) {
-}
+# Get data of a puzzle and store in a Hash. Also a $destination where puzzle
+# files and extra info is stored.
+method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
 
-#-------------------------------------------------------------------------------
-method import-collection-puzzle ( Str $collection-path --> Hash ) {
+  # If one is dumping the puzzles in the same dir all the time using
+  # the same file names, one can run into a clash with older puzzles,
+  # sha256 does not help enough with that. So postfix with a date stamp.
+  my Str $extra-change = DateTime.now.Str;
+
+  # Store the puzzle using a unique filename.
+  my Str $unique-name = sha256-hex($puzzle-path ~ $extra-change) ~ ".puzzle";
+  $puzzle-path.IO.copy( "$destination/$unique-name", :createonly);
+
+  # Get the image and desktop file from the puzzle file, a tar archive.
+  my PuzzleTable::ExtractDataFromPuzzle $extracter .= new;
+  $extracter.extract( $destination, $puzzle-path);
+
+  # Convert the image into a smaller one to be displayed on the puzzle table
+  run '/usr/bin/convert', "$destination/image.jpg",
+      '-resize', '400x400', "$destination/image400.jpg";
+
+  # Get some info from the desktop file
+  my Hash $info = $extracter.palapeli-info($destination);
+
+  # Add :Filename and :SourceFile keys
+  %(
+    :Filename($unique-name),
+    :SourceFile($puzzle-path),
+    :Source($info<Source>),
+    :Comment($info<Comment>),
+    :Name($info<Name>),
+    :ImageSize($info<ImageSize>),
+    :PieceCount($info<PieceCount>),
+    :Slicer($info<Slicer>),
+    :SlicerMode($info<SlicerMode>),
+  )
 }
 
 #-------------------------------------------------------------------------------
