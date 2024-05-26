@@ -3,8 +3,8 @@
 use v6.d;
 
 #use YAMLish;
-use Archive::Libarchive;
-use Archive::Libarchive::Constants;
+#use Archive::Libarchive;
+#use Archive::Libarchive::Constants;
 
 use PuzzleTable::Types;
 use PuzzleTable::ExtractDataFromPuzzle;
@@ -113,8 +113,7 @@ sub calculate-progress ( Str $puzzle-path, Str $puzzel-save --> Bool ) {
   # A puzzle of n pieces has n different pieces at the start and only one
   # when finished. To calculate the progress substract one from the numbers
   # before deviding.
-  my Rat $p;
-  $p = 100.0 - ($piece-coordinates.elems -1) / ($nbr-pieces -1) * 100.0;
+  my Rat $p = 100.0 - ($piece-coordinates.elems -1) / ($nbr-pieces -1) * 100.0;
   $progress = True if $p > 0.0;
 
   say "  i:           $piece-coordinates.elems(), $nbr-pieces";
