@@ -42,6 +42,9 @@ with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
   is $config<members>.elems, 2, '.import-collection()';
 
   .remove-puzzle( 'p001', ARCHDATA);
+  .save-category-config(:force);
+  $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
+  is $config<members>.elems, 1, '.remove-puzzle()';
 }
 
 done-testing;

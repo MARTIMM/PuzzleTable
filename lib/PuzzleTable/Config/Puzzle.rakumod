@@ -82,7 +82,6 @@ method archive-puzzle (
 
   # Return to dir where we started
   chdir($cwd);
-note "A: $archive-path.tbz2";
   $archive-path.IO.rmdir;
 }
 
