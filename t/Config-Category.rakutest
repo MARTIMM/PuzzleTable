@@ -27,15 +27,8 @@ with $category .= new( :category-name<cat-1>, :root-dir(CONFDATA)) {
 
 with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
   .import-collection(COLLDATA);
-  $category.save-category-config for ^5;
-  nok (CONFDATA ~ 'cat-2/puzzle-data.yaml').IO.r, '.save-category-config(): not yet saved';
-
   .save-category-config;
   ok (CONFDATA ~ 'cat-2/puzzle-data.yaml').IO.r, '.save-category-config(): now saved';
-
-#  .finish;
-#  $category = Nil;
-
 
   # Check that two puzzles are imported
   my Hash $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
@@ -43,13 +36,12 @@ with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
 
   # Remove a puzzle and check that there is only one puzlle left
   .remove-puzzle( 'p001', ARCHDATA);
-  .save-category-config(:force);
+  .save-category-config;
   $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
   is $config<members>.elems, 1, '.remove-puzzle()';
 
-
   .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
-  .save-category-config(:force);
+  .save-category-config;
   $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
   is $config<members>.elems, 2, '.restore-puzzle()';
 }

@@ -91,12 +91,6 @@ method restore-puzzle (
 
   my Str $archive-path = [~] $archive-trashbin, $archive-name;
 
-  # Change dir to archive path
-#  my Str $cwd = $*CWD.Str;
-#  chdir($archive-path);
-
-#note $archive-path;
-
   my Archive::Libarchive $a .= new(
     operation => LibarchiveExtract,
     file => "$archive-path",
@@ -122,7 +116,6 @@ method restore-puzzle (
 
   else {
     for dir("$archive-trashbin/puzzle") -> $f {
-note "F: $f";
       if $f.Str ~~ m/ '/' p \d+ '.yaml' $/ {
         $config-file = $f.Str;
         last;
@@ -130,7 +123,6 @@ note "F: $f";
     }
   }
 
-note $config-file;
   my Hash $config = %();
   if ?$config-file {
     $config = load-yaml($config-file.IO.slurp);
