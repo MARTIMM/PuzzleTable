@@ -35,8 +35,7 @@ unit class PuzzleTable::Config::Puzzle:auth<github:MARTIMM>;
 
 #-------------------------------------------------------------------------------
 method archive-puzzle (
-  Str:D $archive-trashbin, Str:D $puzzle-path,
-  Str:D $puzzle-id, Hash:D $puzzle-data
+  Str:D $archive-trashbin, Str:D $puzzle-path, Hash:D $puzzle-data
 ) {
 
   # Create the name of the archive
@@ -56,7 +55,7 @@ method archive-puzzle (
   chdir($archive-path);
 
   # Save config into a yaml file in the archive dir
-  "$puzzle-id.yaml".IO.spurt(save-yaml($puzzle-data));
+  "puzzle-data.yaml".IO.spurt(save-yaml($puzzle-data));
 
   # Create a bzipped tar archive
   my Archive::Libarchive $a .= new(
@@ -86,7 +85,63 @@ method archive-puzzle (
 }
 
 #-------------------------------------------------------------------------------
-method restore-puzzle ( ) {
+method restore-puzzle (
+  Str:D $archive-trashbin, Str:D $archive-name, Str:D $puzzle-path --> Hash
+) {
+
+  my Str $archive-path = [~] $archive-trashbin, $archive-name;
+
+  # Change dir to archive path
+#  my Str $cwd = $*CWD.Str;
+#  chdir($archive-path);
+
+#note $archive-path;
+
+  my Archive::Libarchive $a .= new(
+    operation => LibarchiveExtract,
+    file => "$archive-path",
+    flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
+             ARCHIVE_EXTRACT_ACL +|  ARCHIVE_EXTRACT_FFLAGS
+  );
+
+  try {
+    $a.extract("$archive-trashbin/puzzle");
+    CATCH {
+      say "Can't extract files: $_";
+    }
+  }
+
+  $a.close;
+
+  # Older versions of archives hold the config in a '<puzzle-id>.yaml' file
+  # Now it is stored in a strait forward name 'puzzle-data.yaml'.
+  my Str $config-file;
+  if "$archive-trashbin/puzzle/puzzle-data.yaml".IO.e {
+    $config-file = "$archive-trashbin/puzzle/puzzle-data.yaml";
+  }
+
+  else {
+    for dir("$archive-trashbin/puzzle") -> $f {
+note "F: $f";
+      if $f.Str ~~ m/ '/' p \d+ '.yaml' $/ {
+        $config-file = $f.Str;
+        last;
+      }
+    }
+  }
+
+note $config-file;
+  my Hash $config = %();
+  if ?$config-file {
+    $config = load-yaml($config-file.IO.slurp);
+    $config-file.IO.unlink;
+  }
+
+  # Rename the archive path into the puzzle path, effectively adding the
+  # puzzle data into a category.
+  "$archive-trashbin/puzzle".IO.rename($puzzle-path);
+
+  $config
 }
 
 #-------------------------------------------------------------------------------

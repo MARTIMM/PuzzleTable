@@ -115,11 +115,27 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin ) {
   my Str $progress-file = [~] '__FSC_', $puzzle-data<Filename>, '_0_.save';
 
   my PuzzleTable::Config::Puzzle $puzzle .= new;
-  $puzzle.archive-puzzle(
-    $archive-trashbin, $puzzle-path, $puzzle-id, $puzzle-data
-  );
+  $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-data);
 }
 
+#-------------------------------------------------------------------------------
+method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name ) {
+
+  # Find a free id to store the data
+  my Int $count = 1;
+  my Str $puzzle-destination;
+  while $!category-config<members>{"p$count.fmt('%03d')"}:exists { $count++; }
+
+  my Str $puzzle-id = 'p' ~ $count.fmt('%03d');
+  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
+
+  my PuzzleTable::Config::Puzzle $puzzle .= new;
+  my Hash $puzzle-data = $puzzle.restore-puzzle(
+    $archive-trashbin, $archive-name, $puzzle-path
+  );
+
+  $!category-config<members>{$puzzle-id} = $puzzle-data;
+}
 
 =finish
 #-------------------------------------------------------------------------------

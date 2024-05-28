@@ -41,10 +41,17 @@ with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
   my Hash $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
   is $config<members>.elems, 2, '.import-collection()';
 
+  # Remove a puzzle and check that there is only one puzlle left
   .remove-puzzle( 'p001', ARCHDATA);
   .save-category-config(:force);
   $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
   is $config<members>.elems, 1, '.remove-puzzle()';
+
+
+  .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
+  .save-category-config(:force);
+  $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
+  is $config<members>.elems, 2, '.restore-puzzle()';
 }
 
 done-testing;
