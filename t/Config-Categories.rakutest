@@ -1,0 +1,59 @@
+use v6.d;
+use Test;
+
+use YAMLish;
+use Digest::SHA256::Native;
+
+use PuzzleTable::Config::Categories;
+
+#-------------------------------------------------------------------------------
+constant TESTDATA = 't/test-data/';
+constant COLLDATA = TESTDATA ~ 'puzzle-collection/';
+constant EXPDATA = TESTDATA ~ 'exported-puzzles/';
+constant ARCHDATA = TESTDATA ~ 'archived-puzzles/';
+constant EXTRDATA = TESTDATA ~ 'puzzle-extract/';
+constant CONFDATA = TESTDATA ~ 'puzzle-table-data/';
+
+cleanup-puzzle-table-data(CONFDATA);
+
+
+my PuzzleTable::Config::Categories $categories .= new(:root-dir(CONFDATA));
+with $categories {
+  is .get-password, '', '.get-password()';
+  ok .check-password(''), '.check-password()';
+
+  .set-password( '', 'hoeperdepoep');
+  ok .check-password('hoeperdepoep'), '.set-password()';
+  
+  #$category .= new( :category-name<cat-2>, :root-dir(CONFDATA));
+  my Str $message = .add-category( 'cat-2', :lockable);
+  ok ! $message, '.add-category()';
+  $message = .add-category( 'cat-2', :lockable);
+  is $message, "Category cat-2 already exists", '.add-category() 2nd time fail';
+
+  .save-categories-config;
+  my Hash $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+  is $config.elems, 3, '.save-categories-config()';
+#note $config.gist();
+  ok $config<categories><cat-2><lockable>, '.add-category() config';
+}
+
+
+done-testing;
+exit;
+
+#-------------------------------------------------------------------------------
+sub cleanup-puzzle-table-data ( Str:D $d ) {
+  return unless $d.IO.d;
+
+  for dir($d) -> $f {
+    if $f.d {
+      cleanup-puzzle-table-data($f.Str);
+      $f.rmdir;
+    }
+
+    else {
+      $f.unlink;
+    }
+  }
+}
