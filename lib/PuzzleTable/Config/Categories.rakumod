@@ -42,8 +42,8 @@ method save-categories-config ( ) {
   # And, if there is a selected category, also save category data
   $!current-category.save-category-config if ? $!current-category;
 
-  note "Done saving categories";
-  note "Time needed to save: {(now - $t0).fmt('%.1f sec')}.";
+#  note "Done saving categories";
+  note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}.";
 }
 
 #-------------------------------------------------------------------------------
@@ -57,14 +57,14 @@ method add-category ( Str:D $name, :$lockable = False --> Str ) {
     $!categories-config<categories>{$name}<lockable> = $lockable;
   }
 
-  $message;
+  $message
 }
 
 #-------------------------------------------------------------------------------
 method select-category ( Str:D $category-name --> Str ) {
   my Str $message = '';
 
-  if $!categories-config{$category-name}:exists {
+  if $!categories-config<categories>{$category-name}:exists {
     # Check if a category was selected. If so, save before assigning a new
     $!current-category.save-category-config if ? $!current-category;
 
@@ -75,6 +75,37 @@ method select-category ( Str:D $category-name --> Str ) {
   else {
     $message = "Category $category-name does not exist";
   }
+
+  $message
+}
+
+#-------------------------------------------------------------------------------
+method get-current-category ( --> Str ) {
+  my Str $category-name;
+  $category-name = $!current-category.category-name if ? $!current-category;
+
+  $category-name
+}
+
+#-------------------------------------------------------------------------------
+method import-collection ( Str:D $collection-path --> Str ) {
+  my Str $message = '';
+
+  if ? $!current-category {
+    if $collection-path.IO.d {
+      $!current-category.import-collection($collection-path);
+    }
+
+    else {
+      $message = 'Collection path does not exist or isn\'t a directory';
+    }
+  }
+
+  else {
+    $message = 'No collection selected';
+  }
+
+  $message
 }
 
 #-------------------------------------------------------------------------------
@@ -109,12 +140,12 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 #-------------------------------------------------------------------------------
 # Get the category lockable state
 method is-category-lockable ( Str:D $category --> Bool ) {
-  $*puzzle-data<categories>{$category}<lockable>.Bool
+  $!categories-config<categories>{$category}<lockable>.Bool
 }
 
 #-------------------------------------------------------------------------------
 method set-category-lockable ( Str:D $category, Bool:D $lockable ) {
-  $*puzzle-data<categories>{$category}<lockable> = $lockable;
+  $!categories-config<categories>{$category}<lockable> = $lockable;
 #  self.save-categories-config;
 }
 

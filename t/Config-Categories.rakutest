@@ -30,6 +30,28 @@ with $categories {
   ok ! $message, '.add-category()';
   $message = .add-category( 'cat-2', :lockable);
   is $message, "Category cat-2 already exists", '.add-category() 2nd time fail';
+  $message = .add-category( 'cat-1', :!lockable);
+
+  ok ! .get-current-category, '.get-current-category(); no current category';
+
+  $message = .select-category('cat-3');
+  is $message, 'Category cat-3 does not exist',
+     '.select-category(); cat-3 not found';
+  $message = .select-category('cat-2');
+  ok ! $message, '.select-category(); cat-2 found';
+  is .get-current-category, 'cat-2', 
+    '.get-current-category(); category cat-2 is selected';
+
+  ok ! .is-category-lockable('cat-1'),
+       '.is-category-lockable() cat 1 not lockable';
+  ok .is-category-lockable('cat-2'), '.is-category-lockable() cat 2 lockable';
+
+  $message = .import-collection('some-where-else');
+  is $message, 'Collection path does not exist or isn\'t a directory',
+     '.import-collection(); collection not found';
+
+  $message = .import-collection(COLLDATA);
+  ok ! $message, '.import-collection(); puzzles imported from collection';
 
   .save-categories-config;
   my Hash $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
