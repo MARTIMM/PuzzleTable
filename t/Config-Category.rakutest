@@ -19,31 +19,36 @@ cleanup-puzzle-table-data(CONFDATA);
 my PuzzleTable::Config::Category $category;
 
 with $category .= new( :category-name<cat-1>, :root-dir(CONFDATA)) {
-  lives-ok { .finish; }, '.finish()';
+  .save-category-config;
   $category = Nil;
 
-  ok (CONFDATA ~ 'cat-1/puzzle-data.yaml').IO.r, '.new()';
+  ok (CONFDATA ~ 'Cat-1/puzzles.yaml').IO.r, '.new()';
 }
 
 with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
   .import-collection(COLLDATA);
   .save-category-config;
-  ok (CONFDATA ~ 'cat-2/puzzle-data.yaml').IO.r, '.save-category-config(): now saved';
+  ok (CONFDATA ~ 'Cat-2/puzzles.yaml').IO.r, '.save-category-config()';
 
   # Check that two puzzles are imported
-  my Hash $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
+  my Hash $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 2, '.import-collection()';
 
   # Remove a puzzle and check that there is only one puzlle left
-  .remove-puzzle( 'p001', ARCHDATA);
+  .remove-puzzle( 'p000', ARCHDATA);
   .save-category-config;
-  $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
+  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 1, '.remove-puzzle()';
 
   .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
   .save-category-config;
-  $config = load-yaml("{CONFDATA}cat-2/puzzle-data.yaml".IO.slurp);
+  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 2, '.restore-puzzle()';
+
+  .add-puzzle(EXPDATA ~ 'e1.puzzle');
+  .save-category-config;
+  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  is $config<members>.elems, 3, '.add-puzzle()';
 }
 
 done-testing;

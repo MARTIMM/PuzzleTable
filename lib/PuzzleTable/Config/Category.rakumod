@@ -9,13 +9,15 @@ use PuzzleTable::Config::Puzzle;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
 
-has Str $!category-name;
+has Str $.category-name;
 has Str $!config-dir;
 has Hash $!category-config;
 has Str $!config-path;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$!category-name, Str:D :$root-dir ) {
+
+  $!category-name .= tc;
 
   $!config-dir = "$root-dir/$!category-name";
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
@@ -27,7 +29,6 @@ submethod BUILD ( Str:D :$!category-name, Str:D :$root-dir ) {
 
   else {
     $!category-config = %(
-      :!lockable,
       :members(%()),
       :name($!category-name),
     );
@@ -41,8 +42,8 @@ method save-category-config ( ) {
   my $t0 = now;
   $!config-path.IO.spurt(save-yaml($!category-config));
 
-  note "Done saving puzzle category $!category-name.";
-  note "Time needed to save: {(now - $t0).fmt('%.1f sec')}.";
+#  note "Done saving puzzle category $!category-name.";
+  note "Time needed to save category $!category-name: {(now - $t0).fmt('%.1f sec')}.";
 }
 
 #-------------------------------------------------------------------------------
@@ -51,7 +52,6 @@ method save-category-config ( ) {
 # for each puzzle found.
 method import-collection ( Str:D $collection-path ) {
   my PuzzleTable::Config::Puzzle $puzzle .= new;
-  my Int $count = 1;
 
   for $collection-path.IO.dir -> $collection-file {
     next if $collection-file.d;
@@ -59,20 +59,18 @@ method import-collection ( Str:D $collection-path ) {
     # Skip all files but *.puzzle
     next if $collection-file.Str !~~ m/ \. puzzle $/;
 
-    # Find a free id to store the data
-    my Str $puzzle-destination;
-    while $!category-config<members>{"p$count.fmt('%03d')"}:exists { $count++; }
+    # Get a new puzzle id
+    my Str $puzzle-id = self!new-puzzle-id;
 
-    # Create directory for the puzzles files
-    my Str $puzzle-id = 'p' ~ $count.fmt('%03d');
-    $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
-    mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
+    # Get directory for the puzzles files
+    my Str $puzzle-destination = self!make-puzzle-destination($puzzle-id);
 
     # Get the puzzle data and Hash
     my Hash $puzzle-config = $puzzle.import-puzzle(
       $collection-file.Str, $puzzle-destination
     );
 
+    # Check if there is a progress file
     my Str $progress-file = $collection-file.Str;
     $progress-file ~~ s/ '.puzzle' $/.save/;
     if $progress-file.IO.r {
@@ -82,8 +80,46 @@ method import-collection ( Str:D $collection-path ) {
     }
 
     $!category-config<members>{$puzzle-id} = $puzzle-config;
-    $count++;
   }
+}
+
+#-------------------------------------------------------------------------------
+method add-puzzle ( Str:D $puzzle-path ) {
+
+  # Get a new puzzle id
+  my Str $puzzle-id = self!new-puzzle-id;
+
+  # Get directory for the puzzles files
+  my Str $puzzle-destination = self!make-puzzle-destination($puzzle-id);
+
+  my PuzzleTable::Config::Puzzle $puzzle .= new;
+  my Hash $puzzle-config = $puzzle.import-puzzle(
+     $puzzle-path, $puzzle-destination
+  );
+
+  $!category-config<members>{$puzzle-id} = $puzzle-config;
+}
+
+#-------------------------------------------------------------------------------
+method !new-puzzle-id ( --> Str ) {
+
+  # Start at number of elements, less change of a collision, then find
+  # a free id to store the data
+  my Int $count = $!category-config<members>.elems;
+  while $!category-config<members>{"p$count.fmt('%03d')"}:exists { $count++; }
+
+  # Create directory for the puzzles files
+  'p' ~ $count.fmt('%03d')
+}
+
+#-------------------------------------------------------------------------------
+method !make-puzzle-destination ( Str $puzzle-id --> Str ) {
+
+  # Create directory for the puzzles files
+  my Str $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
+  mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
+
+  $puzzle-destination
 }
 
 #-------------------------------------------------------------------------------
