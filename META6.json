@@ -22,6 +22,7 @@
     "PuzzleTable::Gui::Table": "lib/PuzzleTable/Gui/Table.rakumod",
     "PuzzleTable::Gui::TableItemLabel": "lib/PuzzleTable/Gui/TableItemLabel.rakumod",
     "PuzzleTable::Config": "lib/PuzzleTable/Config.rakumod",
+    "PuzzleTable::Config::Categories": "lib/PuzzleTable/Config/Categories.rakumod",
     "PuzzleTable::Config::Category": "lib/PuzzleTable/Config/Category.rakumod",
     "PuzzleTable::Config::Puzzle": "lib/PuzzleTable/Config/Puzzle.rakumod",
     "PuzzleTable::ExtractDataFromPuzzle": "lib/PuzzleTable/ExtractDataFromPuzzle.rakumod",
