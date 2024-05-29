@@ -101,6 +101,40 @@ method add-puzzle ( Str:D $puzzle-path ) {
 }
 
 #-------------------------------------------------------------------------------
+method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
+
+  return False unless $!category-config<members>{$puzzle-id}:exists;
+
+  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
+  return False unless $puzzle-path.IO.d;
+
+  # Get the configuration data of this puzzle and remove it from the
+  # configuration Hash.
+  my Hash $puzzle-data = $!category-config<members>{$puzzle-id}:delete;
+
+  my Str $progress-file = [~] '__FSC_', $puzzle-data<Filename>, '_0_.save';
+
+  my PuzzleTable::Config::Puzzle $puzzle .= new;
+  $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-data);
+}
+
+#-------------------------------------------------------------------------------
+method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name ) {
+
+  # Get a new puzzle id
+  my Str $puzzle-id = self!new-puzzle-id;
+  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
+
+  # Restore puzzle at $puzzle-path
+  my PuzzleTable::Config::Puzzle $puzzle .= new;
+  my Hash $puzzle-data = $puzzle.restore-puzzle(
+    $archive-trashbin, $archive-name, $puzzle-path
+  );
+
+  $!category-config<members>{$puzzle-id} = $puzzle-data;
+}
+
+#-------------------------------------------------------------------------------
 method !new-puzzle-id ( --> Str ) {
 
   # Start at number of elements, less change of a collision, then find
@@ -120,38 +154,4 @@ method !make-puzzle-destination ( Str $puzzle-id --> Str ) {
   mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
 
   $puzzle-destination
-}
-
-#-------------------------------------------------------------------------------
-method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin ) {
-
-  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
-
-  # Get the configuration data of this puzzle and remove it from the
-  # configuration Hash.
-  my Hash $puzzle-data = $!category-config<members>{$puzzle-id}:delete;
-
-  my Str $progress-file = [~] '__FSC_', $puzzle-data<Filename>, '_0_.save';
-
-  my PuzzleTable::Config::Puzzle $puzzle .= new;
-  $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-data);
-}
-
-#-------------------------------------------------------------------------------
-method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name ) {
-
-  # Find a free id to store the data
-  my Int $count = 1;
-  my Str $puzzle-destination;
-  while $!category-config<members>{"p$count.fmt('%03d')"}:exists { $count++; }
-
-  my Str $puzzle-id = 'p' ~ $count.fmt('%03d');
-  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
-
-  my PuzzleTable::Config::Puzzle $puzzle .= new;
-  my Hash $puzzle-data = $puzzle.restore-puzzle(
-    $archive-trashbin, $archive-name, $puzzle-path
-  );
-
-  $!category-config<members>{$puzzle-id} = $puzzle-data;
 }

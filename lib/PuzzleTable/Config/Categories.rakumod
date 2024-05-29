@@ -24,11 +24,16 @@ submethod BUILD ( Str:D :$!root-dir ) {
   }
 
   else {
-    $!categories-config = %( :categories(%()) );
+    $!categories-config = %();
+    $!categories-config<categories> = %();
+    $!categories-config<categories><Default> = %(:!lockable);
   }
 
   $!categories-config<locked> = True;
   $!categories-config<password> = '';
+  
+  # Always select the default category
+  $!current-category .= new( :category-name('Default'), :$!root-dir);
 }
 
 #-------------------------------------------------------------------------------
@@ -40,33 +45,38 @@ method save-categories-config ( ) {
   $!config-path.IO.spurt(save-yaml($!categories-config));
 
   # And, if there is a selected category, also save category data
-  $!current-category.save-category-config if ? $!current-category;
+  $!current-category.save-category-config;
 
 #  note "Done saving categories";
   note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}.";
 }
 
 #-------------------------------------------------------------------------------
-method add-category ( Str:D $name, :$lockable = False --> Str ) {
+method add-category (
+  Str:D $category-name is copy, :$lockable = False --> Str
+) {
   my Str $message = '';
-  if $!categories-config<categories>{$name}:exists {
-    $message = "Category $name already exists";
+  $category-name .= tc;
+
+  if $!categories-config<categories>{$category-name}:exists {
+    $message = "Category $category-name already exists";
   }
 
   else {
-    $!categories-config<categories>{$name}<lockable> = $lockable;
+    $!categories-config<categories>{$category-name}<lockable> = $lockable;
   }
 
   $message
 }
 
 #-------------------------------------------------------------------------------
-method select-category ( Str:D $category-name --> Str ) {
+method select-category ( Str:D $category-name is copy --> Str ) {
   my Str $message = '';
+  $category-name .= tc;
 
   if $!categories-config<categories>{$category-name}:exists {
     # Check if a category was selected. If so, save before assigning a new
-    $!current-category.save-category-config if ? $!current-category;
+    $!current-category.save-category-config;
 
     # Set to new category
     $!current-category .= new( :$category-name, :$!root-dir);
@@ -81,31 +91,53 @@ method select-category ( Str:D $category-name --> Str ) {
 
 #-------------------------------------------------------------------------------
 method get-current-category ( --> Str ) {
-  my Str $category-name;
-  $category-name = $!current-category.category-name if ? $!current-category;
-
-  $category-name
+  $!current-category.category-name;
 }
 
 #-------------------------------------------------------------------------------
 method import-collection ( Str:D $collection-path --> Str ) {
   my Str $message = '';
 
-  if ? $!current-category {
-    if $collection-path.IO.d {
-      $!current-category.import-collection($collection-path);
-    }
-
-    else {
-      $message = 'Collection path does not exist or isn\'t a directory';
-    }
+  if $collection-path.IO.d {
+    $!current-category.import-collection($collection-path);
   }
 
   else {
-    $message = 'No collection selected';
+    $message = 'Collection path does not exist or isn\'t a directory';
   }
 
   $message
+}
+
+#-------------------------------------------------------------------------------
+method add-puzzle ( Str:D $puzzle-path ) {
+  my Str $message = '';
+
+  if $puzzle-path.IO.r {
+    $!current-category.add-puzzle($puzzle-path);
+  }
+
+  else {
+    $message = 'Puzzle does not exist or isn\'t a puzzle file';
+  }
+
+  $message
+}
+
+#-------------------------------------------------------------------------------
+method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
+  my Str $message = '';
+
+  if ! $!current-category.remove-puzzle( $puzzle-id, $archive-trashbin) {
+    $message = 'Puzzle id is wrong and/or Puzzle directory not found';
+  }
+
+  $message
+}
+
+#-------------------------------------------------------------------------------
+method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name --> Str ) {
+# ....
 }
 
 #-------------------------------------------------------------------------------
@@ -133,7 +165,6 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
   $is-set = self.check-password($old-password);
   $!categories-config<password> = sha256-hex($new-password) if $is-set;
 
-#  self.save-categories-config if $is-set;
   $is-set
 }
 
@@ -144,9 +175,14 @@ method is-category-lockable ( Str:D $category --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-category-lockable ( Str:D $category, Bool:D $lockable ) {
-  $!categories-config<categories>{$category}<lockable> = $lockable;
-#  self.save-categories-config;
+method set-category-lockable ( Str:D $category, Bool:D $lockable --> Bool ) {
+  my Bool $is-set = False;
+  if $category ne 'Default' {
+    $!categories-config<categories>{$category}<lockable> = $lockable;
+    $is-set = True;
+  }
+
+  $is-set
 }
 
 #-------------------------------------------------------------------------------
@@ -159,7 +195,6 @@ method is-locked ( --> Bool ) {
 # Set the puzzle table locking state
 method lock ( ) {
   $!categories-config<locked> = True;
-#  self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -167,7 +202,6 @@ method lock ( ) {
 method unlock ( Str $password --> Bool ) {
   my Bool $ok = self.check-password($password);
   $!categories-config<locked> = False if $ok;
-#  self.save-categories-config;
   $ok
 }
 

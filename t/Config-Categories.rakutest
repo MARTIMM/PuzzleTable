@@ -24,27 +24,27 @@ with $categories {
 
   .set-password( '', 'hoeperdepoep');
   ok .check-password('hoeperdepoep'), '.set-password()';
-  
+
+
   #$category .= new( :category-name<cat-2>, :root-dir(CONFDATA));
   my Str $message = .add-category( 'cat-2', :lockable);
   ok ! $message, '.add-category()';
   $message = .add-category( 'cat-2', :lockable);
-  is $message, "Category cat-2 already exists", '.add-category() 2nd time fail';
+  is $message, "Category Cat-2 already exists", '.add-category() 2nd time fail';
   $message = .add-category( 'cat-1', :!lockable);
 
-  ok ! .get-current-category, '.get-current-category(); no current category';
+  is .get-current-category, 'Default', '.get-current-category(): Default';
 
-  $message = .select-category('cat-3');
-  is $message, 'Category cat-3 does not exist',
-     '.select-category(); cat-3 not found';
-  $message = .select-category('cat-2');
-  ok ! $message, '.select-category(); cat-2 found';
-  is .get-current-category, 'cat-2', 
-    '.get-current-category(); category cat-2 is selected';
+  $message = .select-category('Cat-3');
+  is $message, 'Category Cat-3 does not exist',
+     '.select-category(); Cat-3 not found';
+  $message = .select-category('Cat-2');
+  ok ! $message, '.select-category(); Cat-2 found';
+  is .get-current-category, 'Cat-2', '.get-current-category(); Cat-2';
 
-  ok ! .is-category-lockable('cat-1'),
-       '.is-category-lockable() cat 1 not lockable';
-  ok .is-category-lockable('cat-2'), '.is-category-lockable() cat 2 lockable';
+  ok ! .is-category-lockable('Cat-1'),
+       '.is-category-lockable() Cat 1 not lockable';
+  ok .is-category-lockable('Cat-2'), '.is-category-lockable() Cat 2 lockable';
 
   $message = .import-collection('some-where-else');
   is $message, 'Collection path does not exist or isn\'t a directory',
@@ -54,10 +54,23 @@ with $categories {
   ok ! $message, '.import-collection(); puzzles imported from collection';
 
   .save-categories-config;
-  my Hash $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-  is $config.elems, 3, '.save-categories-config()';
+  my Hash $config;
+
+  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+  is $config<categories>.elems, 3, '.save-categories-config()';
+  ok $config<categories><Cat-2><lockable>, 'Check categories config';
+
+  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  is $config<members>.elems, 2, 'Check category config';
 #note $config.gist();
-  ok $config<categories><cat-2><lockable>, '.add-category() config';
+
+  .add-puzzle(EXPDATA ~ 'e1.puzzle');
+  .save-categories-config;
+
+  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  is $config<members>.elems, 3, '.add-puzzle()';
+#note $config.gist();
 }
 
 
