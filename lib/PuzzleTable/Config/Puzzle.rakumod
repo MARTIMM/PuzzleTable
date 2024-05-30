@@ -90,6 +90,7 @@ method restore-puzzle (
 ) {
 
   my Str $archive-path = [~] $archive-trashbin, $archive-name;
+  return Hash unless $archive-path.IO.r;
 
   my Archive::Libarchive $a .= new(
     operation => LibarchiveExtract,
@@ -102,13 +103,14 @@ method restore-puzzle (
     $a.extract("$archive-trashbin/puzzle");
     CATCH {
       say "Can't extract files: $_";
+      return Hash;
     }
   }
 
   $a.close;
 
   # Older versions of archives hold the config in a '<puzzle-id>.yaml' file
-  # Now it is stored in a strait forward name 'puzzle-data.yaml'.
+  # Now it is stored in a straight forward name 'puzzle-data.yaml'.
   my Str $config-file;
   if "$archive-trashbin/puzzle/puzzle-data.yaml".IO.e {
     $config-file = "$archive-trashbin/puzzle/puzzle-data.yaml";
@@ -123,10 +125,29 @@ method restore-puzzle (
     }
   }
 
-  my Hash $config = %();
-  if ?$config-file {
+  my Hash $config;
+  if ? $config-file {
     $config = load-yaml($config-file.IO.slurp);
     $config-file.IO.unlink;
+  }
+
+  else {
+    sub cleanup-extracted-data ( Str:D $d ) {
+      for dir($d) -> $f {
+        if $f.d {
+          cleanup-extracted-data($f.Str);
+        }
+
+        else {
+          $f.unlink;
+        }
+      }
+
+      $d.rmdir;
+    }
+
+    cleanup-extracted-data("$archive-trashbin/puzzle");
+    return Hash;
   }
 
   # Rename the archive path into the puzzle path, effectively adding the

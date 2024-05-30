@@ -129,7 +129,7 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
   my Str $message = '';
 
   if ! $!current-category.remove-puzzle( $puzzle-id, $archive-trashbin) {
-    $message = 'Puzzle id is wrong and/or Puzzle directory not found';
+    $message = 'Puzzle id is wrong and/or Puzzle store not found';
   }
 
   $message
@@ -137,7 +137,58 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
 
 #-------------------------------------------------------------------------------
 method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name --> Str ) {
-# ....
+  my Str $message = '';
+
+  if ! $!current-category.restore-puzzle( $archive-trashbin, $archive-name) {
+    $message = 'Archive not found or does not have the proper contents';
+  }
+
+  $message
+}
+
+#`{{
+#-------------------------------------------------------------------------------
+method get-puzzle ( Str:D $puzzle-id --> Hash ) {
+  my Str $message = '';
+
+  if ! $!current-category.get-puzzle($puzzle-id) {
+    $message = 'Puzzle id is wrong and/or Puzzle store not found';
+  }
+
+  $message
+}
+}}
+
+#-------------------------------------------------------------------------------
+# Return an array of hashes. Basic info comes from
+# $*puzzle-data<categories>{$category}<members> where info of Image and the
+# index of the puzzle is added.
+method get-puzzles ( --> Seq ) {
+
+  my Str $pi;
+  my Int $found-count = 0;
+  my Array $cat-puzzle-data = [];
+
+  for $!current-category.get-puzzle-ids -> $puzzle-id {
+    my Hash $puzzle-data = $!current-category.get-puzzle($puzzle-id);
+
+    $puzzle-data<Puzzle-index> = $puzzle-id;
+    $puzzle-data<Category> = $!current-category.category-name;
+    $puzzle-data<Image> = 
+      $!current-category.get-puzzle-destination($puzzle-id) ~ 'image400.jpg';
+    $cat-puzzle-data.push: $puzzle-data;
+  }
+
+  # Sort pusles on its size
+  my Seq $puzzles = $cat-puzzle-data.sort(
+    -> $item1, $item2 { 
+      if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
+      elsif $item1<PieceCount> == $item2<PieceCount> { Order::Same }
+      else { Order::More }
+    }
+  );
+
+  $puzzles
 }
 
 #-------------------------------------------------------------------------------

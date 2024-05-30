@@ -63,7 +63,7 @@ method import-collection ( Str:D $collection-path ) {
     my Str $puzzle-id = self!new-puzzle-id;
 
     # Get directory for the puzzles files
-    my Str $puzzle-destination = self!make-puzzle-destination($puzzle-id);
+    my Str $puzzle-destination = self.get-puzzle-destination($puzzle-id);
 
     # Get the puzzle data and Hash
     my Hash $puzzle-config = $puzzle.import-puzzle(
@@ -90,7 +90,7 @@ method add-puzzle ( Str:D $puzzle-path ) {
   my Str $puzzle-id = self!new-puzzle-id;
 
   # Get directory for the puzzles files
-  my Str $puzzle-destination = self!make-puzzle-destination($puzzle-id);
+  my Str $puzzle-destination = self.get-puzzle-destination($puzzle-id);
 
   my PuzzleTable::Config::Puzzle $puzzle .= new;
   my Hash $puzzle-config = $puzzle.import-puzzle(
@@ -119,7 +119,10 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name ) {
+method restore-puzzle (
+  Str:D $archive-trashbin, Str:D $archive-name  --> Bool
+) {
+  my Bool $restore-ok = False;
 
   # Get a new puzzle id
   my Str $puzzle-id = self!new-puzzle-id;
@@ -131,7 +134,32 @@ method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name ) {
     $archive-trashbin, $archive-name, $puzzle-path
   );
 
-  $!category-config<members>{$puzzle-id} = $puzzle-data;
+  if ? $puzzle-data {
+    $!category-config<members>{$puzzle-id} = $puzzle-data;
+    $restore-ok = True;
+  }
+
+  $restore-ok
+}
+
+#-------------------------------------------------------------------------------
+method get-puzzle ( Str $puzzle-id  --> Hash ) {
+  $!category-config<members>{$puzzle-id};
+}
+
+#-------------------------------------------------------------------------------
+method get-puzzle-ids ( --> Seq ) {
+  $!category-config<members>.keys
+}
+
+#-------------------------------------------------------------------------------
+method get-puzzle-destination ( Str $puzzle-id --> Str ) {
+
+  # Create directory for the puzzles files
+  my Str $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
+  mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
+
+  $puzzle-destination
 }
 
 #-------------------------------------------------------------------------------
@@ -144,14 +172,4 @@ method !new-puzzle-id ( --> Str ) {
 
   # Create directory for the puzzles files
   'p' ~ $count.fmt('%03d')
-}
-
-#-------------------------------------------------------------------------------
-method !make-puzzle-destination ( Str $puzzle-id --> Str ) {
-
-  # Create directory for the puzzles files
-  my Str $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
-  mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
-
-  $puzzle-destination
 }
