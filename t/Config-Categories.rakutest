@@ -88,7 +88,16 @@ with $categories {
   is $config<members>.elems, 3, '.restore-puzzle()';
   ok $config<members><p003>:exists, '.restore-puzzle(): Config check';
 
-  my Array $puzzles = [.get-puzzles];
+  my Array $puzzles = [|.get-puzzles];
+  is $puzzles.elems, 3, '.get-puzzles(); Check nbr puzzles returned';
+  ok $puzzles[0]<Category> eq
+        $puzzles[1]<Category> eq
+        $puzzles[2]<Category> eq 'Cat-2',
+         '.get-puzzles(); Check puzzles category';
+  ok $puzzles[0]<PieceCount> <=
+        $puzzles[1]<PieceCount> <=
+        $puzzles[2]<PieceCount>, '.get-puzzles(); Check order';
+
   note $puzzles.gist;
 }
 
