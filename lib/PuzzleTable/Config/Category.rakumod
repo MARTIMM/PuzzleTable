@@ -77,6 +77,11 @@ method import-collection ( Str:D $collection-path ) {
       $puzzle-config<Progress> = $puzzle.calculate-progress(
         $progress-file, $puzzle-config<PieceCount>
       );
+
+      my Str $config-progress-filename =
+         [~] '__FSC_', $puzzle-config<Filename>, '_0_.save';
+      $progress-file.IO.copy("$puzzle-destination/$config-progress-filename");
+      $puzzle-config<ProgressFile> = $config-progress-filename;
     }
 
     $!category-config<members>{$puzzle-id} = $puzzle-config;
@@ -84,7 +89,7 @@ method import-collection ( Str:D $collection-path ) {
 }
 
 #-------------------------------------------------------------------------------
-method add-puzzle ( Str:D $puzzle-path ) {
+method add-puzzle ( Str:D $puzzle-path --> Str ) {
 
   # Get a new puzzle id
   my Str $puzzle-id = self!new-puzzle-id;
@@ -98,6 +103,24 @@ method add-puzzle ( Str:D $puzzle-path ) {
   );
 
   $!category-config<members>{$puzzle-id} = $puzzle-config;
+  
+  $puzzle-id
+}
+
+#-------------------------------------------------------------------------------
+method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
+  return False unless $!category-config<members>{$puzzle-id}:exists;
+
+  for $new-pairs.kv -> Str $field-name, Str $value {
+    if $field-name ~~ any(
+         <Comment Progress Source Progress>
+       ) and $value.defined
+    {
+      $!category-config<members>{$puzzle-id}{$field-name} = $value;
+    }
+  }
+
+  True
 }
 
 #-------------------------------------------------------------------------------
@@ -110,12 +133,14 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
 
   # Get the configuration data of this puzzle and remove it from the
   # configuration Hash.
-  my Hash $puzzle-data = $!category-config<members>{$puzzle-id}:delete;
+  my Hash $puzzle-config = $!category-config<members>{$puzzle-id}:delete;
 
-  my Str $progress-file = [~] '__FSC_', $puzzle-data<Filename>, '_0_.save';
+  my Str $progress-file = [~] '__FSC_', $puzzle-config<Filename>, '_0_.save';
 
   my PuzzleTable::Config::Puzzle $puzzle .= new;
-  $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-data);
+  $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-config);
+
+  True
 }
 
 #-------------------------------------------------------------------------------
@@ -130,12 +155,12 @@ method restore-puzzle (
 
   # Restore puzzle at $puzzle-path
   my PuzzleTable::Config::Puzzle $puzzle .= new;
-  my Hash $puzzle-data = $puzzle.restore-puzzle(
+  my Hash $puzzle-config = $puzzle.restore-puzzle(
     $archive-trashbin, $archive-name, $puzzle-path
   );
 
-  if ? $puzzle-data {
-    $!category-config<members>{$puzzle-id} = $puzzle-data;
+  if ? $puzzle-config {
+    $!category-config<members>{$puzzle-id} = $puzzle-config;
     $restore-ok = True;
   }
 
