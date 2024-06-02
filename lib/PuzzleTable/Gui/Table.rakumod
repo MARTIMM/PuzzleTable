@@ -247,11 +247,14 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
   }
 
+  my Gnome::Gtk4::Label $pid .= new-label();
+
   with my Gnome::Gtk4::Box $button-box .= new-box(
     GTK_ORIENTATION_VERTICAL, 2
   ) {
     .append($run-palapeli);
     .append($edit-palapeli);
+    .append($pid);
   }
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
@@ -325,6 +328,9 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
       self, 'edit-palapeli', 'clicked', :$puzzle,
       :$label-comment, :$label-source
     );
+
+    my Gnome::Gtk4::Label() $pid = $edit-palapeli.get-next-sibling;
+    $pid.set-text($puzzle<Puzzle-index>);
 
     $image.set-filename($puzzle<Image>);
     $label-comment.set-text($puzzle<Comment>);
