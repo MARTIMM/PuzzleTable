@@ -24,14 +24,44 @@ submethod BUILD ( Str:D :$!root-dir ) {
   }
 
   else {
-    $!categories-config = %();
-    $!categories-config<categories> = %();
+#    $!categories-config = %();
+#    $!categories-config<categories> = %();
     $!categories-config<categories><Default> = %(:!lockable);
+
+    $!categories-config<password> = '';
+
+#    $!categories-config<palapeli> = %();
+    given $!categories-config<palapeli><Flatpak> {
+      .<collection> = '.var/app/org.kde.palapeli/data/palapeli/collection>';
+      .<exec> = '/usr/bin/flatpak run org.kde.palapeli';
+      .<env> = %(
+        :GDK_BACKEND<x11>,
+      )
+   }
+
+    given $!categories-config<palapeli><Snap> {
+      .<collection> = 'snap/palapeli/current/.local/share/palapeli/collection>';
+      .<exec> = '/var/lib/snapd/snap/bin/palapeli';
+      .<env> = %(
+        :BAMF_DESKTOP_FILE_HINT</var/lib/snapd/desktop/applications/palapeli_palapeli.desktop>,
+        :GDK_BACKEND<x11>,
+      )
+    }
+
+    given $!categories-config<palapeli><Standard> {
+      .<collection> = <.local/share/palapeli/collection>;
+      .<exec> = '/usr/bin/palapeli';
+      .<env> = %(
+        :GDK_BACKEND<x11>,
+      )
+    }
+
+    $!categories-config<palapeli><preference> = 'Snap';
   }
 
+  # Always lock at start
   $!categories-config<locked> = True;
-  $!categories-config<password> = '';
-  
+
   # Always select the default category
   $!current-category .= new( :category-name('Default'), :$!root-dir);
 }
@@ -114,7 +144,21 @@ method add-puzzle ( Str:D $puzzle-path ) {
   my Str $message = '';
 
   if $puzzle-path.IO.r {
-    $!current-category.add-puzzle($puzzle-path);
+    my Str $puzzle-id = $!current-category.add-puzzle($puzzle-path);
+#`{{
+    my Hash $puzzle-config = $!current-category.get-puzzle($puzzle-id);
+    if ?$puzzle-config<ProgressFile> {
+      #!!!!!!!!!!!!!!!!!!!!
+    }
+
+    else {
+      my Str $p = $!categories-config<palapeli><preference>;
+      my Str $c = $!categories-config<palapeli>{$p}<collection>;
+      my Str $filename = $puzzle-config<Filename>;
+      my Str $progress-filename = [~] '__FSC_', $filename, '_0_.save';
+      #!!!!!!!!!!!!!!!!!!!!
+    }
+}}
   }
 
   else {
@@ -146,23 +190,20 @@ method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name --> Str ) {
   $message
 }
 
-#`{{
 #-------------------------------------------------------------------------------
-method get-puzzle ( Str:D $puzzle-id --> Hash ) {
-  my Str $message = '';
+=begin pod
 
-  if ! $!current-category.get-puzzle($puzzle-id) {
-    $message = 'Puzzle id is wrong and/or Puzzle store not found';
-  }
+Return an sequence of hashes. Puzzles are taken from the current category and extra information is added to update the puzzles later if needed. The sequence is sorted on the number of pieces used for the puzzle. This method is called from the puzzle table display to be able to
 
-  $message
-}
-}}
+=item display in the order set above.
+=item to edit a few fields in the structure followed by .update-puzzle().
+=item to run the Palapeli program to play the puzzle with .run-palapeli().
+=item to update the progress after playing using .calculate-progress() in class B<PuzzleTable::Config::Puzzle> followed by .update-puzzle().
 
-#-------------------------------------------------------------------------------
-# Return an array of hashes. Basic info comes from
-# $*puzzle-data<categories>{$category}<members> where info of Image and the
-# index of the puzzle is added.
+  method get-puzzles ( --> Seq )
+
+=end pod
+
 method get-puzzles ( --> Seq ) {
 
   my Str $pi;
@@ -170,13 +211,18 @@ method get-puzzles ( --> Seq ) {
   my Array $cat-puzzle-data = [];
 
   for $!current-category.get-puzzle-ids -> $puzzle-id {
-    my Hash $puzzle-data = $!current-category.get-puzzle($puzzle-id);
+    my Hash $puzzle-config = $!current-category.get-puzzle($puzzle-id);
 
-    $puzzle-data<Puzzle-index> = $puzzle-id;
-    $puzzle-data<Category> = $!current-category.category-name;
-    $puzzle-data<Image> = 
-      $!current-category.get-puzzle-destination($puzzle-id) ~ 'image400.jpg';
-    $cat-puzzle-data.push: $puzzle-data;
+    # Add extra info so it can be used to modify the data later, e.g. progress.
+    $puzzle-config<PuzzleID> = $puzzle-id;
+    $puzzle-config<Category> = $!current-category.category-name;
+    $puzzle-config<Image> = 
+      $!current-category.get-puzzle-destination($puzzle-id) ~ '/image400.jpg';
+
+    # Drop some data
+    $puzzle-config<SourceFile>:delete;
+
+    $cat-puzzle-data.push: $puzzle-config;
   }
 
   # Sort pusles on its size
@@ -189,6 +235,101 @@ method get-puzzles ( --> Seq ) {
   );
 
   $puzzles
+}
+
+#-------------------------------------------------------------------------------
+# This puzzle hash must have the extra fields added by get-puzzles
+method run-palapeli ( Hash $puzzle ) {
+  my Str $pref = $!categories-config<palapeli><preference>;
+  for $!categories-config<palapeli>{$pref}<env>.kv -> $env-key, $env-val {
+    %*ENV{$env-key} = $env-val;
+  }
+
+  my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
+  my Str $puzzle-id = $puzzle<PuzzleID>;
+  my Str $puzzle-path = [~]
+    $!current-category.get-puzzle-destination($puzzle-id),
+    '/', $puzzle<Filename>;
+
+  my Str $prog-filename = $puzzle<ProgressFile> //
+      [~] '__FSC_', $puzzle<Filename>, '_0_.save';
+
+  my Str $prog-path = [~]
+    $!current-category.get-puzzle-destination($puzzle-id),
+    '/', $prog-filename if ?$prog-filename;
+
+  if ?$prog-filename and $prog-path.IO.r {
+    my $collection = $!categories-config<palapeli>{$pref}<collection>;
+    $prog-path.IO.copy("$collection/$prog-filename");
+  }
+
+  shell "$exec $puzzle-path";
+
+# ! restore
+}
+
+#`{{
+#-------------------------------------------------------------------------------
+# Called from call-back in Table after playing a puzzle.
+# The object holds most of the fields of some puzzle added with
+# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# below) while Name and SourceFile are removed (see add-puzzle-to-table()
+# in Table).
+method restore-progress-file ( Hash $puzzle ) {
+
+  my $c = $puzzle<Category>;
+  my $i = $puzzle<Puzzle-index>;
+
+  my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
+  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
+  my Str $collection-path =
+     [~] $!config.get-pala-collection, '/', $collection-filename;
+
+  my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
+          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
+
+  if $backup-path.IO.e and $collection-path.IO.e and
+      $collection-path.IO.modified < $backup-path.IO.modified {
+    $backup-path.IO.copy($collection-path);
+  }
+
+  elsif $backup-path.IO.e {
+    $backup-path.IO.copy($collection-path);
+  }
+}
+
+#-------------------------------------------------------------------------------
+# The object holds most of the fields of a puzzle added with
+# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# below) while Name and SourceFile are removed (see add-puzzle-to-table()
+# in Table).
+method save-progress-file ( Hash $puzzle  ) {
+
+  my $c = $puzzle<Category>;
+  my $i = $puzzle<Puzzle-index>;
+
+  my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
+  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
+  my Str $collection-path =
+     [~] $!config.get-pala-collection, '/', $collection-filename;
+
+  my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
+          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
+
+  if $backup-path.IO.e and $collection-path.IO.e and
+      $collection-path.IO.modified > $backup-path.IO.modified {
+    $collection-path.IO.copy($backup-path)
+  }
+
+  elsif $collection-path.IO.e {
+    $collection-path.IO.copy($backup-path)
+  }
+}
+}}
+
+#-------------------------------------------------------------------------------
+method update-puzzle ( Hash $puzzle --> Hash ) {
+  $!current-category{ $puzzle<Puzzle-index>, $puzzle};
 }
 
 #-------------------------------------------------------------------------------
