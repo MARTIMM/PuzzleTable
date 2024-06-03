@@ -111,11 +111,8 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
   return False unless $!category-config<members>{$puzzle-id}:exists;
 
-  for $new-pairs.kv -> Str $field-name, Str $value {
-    if $field-name ~~ any(
-         <Comment Progress Source Progress>
-       ) and $value.defined
-    {
+  for $new-pairs.kv -> Str $field-name, $value {
+    if $field-name ~~ any(<Comment Source Progress>) and $value.defined {
       $!category-config<members>{$puzzle-id}{$field-name} = $value;
     }
   }
