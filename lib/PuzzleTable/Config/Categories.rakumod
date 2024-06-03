@@ -4,7 +4,7 @@ use YAMLish;
 use Digest::SHA256::Native;
 
 #use PuzzleTable::Types;
-#use PuzzleTable::Config::Puzzle;
+use PuzzleTable::Config::Puzzle;
 use PuzzleTable::Config::Category;
 
 #-------------------------------------------------------------------------------
@@ -32,15 +32,17 @@ submethod BUILD ( Str:D :$!root-dir ) {
 
 #    $!categories-config<palapeli> = %();
     given $!categories-config<palapeli><Flatpak> {
-      .<collection> = '.var/app/org.kde.palapeli/data/palapeli/collection>';
-      .<exec> = '/usr/bin/flatpak run org.kde.palapeli';
+      .<collection> = '.var/app/org.kde.palapeli/data/palapeli/collection';
+# Flatpak doec not seem to start with puzzle, too much shielded???
+#      .<exec> = '/usr/bin/flatpak run org.kde.palapeli';
+#      .<exec> = '/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=palapeli --file-forwarding org.kde.palapeli';
       .<env> = %(
         :GDK_BACKEND<x11>,
       )
    }
 
     given $!categories-config<palapeli><Snap> {
-      .<collection> = 'snap/palapeli/current/.local/share/palapeli/collection>';
+      .<collection> = 'snap/palapeli/current/.local/share/palapeli/collection';
       .<exec> = '/var/lib/snapd/snap/bin/palapeli';
       .<env> = %(
         :BAMF_DESKTOP_FILE_HINT</var/lib/snapd/desktop/applications/palapeli_palapeli.desktop>,
@@ -49,7 +51,7 @@ submethod BUILD ( Str:D :$!root-dir ) {
     }
 
     given $!categories-config<palapeli><Standard> {
-      .<collection> = <.local/share/palapeli/collection>;
+      .<collection> = '.local/share/palapeli/collection';
       .<exec> = '/usr/bin/palapeli';
       .<env> = %(
         :GDK_BACKEND<x11>,
@@ -238,32 +240,74 @@ method get-puzzles ( --> Seq ) {
 }
 
 #-------------------------------------------------------------------------------
+method set-palapeli-preference ( Str $preference ) {
+  note "Flatpak does not seem to b able to start - set to 'Standard'"
+       if $preference eq 'Flatpak';
+
+#  if $preference ~~ any(<Snap Flatpak Standard>) {
+  if $preference ~~ any(<Snap Standard>) {
+    $!categories-config<palapeli><preference> = $preference;
+  }
+
+  else {
+    $!categories-config<palapeli><preference> = 'Standard';
+  }
+}
+
+#-------------------------------------------------------------------------------
 # This puzzle hash must have the extra fields added by get-puzzles
 method run-palapeli ( Hash $puzzle ) {
+
+  # Get the preference of one of the palapeli installations
   my Str $pref = $!categories-config<palapeli><preference>;
+
+  # Set the environment values if any
   for $!categories-config<palapeli>{$pref}<env>.kv -> $env-key, $env-val {
     %*ENV{$env-key} = $env-val;
   }
 
+  # Get executable program
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
+
   my Str $puzzle-id = $puzzle<PuzzleID>;
   my Str $puzzle-path = [~]
-    $!current-category.get-puzzle-destination($puzzle-id),
+    $*CWD, '/', $!current-category.get-puzzle-destination($puzzle-id),
     '/', $puzzle<Filename>;
 
-  my Str $prog-filename = $puzzle<ProgressFile> //
-      [~] '__FSC_', $puzzle<Filename>, '_0_.save';
+  # If $puzzle<ProgressFile> is not defined yet, set the name.
+  $puzzle<ProgressFile> = [~] '__FSC_', $puzzle<Filename>, '_0_.save'
+    unless ?$puzzle<ProgressFile>;
 
+  # Get path to the local progress file
+  my Str $prog-filename = $puzzle<ProgressFile>;
   my Str $prog-path = [~]
-    $!current-category.get-puzzle-destination($puzzle-id),
-    '/', $prog-filename if ?$prog-filename;
+    $!current-category.get-puzzle-destination($puzzle-id), '/', $prog-filename;
 
-  if ?$prog-filename and $prog-path.IO.r {
-    my $collection = $!categories-config<palapeli>{$pref}<collection>;
-    $prog-path.IO.copy("$collection/$prog-filename");
+  # Needed to save it at least
+  my $coll-filename = [~]
+    $*HOME, '/', $!categories-config<palapeli>{$pref}<collection>,
+            '/', $prog-filename;
+
+  # Copy the file to the collection dir if it exists
+  $prog-path.IO.copy($coll-filename) if $prog-path.IO.r;
+
+  # Now start the puzzle, program will freeze!
+  shell "$exec $puzzle-path";
+
+  # Just starting and stopping does not create a progress file, so test
+  # for its existence befor cop[ying it back to local place.
+  if $coll-filename.IO.r {
+    $coll-filename.IO.copy($prog-path);
+
+    # And set the progress too
+    my Str $progress = PuzzleTable::Config::Puzzle.new.calculate-progress(
+      $prog-path, $puzzle<PieceCount>
+    );
+
+    # Update the puzzle for its progress
+    $!current-category.update-puzzle( $puzzle-id, %( :Progress($progress) ));
   }
 
-  shell "$exec $puzzle-path";
 
 # ! restore
 }

@@ -98,7 +98,14 @@ with $categories {
         $puzzles[1]<PieceCount> <=
         $puzzles[2]<PieceCount>, '.get-puzzles(); Check order';
 
-  note $puzzles.gist;
+#  note $puzzles.gist;
+
+  .set-palapeli-preference('Flatpak');
+  .save-categories-config;
+  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+  is $config<palapeli><preference>, 'Standard', '.set-palapeli-preference()';
+
+  .run-palapeli($puzzles[2]);
 }
 
 done-testing;
