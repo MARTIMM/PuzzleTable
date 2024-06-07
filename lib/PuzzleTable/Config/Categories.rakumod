@@ -278,30 +278,40 @@ method run-palapeli ( Hash $puzzle ) {
   $puzzle<ProgressFile> = [~] '__FSC_', $puzzle<Filename>, '_0_.save'
     unless ?$puzzle<ProgressFile>;
 
-  # Get path to the local progress file
-  my Str $prog-filename = $puzzle<ProgressFile>;
-  my Str $prog-path = [~]
-    $!current-category.get-puzzle-destination($puzzle-id), '/', $prog-filename;
+  # Get path to the local progress file (backup)
+  my Str $prog-backup-filename = $puzzle<ProgressFile>;
+  my Str $prog-backup-path = [~]
+    $!current-category.get-puzzle-destination($puzzle-id),
+    '/', $prog-backup-filename;
 
-  # Needed to save it at least
+  # Get path to progress file in the palapeli collection directory
   my $coll-filename = [~]
     $*HOME, '/', $!categories-config<palapeli>{$pref}<collection>,
-            '/', $prog-filename;
+            '/', $prog-backup-filename;
 
-  # Copy the file to the collection dir if it exists
-  $prog-path.IO.copy($coll-filename) if $prog-path.IO.r;
+  # Copy the file to the collection dir if local backup exists and if
+  # collection file exists, compair modification dates.
+  if $prog-backup-path.IO.r and $coll-filename.IO.r and
+    $prog-backup-path.IO.modified > $coll-filename.IO.modified
+  {
+    $prog-backup-path.IO.copy($coll-filename);
+  }
+
+  elsif $prog-backup-path.IO.r {
+    $prog-backup-path.IO.copy($coll-filename);
+  }
 
   # Now start the puzzle, program will freeze!
   shell "$exec $puzzle-path";
 
   # Just starting and stopping does not create a progress file, so test
-  # for its existence befor cop[ying it back to local place.
+  # for its existence before copying it back to its local place.
   if $coll-filename.IO.r {
-    $coll-filename.IO.copy($prog-path);
+    $coll-filename.IO.copy($prog-backup-path);
 
     # And set the progress too
     my Str $progress = PuzzleTable::Config::Puzzle.new.calculate-progress(
-      $prog-path, $puzzle<PieceCount>
+      $prog-backup-path, $puzzle<PieceCount>
     );
 
     # Update the puzzle for its progress
