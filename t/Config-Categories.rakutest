@@ -105,7 +105,7 @@ with $categories {
   $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
   is $config<palapeli><preference>, 'Standard', '.set-palapeli-preference()';
 
-# Works! lives-ok { .run-palapeli($puzzles[2]); }, 'run-palapeli()';
+# Works! lives-ok { .run-palapeli($puzzles[2]); }, '.run-palapeli()';
 }
 
 done-testing;
