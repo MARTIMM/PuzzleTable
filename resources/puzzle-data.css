@@ -4353,8 +4353,11 @@ progressbar.osd {
   -gtk-icon-size: 48px;
 }
 
-
-
+/*
+windowcontrols image.icon {
+  background: url('/home/marcel/.config/io.github.martimm.puzzle-table/images/start-puzzle-64.png');
+}
+*/
 
 
 /*
