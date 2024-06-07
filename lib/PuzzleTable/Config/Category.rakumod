@@ -121,6 +121,14 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
+# To copy a confguration call this method. Only neede for the converter
+method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
+  for $new-pairs.kv -> Str $field-name, $value {
+    $!category-config<members>{$puzzle-id}{$field-name} = $value;
+  }
+}
+
+#-------------------------------------------------------------------------------
 method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
 
   return False unless $!category-config<members>{$puzzle-id}:exists;
