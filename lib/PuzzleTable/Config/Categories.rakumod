@@ -11,8 +11,8 @@ use PuzzleTable::Config::Category;
 unit class PuzzleTable::Config::Categories:auth<github:MARTIMM>;
 
 has Str $!root-dir;
-has Str $!config-path;
-has Hash $!categories-config;
+has Str $.config-path;
+has Hash $.categories-config;
 has PuzzleTable::Config::Category $!current-category;
 
 #-------------------------------------------------------------------------------
@@ -24,18 +24,15 @@ submethod BUILD ( Str:D :$!root-dir ) {
   }
 
   else {
-#    $!categories-config = %();
-#    $!categories-config<categories> = %();
     $!categories-config<categories><Default> = %(:!lockable);
 
     $!categories-config<password> = '';
 
-#    $!categories-config<palapeli> = %();
     given $!categories-config<palapeli><Flatpak> {
       .<collection> = '.var/app/org.kde.palapeli/data/palapeli/collection';
-# Flatpak doec not seem to start with puzzle, too much shielded???
-#      .<exec> = '/usr/bin/flatpak run org.kde.palapeli';
-#      .<exec> = '/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=palapeli --file-forwarding org.kde.palapeli';
+      # Flatpak doec not seem to start with puzzle, too much shielded???
+      #.<exec> = '/usr/bin/flatpak run org.kde.palapeli';
+      #.<exec> = '/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=palapeli --file-forwarding org.kde.palapeli';
       .<env> = %(
         :GDK_BACKEND<x11>,
       )
@@ -76,10 +73,10 @@ method save-categories-config ( ) {
   # Save categories config
   $!config-path.IO.spurt(save-yaml($!categories-config));
 
-  # And, if there is a selected category, also save category data
+  # Also save puzzle data of current category
   $!current-category.save-category-config;
 
-#  note "Done saving categories";
+  #note "Done saving categories";
   note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}.";
 }
 
@@ -107,7 +104,7 @@ method select-category ( Str:D $category-name is copy --> Str ) {
   $category-name .= tc;
 
   if $!categories-config<categories>{$category-name}:exists {
-    # Check if a category was selected. If so, save before assigning a new
+    # Save category before assigning a new
     $!current-category.save-category-config;
 
     # Set to new category
