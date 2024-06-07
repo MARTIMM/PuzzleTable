@@ -1,6 +1,6 @@
 
 * 2024-05-24 0.5.0
-  * Saving the config Hash costs about 7 to 10 secs. It is getting too slow, even that the config is only save once every 5 changes or at shutdown. So, the config will be tored apart and saved per category on disk and only loaded and saved when some category is selected.
+  * Saving the config Hash costs about 7 to 10 secs. It is getting too slow, even that the config is only saved once every 5 changes or at shutdown. So, the config will be tored apart and saved per category on disk and only loaded and saved when some category is selected or switched.
   * The **PuzzleTable::Config** module is also getting too large with too many functions. So, this will be split up into smaller parts.
 
 * 2024-05-20 0.4.7
