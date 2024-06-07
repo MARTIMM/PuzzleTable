@@ -28,7 +28,7 @@ unit class PuzzleTable::Config:auth<github:MARTIMM>;
 my Gnome::Gtk4::CssProvider $css-provider;
 
 has PuzzleTable::ExtractDataFromPuzzle $!extracter;
-has Version $.version = v0.4.3;
+has Version $.version = v0.5.0;
 has Array $.options = [<
   category=s pala-collection=s puzzles lock h help version filter=s
 >];
