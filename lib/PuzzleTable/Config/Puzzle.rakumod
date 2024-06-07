@@ -129,6 +129,16 @@ method restore-puzzle (
   if ? $config-file {
     $config = load-yaml($config-file.IO.slurp);
     $config-file.IO.unlink;
+
+    # Remove unneeded data, older version might have it saved in the archive
+    "$archive-trashbin/puzzle/image.jpg".IO.unlink
+      if "$archive-trashbin/puzzle/image.jpg".IO.e;
+    "$archive-trashbin/puzzle/pala.desktop".IO.unlink
+      if "$archive-trashbin/puzzle/pala.desktop".IO.e;
+
+    # Rename the archive path into the puzzle path, effectively adding the
+    # puzzle data into a category.
+    "$archive-trashbin/puzzle".IO.rename($puzzle-path);
   }
 
   else {
@@ -149,10 +159,6 @@ method restore-puzzle (
     cleanup-extracted-data("$archive-trashbin/puzzle");
     return Hash;
   }
-
-  # Rename the archive path into the puzzle path, effectively adding the
-  # puzzle data into a category.
-  "$archive-trashbin/puzzle".IO.rename($puzzle-path);
 
   $config
 }
@@ -181,6 +187,10 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
 
   # Get some info from the desktop file
   my Hash $info = $extracter.palapeli-info($destination);
+
+  # Remove unneeded data
+  "$destination/image.jpg".IO.unlink;
+  "$destination/pala.desktop".IO.unlink;
 
   # Add :Filename and :SourceFile keys
   %(
