@@ -1,0 +1,37 @@
+#!/usr/bin/env rakudo
+
+use v6.d;
+
+use YAMLish;
+
+use PuzzleTable::Types;
+use PuzzleTable::Config::Categories;
+use PuzzleTable::Config::Category;
+
+#-------------------------------------------------------------------------------
+# Load puzzle data in global Hash
+my Hash $old-puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp);
+my Hash $new-puzzle-categories-data = %();
+my PuzzleTable::Config::Categories $categories;
+my Str $root-dir = PUZZLE_TABLE_DATA;
+
+$categories .= new(:$root-dir);
+for $old-puzzle-data<categories>.keys -> $category-name {
+  my Hash $old-curr-cat := $old-puzzle-data<categories>{$category-name};
+  $categories.add-category($category-name);
+  $categories.set-category-lockable( $category-name, $old-curr-cat<lockable>);
+
+  my PuzzleTable::Config::Category $category .= new(
+    :$category-name, :$root-dir
+  );
+
+  for $old-curr-cat<members>.keys -> $member {
+    $category.set-puzzle( $member, $old-curr-cat<members>{$member});
+  }
+
+  $category.save-category-config;
+#last;
+}
+
+#$categories.save-categories-config(:categories-only);
+$categories.config-path.IO.spurt(save-yaml($categories.categories-config));
