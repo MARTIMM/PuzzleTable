@@ -30,13 +30,8 @@ submethod BUILD ( Str:D :$!root-dir ) {
 
     given $!categories-config<palapeli><Flatpak> {
       .<collection> = '.var/app/org.kde.palapeli/data/palapeli/collection';
-      # Flatpak doec not seem to start with puzzle, too much shielded???
-      #.<exec> = '/usr/bin/flatpak run org.kde.palapeli';
-      #.<exec> = '/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=palapeli --file-forwarding org.kde.palapeli';
-      .<env> = %(
-        :GDK_BACKEND<x11>,
-      )
-   }
+      .<exec> = "/usr/bin/flatpak run --filesystem={$!root-dir.IO.absolute}:ro --branch=stable --arch=x86_64 --command=palapeli --file-forwarding org.kde.palapeli";
+    }
 
     given $!categories-config<palapeli><Snap> {
       .<collection> = 'snap/palapeli/current/.local/share/palapeli/collection';
@@ -63,6 +58,10 @@ submethod BUILD ( Str:D :$!root-dir ) {
 
   # Always select the default category
   $!current-category .= new( :category-name('Default'), :$!root-dir);
+
+  # Default width and height of displayed puzzle image
+  $!categories-config<puzzle-image-width> = 300;
+  $!categories-config<puzzle-image-height> = 300;
 }
 
 #-------------------------------------------------------------------------------
@@ -93,9 +92,20 @@ method add-category (
 
   else {
     $!categories-config<categories>{$category-name}<lockable> = $lockable;
+    mkdir $!root-dir ~ $category-name, 0o700;
   }
 
   $message
+}
+
+#-------------------------------------------------------------------------------
+method move-category ( $cat-from, $cat-to ) {
+  $!categories-config<categories>{$cat-to} =
+    $!categories-config<categories>{$cat-from}:delete;
+
+  my Str $dir-from = $!root-dir ~ $cat-from;
+  my Str $dir-to = $!root-dir ~ $cat-to;
+  $dir-from.IO.rename( $dir-to, :createonly);
 }
 
 #-------------------------------------------------------------------------------
@@ -241,8 +251,8 @@ method set-palapeli-preference ( Str $preference ) {
   note "Flatpak does not seem to b able to start - set to 'Standard'"
        if $preference eq 'Flatpak';
 
-#  if $preference ~~ any(<Snap Flatpak Standard>) {
-  if $preference ~~ any(<Snap Standard>) {
+  if $preference ~~ any(<Snap Flatpak Standard>) {
+#  if $preference ~~ any(<Snap Standard>) {
     $!categories-config<palapeli><preference> = $preference;
   }
 
@@ -252,8 +262,31 @@ method set-palapeli-preference ( Str $preference ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-palapeli-preference ( --> Str ) {
+  $!categories-config<palapeli><preference>
+}
+
+#-------------------------------------------------------------------------------
+method set-palapeli-image-size ( Int() $width, Int() $height ) {
+  $!categories-config<puzzle-image-width> = $width;
+  $!categories-config<puzzle-image-height> = $height;
+}
+
+#-------------------------------------------------------------------------------
+method get-palapeli-image-size ( --> List ) {
+  $!categories-config<puzzle-image-width>,
+  $!categories-config<puzzle-image-height>
+}
+
+#-------------------------------------------------------------------------------
+method get-palapeli-collection ( --> Str ) {
+  my $preference = $!categories-config<palapeli><preference>;
+  $!categories-config<palapeli>{$preference}<collection>
+}
+
+#-------------------------------------------------------------------------------
 # This puzzle hash must have the extra fields added by get-puzzles
-method run-palapeli ( Hash $puzzle ) {
+method run-palapeli ( Hash $puzzle --> Str ) {
 
   # Get the preference of one of the palapeli installations
   my Str $pref = $!categories-config<palapeli><preference>;
@@ -262,6 +295,7 @@ method run-palapeli ( Hash $puzzle ) {
   for $!categories-config<palapeli>{$pref}<env>.kv -> $env-key, $env-val {
     %*ENV{$env-key} = $env-val;
   }
+
 
   # Get executable program
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
@@ -299,15 +333,17 @@ method run-palapeli ( Hash $puzzle ) {
   }
 
   # Now start the puzzle, program will freeze!
-  shell "$exec $puzzle-path";
+note "$exec $puzzle-path";
+  shell "$exec \@\@u $puzzle-path \@\@";
 
   # Just starting and stopping does not create a progress file, so test
   # for its existence before copying it back to its local place.
+  my Str $progress = '';
   if $coll-filename.IO.r {
     $coll-filename.IO.copy($prog-backup-path);
 
     # And set the progress too
-    my Str $progress = PuzzleTable::Config::Puzzle.new.calculate-progress(
+    $progress = PuzzleTable::Config::Puzzle.new.calculate-progress(
       $prog-backup-path, $puzzle<PieceCount>
     );
 
@@ -315,68 +351,8 @@ method run-palapeli ( Hash $puzzle ) {
     $!current-category.update-puzzle( $puzzle-id, %( :Progress($progress) ));
   }
 
-
-# ! restore
+  $progress
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-# Called from call-back in Table after playing a puzzle.
-# The object holds most of the fields of some puzzle added with
-# the following fields: Puzzle-index, Category and Image (see get-puzzles()
-# below) while Name and SourceFile are removed (see add-puzzle-to-table()
-# in Table).
-method restore-progress-file ( Hash $puzzle ) {
-
-  my $c = $puzzle<Category>;
-  my $i = $puzzle<Puzzle-index>;
-
-  my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
-  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
-  my Str $collection-path =
-     [~] $!config.get-pala-collection, '/', $collection-filename;
-
-  my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
-          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
-
-  if $backup-path.IO.e and $collection-path.IO.e and
-      $collection-path.IO.modified < $backup-path.IO.modified {
-    $backup-path.IO.copy($collection-path);
-  }
-
-  elsif $backup-path.IO.e {
-    $backup-path.IO.copy($collection-path);
-  }
-}
-
-#-------------------------------------------------------------------------------
-# The object holds most of the fields of a puzzle added with
-# the following fields: Puzzle-index, Category and Image (see get-puzzles()
-# below) while Name and SourceFile are removed (see add-puzzle-to-table()
-# in Table).
-method save-progress-file ( Hash $puzzle  ) {
-
-  my $c = $puzzle<Category>;
-  my $i = $puzzle<Puzzle-index>;
-
-  my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
-  my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
-  my Str $collection-path =
-     [~] $!config.get-pala-collection, '/', $collection-filename;
-
-  my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
-          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
-
-  if $backup-path.IO.e and $collection-path.IO.e and
-      $collection-path.IO.modified > $backup-path.IO.modified {
-    $collection-path.IO.copy($backup-path)
-  }
-
-  elsif $collection-path.IO.e {
-    $collection-path.IO.copy($backup-path)
-  }
-}
-}}
 
 #-------------------------------------------------------------------------------
 method update-puzzle ( Hash $puzzle --> Hash ) {

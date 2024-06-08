@@ -67,7 +67,7 @@ with $categories {
   .add-puzzle(EXPDATA ~ 'e1.puzzle');
   .save-categories-config;
 
-  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+#  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
   $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 3, '.add-puzzle()';
 #note $config.gist();
@@ -103,9 +103,15 @@ with $categories {
   .set-palapeli-preference('Flatpak');
   .save-categories-config;
   $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-  is $config<palapeli><preference>, 'Standard', '.set-palapeli-preference()';
+  is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
 
-# Works! lives-ok { .run-palapeli($puzzles[2]); }, '.run-palapeli()';
+  # Works!
+  #lives-ok { .run-palapeli($puzzles[2]); }, '.run-palapeli()';
+
+  .move-category( 'Cat-1', 'Cat-5');
+  .save-categories-config;
+  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+  ok $config<categories><Cat-5>:exists, '.move-category()';
 }
 
 done-testing;
