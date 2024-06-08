@@ -2,6 +2,19 @@
 
 use v6.d;
 
+use PuzzleTable::Gui::MainWindow;
+
+#-------------------------------------------------------------------------------
+# Show puzzle table. return only when finished
+my PuzzleTable::Gui::MainWindow $puzzles .= new;
+$puzzles.go-ahead;
+
+
+
+
+
+
+=finish
 use YAMLish;
 
 use PuzzleTable::Types;

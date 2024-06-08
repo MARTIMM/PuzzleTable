@@ -1,6 +1,64 @@
 use v6.d;
-#use NativeCall;
 
+use PuzzleTable::Types;
+
+#-------------------------------------------------------------------------------
+unit class PuzzleTable::Config:auth<github:MARTIMM>;
+
+has Gnome::Gtk4::CssProvider $!ss-provider;
+
+has Version $.version = v0.5.0;
+has Array $.options = [<
+  category=s pala-collection=s puzzles lock h help version filter=s
+>];
+
+has PuzzleTable::Config::Categories $!categories handles( <
+      get-password check-password set-password
+      is-category-lockable set-category-lockable is-locked lock unlock
+      set-palapeli-preference get-palapeli-preference get-palapeli-image-size
+      get-palapeli-collection add-category
+    >);
+
+#-------------------------------------------------------------------------------
+submethod BUILD ( ) {
+
+  # Copy images to the data directory
+  my Str $png-file;
+  for <start-puzzle-64.png edit-puzzle-64.png add-cat.png ren-cat.png
+       rem-cat.png move-64.png remove-64.png archive-64.png config-64.png
+      > -> $i {
+    $png-file = [~] DATA_DIR, 'images/', $i;
+    %?RESOURCES{$i}.copy($png-file) unless $png-file.IO.e;
+  }
+
+  # Copy style sheet to data directory and load into program
+  my Str $css-file = DATA_DIR ~ 'puzzle-data.css';
+  %?RESOURCES<puzzle-data.css>.copy($css-file);
+  $!css-provider .= new-cssprovider;
+  $!css-provider.load-from-path($css-file);
+
+  # Load the categories configuraton from the puzzle data directory
+  $!categories .= new(:root-dir(PUZZLE_TABLE_DATA));
+}
+
+#-------------------------------------------------------------------------------
+method set-css ( N-Object $context, Str :$css-class = '' ) {
+  return unless ?$css-class;
+
+  my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
+  $style-context.add-provider(
+    $css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
+  );
+  $style-context.add-class($css-class);
+}
+
+
+
+
+
+
+=finish
+#use NativeCall;
 use PuzzleTable::Types;
 use PuzzleTable::ExtractDataFromPuzzle;
 
@@ -74,15 +132,6 @@ submethod BUILD ( ) {
     }
   );
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-# Set a tap for users of config info
-method set-tap ( Callable $tap-routine ) {
-  my $supply = $!supplier.Supply;
-  $supply.tap($tap-routine);
-}
-}}
 
 #-------------------------------------------------------------------------------
 method set-css ( N-Object $context, Str :$css-class = '' ) {
@@ -174,34 +223,6 @@ method unlock ( Str $password --> Bool ) {
   $ok
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-# Lock to prevent double start of palapeli with same puzzle
-method is-puzzle-locked ( Str $category, Str $puzzle-id --> Bool ) {
-  $!semaphore.reader( 'puzzle-data', {
-    ?$*puzzle-data<categories>{$category}<members>{$puzzle-id}<play-lock>.Bool;
-  });
-}
-
-#-------------------------------------------------------------------------------
-# Set the puzzle table locking state
-method lock-puzzle ( Str $category, Str $puzzle-id ) {
-  $!semaphore.writer( 'puzzle-data', {
-    $*puzzle-data<settings><locked> = True;
-  });
-  self.save-puzzle-admin;
-}
-
-#-------------------------------------------------------------------------------
-# Set the puzzle table locking state
-method unlock-puzzle ( Str $category, Str $puzzle-id ) {
-  $!semaphore.writer( 'puzzle-data', {
-    $*puzzle-data<settings><locked> = True;
-  });
-  self.save-puzzle-admin;
-}
-}}
-
 #-------------------------------------------------------------------------------
 method get-palapeli-preference ( --> Str ) {
 #  $!semaphore.reader( 'puzzle-data', {
@@ -218,7 +239,7 @@ method get-palapeli-image-size ( --> List ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-pala-collection ( --> Str ) {
+method get-palapeli-collection ( --> Str ) {
   my Str $preference = self.get-palapeli-preference;
   my Str $collection = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<palapeli><collections>{$preference};

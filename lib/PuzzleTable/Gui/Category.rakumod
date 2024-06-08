@@ -95,15 +95,24 @@ method do-category-add (
     );
   }
 
-  elsif $!config.check-category($cat-text.tc) {
-    $dialog.set-status('Category already defined');
-  }
+#  elsif $!config.check-category($cat-text.tc) {
+#    $dialog.set-status('Category already defined');
+#  }
 
   else {
-    # Add category to list
-    $!main.config.add-category( $cat-text.tc, $check-button.get-active);
-    self.fill-sidebar;
-    $sts-ok = True;
+    # Add category to list. Message gets defined if something is wrong.
+    my Str $msg = $!main.config.add-category(
+      $cat-text, :lockable($check-button.get-active)
+    );
+
+    if ?$msg {
+      $dialog.set-status($msg);
+    }
+
+    else {
+      self.fill-sidebar;
+      $sts-ok = True;
+    }
   }
 
   $dialog.destroy-dialog if $sts-ok;
@@ -213,9 +222,9 @@ method do-category-rename (
     $dialog.set-status('Category \'default\' cannot be renamed');
   }
 
-  elsif $!config.check-category($cat-text.tc) {
-    $dialog.set-status('Category already defined');
-  }
+#  elsif $!config.check-category($cat-text.tc) {
+#    $dialog.set-status('Category already defined');
+#  }
 
   elsif $cat-text.tc eq $combobox.get-active-text {
     $dialog.set-status('Category text same as selected');

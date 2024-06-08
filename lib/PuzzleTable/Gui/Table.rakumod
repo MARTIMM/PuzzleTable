@@ -320,7 +320,8 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
     $run-palapeli.register-signal(
       self, 'run-palapeli', 'clicked', :$puzzle, :$label-progress,
-      :$progress-bar, :$label-comment
+      :$progress-bar
+      #, :$label-comment
     );
 
     my Gnome::Gtk4::Button() $edit-palapeli = $run-palapeli.get-next-sibling;
@@ -373,6 +374,19 @@ method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
   $grid.clear-object;
 }
 
+#-------------------------------------------------------------------------------
+method run-palapeli (
+  Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
+  Gnome::Gtk4::ProgressBar :$progress-bar
+) {
+  $!config.run-palapeli($puzzle);
+
+  my Str $progress = $!config.calculate-progress($puzzle);
+  $label-progress.set-text("Progress: $progress \%");
+  $progress-bar.set-fraction($progress.Num / 100e0);
+}
+
+#`{{
 #-------------------------------------------------------------------------------
 method run-palapeli (
   Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
@@ -429,6 +443,7 @@ method run-palapeli (
 #    });
 #  }
 }
+}}
 
 #-------------------------------------------------------------------------------
 # Called from call-back in Table after playing a puzzle.
@@ -445,7 +460,7 @@ method restore-progress-file ( Hash $puzzle ) {
   my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
   my Str $collection-path =
-     [~] $!config.get-pala-collection, '/', $collection-filename;
+     [~] $!config.get-palapeli-collection, '/', $collection-filename;
 
   my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
           '/', $puzzle<Puzzle-index>, '/', $collection-filename;
@@ -475,7 +490,7 @@ method save-progress-file ( Hash $puzzle  ) {
   my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
   my Str $collection-path =
-     [~] $!config.get-pala-collection, '/', $collection-filename;
+     [~] $!config.get-palapeli-collection, '/', $collection-filename;
 
   my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
           '/', $puzzle<Puzzle-index>, '/', $collection-filename;

@@ -136,9 +136,9 @@ method remote-options (
   );
   my @args = $o.list;
 
-  my Bool $lock = False;
+  my Bool $lockable = False;
   if $o<lock>:exists {
-    $lock = $o<lock>;
+    $lockable = $o<lock>;
   }
 
   my Str $filter = '';
@@ -153,10 +153,10 @@ method remote-options (
     $opt-category = $o<category>.tc;
     # Create category if does not exist. Keep lockable property of the category
     # True when it is set to True
-    $!config.add-category( $opt-category, $lock);
+    $!config.add-category( $opt-category, :$lockable);
   }
 
-  #TODO select category if registered
+#TODO select category if registered
   $!category.set-category($opt-category);
 
   if $o<puzzles>:exists {
