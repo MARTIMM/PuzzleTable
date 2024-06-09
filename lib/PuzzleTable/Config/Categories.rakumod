@@ -154,20 +154,6 @@ method add-puzzle ( Str:D $puzzle-path ) {
 
   if $puzzle-path.IO.r {
     my Str $puzzle-id = $!current-category.add-puzzle($puzzle-path);
-#`{{
-    my Hash $puzzle-config = $!current-category.get-puzzle($puzzle-id);
-    if ?$puzzle-config<ProgressFile> {
-      #!!!!!!!!!!!!!!!!!!!!
-    }
-
-    else {
-      my Str $p = $!categories-config<palapeli><preference>;
-      my Str $c = $!categories-config<palapeli>{$p}<collection>;
-      my Str $filename = $puzzle-config<Filename>;
-      my Str $progress-filename = [~] '__FSC_', $filename, '_0_.save';
-      #!!!!!!!!!!!!!!!!!!!!
-    }
-}}
   }
 
   else {
