@@ -5,7 +5,7 @@ use NativeCall;
 use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::PuzzleHandling;
-use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Settings;
 use PuzzleTable::Gui::IconButton;
 use PuzzleTable::Gui::Help;
@@ -30,7 +30,7 @@ has $!main is required;
 
 has Array $!menus;
 has PuzzleTable::Gui::PuzzleHandling $!phandling;
-has PuzzleTable::Gui::Category $!cat;
+has PuzzleTable::Gui::Sidebar $!cat;
 has PuzzleTable::Gui::Settings $!set;
 has PuzzleTable::Gui::Help $!help;
 

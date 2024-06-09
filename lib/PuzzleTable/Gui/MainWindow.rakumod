@@ -4,7 +4,7 @@ use NativeCall;
 use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::MenuBar;
-use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
 
@@ -39,7 +39,7 @@ has Bool $!table-is-displayed = False;
 
 has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
-has PuzzleTable::Gui::Category $.category;
+has PuzzleTable::Gui::Sidebar $.category;
 has PuzzleTable::Gui::Statusbar $.statusbar;
 
 #-------------------------------------------------------------------------------

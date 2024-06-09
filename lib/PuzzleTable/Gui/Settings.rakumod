@@ -3,7 +3,7 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Table;
-use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::PasswordEntry:api<2>;
@@ -29,7 +29,7 @@ has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
 #has PuzzleTable::Gui::Statusbar $!statusbar;
-has PuzzleTable::Gui::Category $!category;
+has PuzzleTable::Gui::Sidebar $!category;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {

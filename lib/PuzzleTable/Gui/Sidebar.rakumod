@@ -27,7 +27,7 @@ use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
+unit class PuzzleTable::Gui::Sidebar:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
