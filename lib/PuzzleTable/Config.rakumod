@@ -9,14 +9,15 @@ has Gnome::Gtk4::CssProvider $!ss-provider;
 
 has Version $.version = v0.5.0;
 has Array $.options = [<
-  category=s pala-collection=s puzzles lock h help version filter=s
+  category=s pala-collection=s puzzles lock h help version
 >];
 
 has PuzzleTable::Config::Categories $!categories handles( <
       get-password check-password set-password
       is-category-lockable set-category-lockable is-locked lock unlock
       set-palapeli-preference get-palapeli-preference get-palapeli-image-size
-      get-palapeli-collection add-category
+      get-palapeli-collection add-category move-category
+      add-puzzle
     >);
 
 #-------------------------------------------------------------------------------
@@ -346,13 +347,6 @@ method get-categories ( Str :$filter --> Seq ) {
   @cat.sort
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method rename-category ( Str:D $category-from, Str:D $category-to ) {
-  say 'rename category';
-}
-}}
-
 #-------------------------------------------------------------------------------
 method remove-category ( Str:D $category ) {
   say 'remove category';
@@ -461,7 +455,7 @@ method add-puzzle (
     }
   }
 
-  # When filtered out, some greated data must be removed again
+  # When filtered out, some created data must be removed again
   else {
     self.remove-dir($destination);
     $puzzle-id = '';

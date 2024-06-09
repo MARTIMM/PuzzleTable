@@ -141,11 +141,6 @@ method remote-options (
     $lockable = $o<lock>;
   }
 
-  my Str $filter = '';
-  if $o<filter>:exists and ?$o<filter> {
-    $filter = $o<filter>;
-  }
-
   # Process category option. It is set to 'Default' otherwise.
   my Str $opt-category = 'Default';
 
@@ -163,7 +158,7 @@ method remote-options (
     for @args[1..*-1] -> $puzzle-path {
       next unless $puzzle-path ~~ m/ \. puzzle $/;
       my Str $puzzle-id =
-        $!config.add-puzzle( $opt-category, $puzzle-path, :$filter);
+        $!config.add-puzzle( $opt-category, $puzzle-path);
 
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id)
         if ?$puzzle-id and $!table-is-displayed;
@@ -171,7 +166,7 @@ method remote-options (
   }
 
   if $o<pala-collection>:exists {
-    $!table.get-pala-puzzles( $opt-category, $o<pala-collection>, :$filter);
+    $!table.get-pala-puzzles( $opt-category, $o<pala-collection>);
   }
 
   # Activate unless table is already displayed
@@ -265,28 +260,31 @@ method usage ( ) {
   Usage:
     puzzle-table --version
     puzzle-table --help
-    puzzle-table [--filter='regex'] --puzzles <puzzle-path> …
-    puzzle-table [--filter='regex'] --pala-collection <collection-path>
+    puzzle-table --puzzles <puzzle-path>
+    puzzle-table --pala-collection <collection-path>
 
   Options:
-    --category <name>. By default `Default`. Select the category to work
+    --category <name>
+      By default `Default`. Select the category to work
       with. The category is created if not available. When `--import` or
       `--puzzle` is used, the imported puzzles are placed in that category.
 
-    --filter <regex>. Make a selection on the 'source' field of the puzzle.
+    -h --help
+      Show this information. This is also shown, with an error, when there are
+      faulty arguments or options.
 
-    -h --help. Show this information. This is also shown, with an error,
-      when there are faulty arguments or options.
+    --pala-collection <path to palapeli collection>
+      Get puzzles from a Palapeli collection into a category. The puzzles in
+      Palapeli collection are not removed because Palapelli has its own
+      administration. To remove from Palapeli, one must use the delete option
+      in that program.
 
-    --pala-collection <path to palapeli collection>. Get puzzles from a
-      Palapeli collection into a category. The puzzles in Palapeli
-      collection are not removed because Palapelli has its own administration.
-      To remove from Palapeli, one must use the delete option in that program.
+    --puzzles.
+      Import one or more puzzles. The paths to the puzzles are given as the
+      arguments.
 
-    --puzzles. Import one or more puzzles. The paths to the puzzles are
-      given as the arguments.
-
-    --version. Show current version of distribution.
+    --version
+      Show current version of distribution.
 
   EOUSAGE
 }
