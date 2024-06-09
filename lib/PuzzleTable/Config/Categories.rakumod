@@ -103,6 +103,8 @@ method move-category ( $cat-from, $cat-to ) {
   $!categories-config<categories>{$cat-to} =
     $!categories-config<categories>{$cat-from}:delete;
 
+  $!categories-config<categories><name> = $cat-to;
+
   my Str $dir-from = $!root-dir ~ $cat-from;
   my Str $dir-to = $!root-dir ~ $cat-to;
   $dir-from.IO.rename( $dir-to, :createonly);
@@ -148,8 +150,20 @@ method import-collection ( Str:D $collection-path --> Str ) {
   $message
 }
 
+#`{{
 #-------------------------------------------------------------------------------
-method add-puzzle ( Str:D $puzzle-path ) {
+multi method add-puzzle ( Str $category, Str:D $puzzle-path --> Str ) {
+  my PuzzleTable::Config::Category $c .=
+     new( :category-name($category // 'Default'), :$!root-dir);
+
+  self.select-category($category // 'Default');
+  $!current-category.add-puzzle($puzzle-path) if $puzzle-path.IO.r;
+}
+}}
+
+#-------------------------------------------------------------------------------
+#multi method add-puzzle ( Str:D $puzzle-path --> Str ) {
+method add-puzzle ( Str:D $puzzle-path --> Str ) {
   my Str $message = '';
 
   if $puzzle-path.IO.r {
@@ -161,6 +175,26 @@ method add-puzzle ( Str:D $puzzle-path ) {
   }
 
   $message
+}
+
+#-------------------------------------------------------------------------------
+method move-puzzle ( Str $from-cat, Str $to-cat, Str:D $puzzle-id ) {
+  my PuzzleTable::Config::Category $c-from .=
+     new( :category-name($from-cat), :$!root-dir);
+
+  my PuzzleTable::Config::Category $c-to .=
+     new( :category-name($to-cat), :$!root-dir);
+
+  my Hash $puzzle-config = $c-from.get-puzzle( $puzzle-id, :delete);
+  my Str $new-puzzle-id = $c-to.new-puzzle-id;
+  $c-to.set-puzzle( $new-puzzle-id, $puzzle-config);
+
+  my Str $puzzle-source = $c-from.get-puzzle-destination($puzzle-id);
+  my Str $puzzle-destination = $c-to.get-puzzle-destination($new-puzzle-id);
+  $puzzle-source.IO.rename($puzzle-destination);
+
+  $c-from.save-category-config;
+  $c-to.save-category-config;
 }
 
 #-------------------------------------------------------------------------------

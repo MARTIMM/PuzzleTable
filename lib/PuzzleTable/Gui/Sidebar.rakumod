@@ -313,6 +313,7 @@ method fill-sidebar ( Bool :$init = False ) {
 
       .attach( $cat-button, 0, $row-count, 1, 1);
 
+#`{{
       # Get information of each category
       my Array $cat-status = $!config.get-category-status($category);
       $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
@@ -345,6 +346,7 @@ method fill-sidebar ( Bool :$init = False ) {
       Totals
       [ $totals.join(', ') ]
       EOTT
+}}
   }
 
   self.set-child($!cat-grid);
@@ -357,9 +359,11 @@ method show-tooltip (
   Str :$category
   --> gboolean
 ) {
+#`{{
   my Gnome::Gtk4::Picture $p .= new-picture;
   $p.set-filename($!config.get-puzzle-image($category));
   $tooltip.set-custom($p);
+}}
   True
 }
 
@@ -375,6 +379,8 @@ method select-category ( Str :$category ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
+  my Seq $puzzles = $!config.get-puzzles($category);
+#`{{
   my Seq $puzzles = $!config.get-puzzles($category).sort(
     -> $item1, $item2 { 
       if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
@@ -382,6 +388,7 @@ method select-category ( Str :$category ) {
       else { Order::More }
     }
   );
+}}
 
   $!main.table.add-puzzles-to-table($puzzles);
 }

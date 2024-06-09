@@ -112,6 +112,13 @@ with $categories {
   .save-categories-config;
   $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
   ok $config<categories><Cat-5>:exists, '.move-category()';
+
+  .move-puzzle( 'Cat-2', 'Cat-5', 'p002');
+  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  ok $config<members><p002>:!exists, '.move-puzzle(): Config check';
+  $config = load-yaml("{CONFDATA}Cat-5/puzzles.yaml".IO.slurp);
+  ok $config<members><p000>:exists, '.move-puzzle(): Config check';
+
 }
 
 done-testing;

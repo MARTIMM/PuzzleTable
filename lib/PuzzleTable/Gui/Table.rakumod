@@ -175,7 +175,8 @@ method add-puzzles-to-table ( Seq $puzzles ) {
 #-------------------------------------------------------------------------------
 # Add a puzzle to the table
 multi method add-puzzle-to-table ( Str $category, Str $puzzle-id ) {
-  my Hash $puzzle = $!config.get-puzzle( $category, $puzzle-id);
+  #my Hash $puzzle = $!config.get-puzzle( $category, $puzzle-id);
+  my Hash $puzzle = $!config.get-puzzle($puzzle-id);
   # Coming from MainWindow.remote-options() it needs some more fields
   if ?$puzzle {
     $puzzle<Puzzle-index> = $puzzle-id;
@@ -445,6 +446,7 @@ method run-palapeli (
 }
 }}
 
+#`{{
 #-------------------------------------------------------------------------------
 # Called from call-back in Table after playing a puzzle.
 # The object holds most of the fields of
@@ -504,6 +506,7 @@ method save-progress-file ( Hash $puzzle  ) {
     $collection-path.IO.copy($backup-path)
   }
 }
+}}
 
 #-------------------------------------------------------------------------------
 method show-tooltip (
@@ -544,7 +547,7 @@ method edit-palapeli (
     $source.set-text($puzzle<Source>);
 
     .add-button(
-      self, 'do-store-puzzle-info', 'Change Text',
+      self, 'do-update-puzzle', 'Change Text',
       :$comment, :$source, :$dialog, :$puzzle,
       :$label-comment, :$label-source
     );
@@ -555,13 +558,17 @@ method edit-palapeli (
 }
 
 #-------------------------------------------------------------------------------
-method do-store-puzzle-info (
+method do-update-puzzle (
   PuzzleTable::Gui::Dialog :$dialog, Hash :$puzzle,
   Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source,
   Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
 ) {
-  $!main.config.store-puzzle-info(
-    $puzzle, $comment.get-text, $source.get-text
+  $!main.config.update-puzzle(
+    %(
+      :Puzzle-index($puzzle),
+      :Comment($comment.get-text),
+      :Source($source.get-text),
+    )
   );
   $label-comment.set-text($comment.get-text);
   $label-source.set-text('Source: ' ~ $source.get-text);

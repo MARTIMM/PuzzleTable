@@ -1,5 +1,6 @@
 use v6.d;
 
+use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
 
@@ -159,13 +160,15 @@ method do-remove-puzzles (
 
   if $check-button.get-active.Bool {
     my Str $current-cat = $!main.category.get-current-category;
+    $!config.select-category($current-cat);
 
     # Get the selected puzzles from the bitset and move them
     my Int $n = $bitset.get-size;
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
       $!config.remove-puzzle(
-        $current-cat, $!main.table.puzzle-objects.get-string($item-pos)
+#        $current-cat, $!main.table.puzzle-objects.get-string($item-pos)
+        $!main.table.puzzle-objects.get-string($item-pos), PUZZLE_TRASH
       );
     }
 

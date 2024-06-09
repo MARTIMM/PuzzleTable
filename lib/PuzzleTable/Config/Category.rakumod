@@ -60,7 +60,7 @@ method import-collection ( Str:D $collection-path ) {
     next if $collection-file.Str !~~ m/ \. puzzle $/;
 
     # Get a new puzzle id
-    my Str $puzzle-id = self!new-puzzle-id;
+    my Str $puzzle-id = self.new-puzzle-id;
 
     # Get directory for the puzzles files
     my Str $puzzle-destination = self.get-puzzle-destination($puzzle-id);
@@ -92,7 +92,7 @@ method import-collection ( Str:D $collection-path ) {
 method add-puzzle ( Str:D $puzzle-path --> Str ) {
 
   # Get a new puzzle id
-  my Str $puzzle-id = self!new-puzzle-id;
+  my Str $puzzle-id = self.new-puzzle-id;
 
   # Get directory for the puzzles files
   my Str $puzzle-destination = self.get-puzzle-destination($puzzle-id);
@@ -117,6 +117,11 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
     }
   }
 
+  # Drop a few fields if they stick
+  $!category-config<members>{$puzzle-id}<Image>:delete;
+  $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
+  $!category-config<members>{$puzzle-id}<Category>:delete;
+
   True
 }
 
@@ -126,6 +131,11 @@ method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
   for $new-pairs.kv -> Str $field-name, $value {
     $!category-config<members>{$puzzle-id}{$field-name} = $value;
   }
+
+  # Drop a few fields if they stick
+  $!category-config<members>{$puzzle-id}<Image>:delete;
+  $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
+  $!category-config<members>{$puzzle-id}<Category>:delete;
 }
 
 #-------------------------------------------------------------------------------
@@ -155,7 +165,7 @@ method restore-puzzle (
   my Bool $restore-ok = False;
 
   # Get a new puzzle id
-  my Str $puzzle-id = self!new-puzzle-id;
+  my Str $puzzle-id = self.new-puzzle-id;
   my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
 
   # Restore puzzle at $puzzle-path
@@ -173,8 +183,14 @@ method restore-puzzle (
 }
 
 #-------------------------------------------------------------------------------
-method get-puzzle ( Str $puzzle-id  --> Hash ) {
-  $!category-config<members>{$puzzle-id};
+method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
+  if $delete {
+    $!category-config<members>{$puzzle-id}:delete
+  }
+
+  else {
+    $!category-config<members>{$puzzle-id}
+  }
 }
 
 #-------------------------------------------------------------------------------
@@ -193,13 +209,13 @@ method get-puzzle-destination ( Str $puzzle-id --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method !new-puzzle-id ( --> Str ) {
+method new-puzzle-id ( --> Str ) {
 
   # Start at number of elements, less change of a collision, then find
   # a free id to store the data
   my Int $count = $!category-config<members>.elems;
   while $!category-config<members>{"p$count.fmt('%03d')"}:exists { $count++; }
 
-  # Create directory for the puzzles files
+  # Return the puzzle id
   'p' ~ $count.fmt('%03d')
 }

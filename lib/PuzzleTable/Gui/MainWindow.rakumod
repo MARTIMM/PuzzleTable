@@ -153,12 +153,13 @@ method remote-options (
 
 #TODO select category if registered
   $!category.set-category($opt-category);
+  $!config.select-category($opt-category);
 
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
       next unless $puzzle-path ~~ m/ \. puzzle $/;
-      my Str $puzzle-id =
-        $!config.add-puzzle( $opt-category, $puzzle-path);
+      #my Str $puzzle-id = $!config.add-puzzle( $opt-category, $puzzle-path);
+      my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
 
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id)
         if ?$puzzle-id and $!table-is-displayed;
