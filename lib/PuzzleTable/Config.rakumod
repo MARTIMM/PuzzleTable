@@ -1,11 +1,21 @@
 use v6.d;
 
 use PuzzleTable::Types;
+use PuzzleTable::Config::Categories;
+
+use Gnome::Gtk4::CssProvider:api<2>;
+use Gnome::Gtk4::StyleContext:api<2>;
+use Gnome::Gtk4::T-styleprovider:api<2>;
+
+use Gnome::N::GlibToRakuTypes:api<2>;
+use Gnome::N::N-Object:api<2>;
+#use Gnome::N::X:api<2>;
+#Gnome::N::debug(:on);
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config:auth<github:MARTIMM>;
 
-has Gnome::Gtk4::CssProvider $!ss-provider;
+has Gnome::Gtk4::CssProvider $!css-provider;
 
 has Version $.version = v0.5.0;
 has Array $.options = [<
@@ -16,9 +26,10 @@ has PuzzleTable::Config::Categories $!categories handles( <
       get-password check-password set-password
       is-category-lockable set-category-lockable is-locked lock unlock
       set-palapeli-preference get-palapeli-preference get-palapeli-image-size
-      get-palapeli-collection add-category move-category select-category
+      get-palapeli-collection run-palapeli
+      get-categories add-category move-category select-category
       add-puzzle move-puzzle update-puzzle get-puzzles get-puzzle
-      remove-puzzle
+      remove-puzzle save-categories-config get-current-category
     >);
 
 #-------------------------------------------------------------------------------
@@ -41,6 +52,13 @@ submethod BUILD ( ) {
 
   # Load the categories configuraton from the puzzle data directory
   $!categories .= new(:root-dir(PUZZLE_TABLE_DATA));
+
+  # Save when an interrupt arrives
+  signal(SIGINT).tap( {
+      self.save-categories-config;
+      exit 0;
+    }
+  );
 }
 
 #-------------------------------------------------------------------------------
@@ -49,7 +67,7 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
 
   my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
   $style-context.add-provider(
-    $css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
+    $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
   );
   $style-context.add-class($css-class);
 }
@@ -530,12 +548,12 @@ if $col-progress-path.IO.r {
 # Called from call-back in Table after playing a puzzle.
 # The object holds most of the fields of
 # $*puzzle-data<categories>{$category}<members><some puzzle index> added with
-# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# the following fields: PuzzleID, Category and Image (see get-puzzles()
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
 method calculate-progress ( Hash $puzzle --> Str ) {
   my $c = $puzzle<Category>;
-  my $i = $puzzle<Puzzle-index>;
+  my $i = $puzzle<PuzzleID>;
   my $p = self.get-palapeli-preference;
 
   my $progress = self.calculate( $puzzle, $c, $i);
@@ -609,7 +627,7 @@ method calculate ( Hash $puzzle, Str $category, Str $index --> Str ) {
 #-------------------------------------------------------------------------------
 method store-puzzle-info( Hash $pt-puzzle, Str $comment, Str $source) {
   my $c = $pt-puzzle<Category>;
-  my $i = $pt-puzzle<Puzzle-index>;
+  my $i = $pt-puzzle<PuzzleID>;
   my Hash $puzzle = #$!semaphore.reader( 'puzzle-data', {
     $*puzzle-data<categories>{$c}<members>{$i};
 #  });
@@ -656,12 +674,12 @@ method get-puzzles ( Str $category --> Array ) {
       $pi = $i.fmt('p%03d');
       if ?$cat{$pi} {
         #TODO old info seems to stick, must remove for the moment
-        $cat{$pi}<Puzzle-index>:delete;
+        $cat{$pi}<PuzzleID>:delete;
         $cat{$pi}<Category>:delete;
         $cat{$pi}<Image>:delete;
 
         $cat-puzzle-data.push: %(
-          :Puzzle-index($pi),
+          :PuzzleID($pi),
           :Category($category),
           :Image(PUZZLE_TABLE_DATA ~ "$category/$pi/image400.jpg"),
           |$cat{$pi}
@@ -731,7 +749,7 @@ method move-puzzle ( Str $from-cat, Str $to-cat, Str $puzzle-id ) {
       # Taken care of elsewhere
       #$puzzle<Category>:delete;
       #$puzzle<Image>:delete;
-      #$puzzle<Puzzle-index>:delete;
+      #$puzzle<PuzzleID>:delete;
 
       $*puzzle-data<categories>{$to-cat}<members>{$p-id} = $puzzle;
 

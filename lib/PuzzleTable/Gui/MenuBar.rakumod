@@ -175,6 +175,5 @@ method bind-action (
 #-------------------------------------------------------------------------------
 method file-quit ( N-Object $parameter ) {
   say 'file quit';
-  await $!main.config.save-puzzle-admin(:force);
   $!application.quit;
 }

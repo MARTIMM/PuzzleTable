@@ -95,7 +95,7 @@ method do-move-puzzles (
     }
 
     # Save admin and update puzzle table
-    $!config.save-puzzle-admin;
+    $!config.save-categories-config;
 
     # Selecting the category again will redraw the puzzle table
     $!main.category.select-category(:category($current-cat));
@@ -173,7 +173,7 @@ method do-remove-puzzles (
     }
 
     # Save admin and update puzzle table
-    $!config.save-puzzle-admin;
+    $!config.save-categories-config;
     $!main.category.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles

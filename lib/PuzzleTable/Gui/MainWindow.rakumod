@@ -191,7 +191,7 @@ say 'open a file';
 
 #-------------------------------------------------------------------------------
 method app-shutdown ( ) {
-  await $!config.save-puzzle-admin(:force);
+  $!config.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ method go-ahead ( ) {
 
 #-------------------------------------------------------------------------------
 method quit-application ( ) {
-  await $!config.save-puzzle-admin(:force);
+  $!config.save-categories-config;
   $!application.quit;
 }
 

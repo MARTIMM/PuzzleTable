@@ -51,6 +51,10 @@ submethod BUILD ( Str:D :$!root-dir ) {
     }
 
     $!categories-config<palapeli><preference> = 'Snap';
+
+    # Default width and height of displayed puzzle image
+    $!categories-config<puzzle-image-width> = 300;
+    $!categories-config<puzzle-image-height> = 300;
   }
 
   # Always lock at start
@@ -58,10 +62,6 @@ submethod BUILD ( Str:D :$!root-dir ) {
 
   # Always select the default category
   $!current-category .= new( :category-name('Default'), :$!root-dir);
-
-  # Default width and height of displayed puzzle image
-  $!categories-config<puzzle-image-width> = 300;
-  $!categories-config<puzzle-image-height> = 300;
 }
 
 #-------------------------------------------------------------------------------
@@ -128,6 +128,33 @@ method select-category ( Str:D $category-name is copy --> Str ) {
   }
 
   $message
+}
+
+#-------------------------------------------------------------------------------
+method get-categories ( Str :$filter --> Seq ) {
+  my @cat = ();
+  if $filter eq 'default' {
+    for $!categories-config<categories>.keys -> $category {
+      next if $category eq 'Default';
+      @cat.push: $category;
+    }
+  }
+
+  elsif $filter eq 'lockable' {
+    my Bool $locked = self.is-locked;
+    for $!categories-config<categories>.keys -> $category {
+      next if $locked and self.is-category-lockable($category);
+      @cat.push: $category;
+    }
+  }
+
+  else {
+    for $!categories-config<categories>.keys -> $category {
+      @cat.push: $category;
+    }
+  }
+
+  @cat.sort
 }
 
 #-------------------------------------------------------------------------------
@@ -268,11 +295,7 @@ method get-puzzles ( --> Seq ) {
 
 #-------------------------------------------------------------------------------
 method set-palapeli-preference ( Str $preference ) {
-  note "Flatpak does not seem to b able to start - set to 'Standard'"
-       if $preference eq 'Flatpak';
-
   if $preference ~~ any(<Snap Flatpak Standard>) {
-#  if $preference ~~ any(<Snap Standard>) {
     $!categories-config<palapeli><preference> = $preference;
   }
 
@@ -322,7 +345,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
   my Str $puzzle-id = $puzzle<PuzzleID>;
   my Str $puzzle-path = [~]
-    $*CWD, '/', $!current-category.get-puzzle-destination($puzzle-id),
+    $!current-category.get-puzzle-destination($puzzle-id),
     '/', $puzzle<Filename>;
 
   # If $puzzle<ProgressFile> is not defined yet, set the name.
@@ -353,8 +376,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
   }
 
   # Now start the puzzle, program will freeze!
-note "$exec $puzzle-path";
-  shell "$exec \@\@u $puzzle-path \@\@";
+  shell "$exec '$puzzle-path'";
 
   # Just starting and stopping does not create a progress file, so test
   # for its existence before copying it back to its local place.
@@ -375,8 +397,8 @@ note "$exec $puzzle-path";
 }
 
 #-------------------------------------------------------------------------------
-method update-puzzle ( Hash $puzzle --> Hash ) {
-  $!current-category{ $puzzle<Puzzle-index>, $puzzle};
+method update-puzzle ( Hash $puzzle ) {
+  $!current-category.update-puzzle( $puzzle<PuzzleID>, $puzzle);
 }
 
 #-------------------------------------------------------------------------------

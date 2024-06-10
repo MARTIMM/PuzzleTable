@@ -150,7 +150,7 @@ method get-pala-puzzles (
 #last;
   }
 
-  $!config.save-puzzle-admin;
+  $!config.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ method add-puzzles-to-table ( Seq $puzzles ) {
   my Array $indices = [];
   for @$puzzles -> $puzzle {
     my Str $category = $puzzle<Category>;
-    my Str $puzzle-id = $puzzle<Puzzle-index>;
+    my Str $puzzle-id = $puzzle<PuzzleID>;
 
 #    $!semaphore.writer( 'puzzles-playing', {
       $!puzzles-playing{$category} = %()
@@ -179,7 +179,7 @@ multi method add-puzzle-to-table ( Str $category, Str $puzzle-id ) {
   my Hash $puzzle = $!config.get-puzzle($puzzle-id);
   # Coming from MainWindow.remote-options() it needs some more fields
   if ?$puzzle {
-    $puzzle<Puzzle-index> = $puzzle-id;
+    $puzzle<PuzzleID> = $puzzle-id;
     $puzzle<Category> = $category;
     $puzzle<Image> = PUZZLE_TABLE_DATA ~ "$category/$puzzle-id/image400.jpg";
     self.add-puzzle-to-table($puzzle);
@@ -193,7 +193,7 @@ multi method add-puzzle-to-table ( Hash $puzzle ) {
 #  self.add-puzzles-to-table(@puzzles);
 
   # Save the index and drop some other fields to save memory
-  my Str $puzzle-id = $puzzle<Puzzle-index>;
+  my Str $puzzle-id = $puzzle<PuzzleID>;
   $puzzle<Name>:delete;
   $puzzle<SourceFile>:delete;
 
@@ -301,7 +301,6 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
 #-------------------------------------------------------------------------------
 method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
 #say 'bind-object';
-
   my Gnome::Gtk4::StringObject $string-object .= 
     new(:native-object($list-item.get-item));
 
@@ -332,7 +331,7 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
 
     my Gnome::Gtk4::Label() $pid = $edit-palapeli.get-next-sibling;
-    $pid.set-text($puzzle<Puzzle-index>);
+    $pid.set-text($puzzle<PuzzleID>);
 
     $image.set-filename($puzzle<Image>);
     $label-comment.set-text($puzzle<Comment>);
@@ -343,10 +342,20 @@ method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
     $label-source.set-text('Source: ' ~ $puzzle<Source>);
 
     # Init if the values aren't there
-    my Str $preference = $!config.get-palapeli-preference;
-    $puzzle<Progress> = %() unless $puzzle<Progress>:exists;
-    $puzzle<Progress>{$preference} //= '0';
-    my Str $progress = $puzzle<Progress>{$preference}.Str;
+#    my Str $preference = $!config.get-palapeli-preference;
+#    $puzzle<Progress> = %() unless $puzzle<Progress>:exists;
+    $puzzle<Progress> //= '0';
+    
+    # Test for old version data
+    my Str $progress;
+    if $puzzle<Progress> ~~ Hash {
+      $progress = $puzzle<Progress>{$puzzle<Progress>.keys[0]}.Str;
+    }
+
+    else {
+      $progress = $puzzle<Progress>.Str;
+    }
+
     $label-progress.set-text("Progress: $progress \%");
     $progress-bar.set-text("Progress: $progress \%");
     $progress-bar.set-fraction($progress.Num / 100e0);
@@ -380,9 +389,7 @@ method run-palapeli (
   Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
   Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
-  $!config.run-palapeli($puzzle);
-
-  my Str $progress = $!config.calculate-progress($puzzle);
+  my Str $progress = $!config.run-palapeli($puzzle);
   $label-progress.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
 }
@@ -399,7 +406,7 @@ method run-palapeli (
   # Check if puzzle is started
   my Str $comment = $label-comment.get-text() // '';
   if #$!semaphore.reader( 'puzzles-playing', {
-    $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>}
+    $!puzzles-playing{$puzzle<Category>}{$puzzle<PuzzleID>}
     #}
   #)
   {
@@ -411,7 +418,7 @@ method run-palapeli (
 
   # Prevent puzzle started twice
 #  $!semaphore.writer( 'puzzles-playing', {
-    $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = True;
+    $!puzzles-playing{$puzzle<Category>}{$puzzle<PuzzleID>} = True;
 #  });
 
   # Information becomes visible after starting the thread.
@@ -422,7 +429,7 @@ method run-palapeli (
 #  start {
     my $exec = $!config.get-pala-executable;
     my Str $puzzle-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
-          '/', $puzzle<Puzzle-index>, '/',  $puzzle<Filename>;
+          '/', $puzzle<PuzzleID>, '/',  $puzzle<Filename>;
 
 
     # Start playing the puzzle
@@ -440,7 +447,7 @@ method run-palapeli (
       $label-progress.set-text("Progress: $progress \%");
       $progress-bar.set-fraction($progress.Num / 100e0);
 
-      $!puzzles-playing{$puzzle<Category>}{$puzzle<Puzzle-index>} = False;
+      $!puzzles-playing{$puzzle<Category>}{$puzzle<PuzzleID>} = False;
 #    });
 #  }
 }
@@ -451,13 +458,13 @@ method run-palapeli (
 # Called from call-back in Table after playing a puzzle.
 # The object holds most of the fields of
 # $*puzzle-data<categories>{$category}<members><some puzzle index> added with
-# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# the following fields: PuzzleID, Category and Image (see get-puzzles()
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
 method restore-progress-file ( Hash $puzzle ) {
 
   my $c = $puzzle<Category>;
-  my $i = $puzzle<Puzzle-index>;
+  my $i = $puzzle<PuzzleID>;
 
   my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
@@ -465,7 +472,7 @@ method restore-progress-file ( Hash $puzzle ) {
      [~] $!config.get-palapeli-collection, '/', $collection-filename;
 
   my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
-          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
+          '/', $puzzle<PuzzleID>, '/', $collection-filename;
 
   if $backup-path.IO.e and $collection-path.IO.e and
       $collection-path.IO.modified < $backup-path.IO.modified {
@@ -481,13 +488,13 @@ method restore-progress-file ( Hash $puzzle ) {
 # Called from call-back in Table after playing a puzzle.
 # The object holds most of the fields of
 # $*puzzle-data<categories>{$category}<members><some puzzle index> added with
-# the following fields: Puzzle-index, Category and Image (see get-puzzles()
+# the following fields: PuzzleID, Category and Image (see get-puzzles()
 # below) while Name and SourceFile are removed (see add-puzzle-to-table()
 # in Table).
 method save-progress-file ( Hash $puzzle  ) {
 
   my $c = $puzzle<Category>;
-  my $i = $puzzle<Puzzle-index>;
+  my $i = $puzzle<PuzzleID>;
 
   my Str $filename = $*puzzle-data<categories>{$c}<members>{$i}<Filename>;
   my Str $collection-filename = [~] '__FSC_', $filename, '_0_.save';
@@ -495,7 +502,7 @@ method save-progress-file ( Hash $puzzle  ) {
      [~] $!config.get-palapeli-collection, '/', $collection-filename;
 
   my Str $backup-path = [~] PUZZLE_TABLE_DATA, $puzzle<Category>,
-          '/', $puzzle<Puzzle-index>, '/', $collection-filename;
+          '/', $puzzle<PuzzleID>, '/', $collection-filename;
 
   if $backup-path.IO.e and $collection-path.IO.e and
       $collection-path.IO.modified > $backup-path.IO.modified {
@@ -565,7 +572,7 @@ method do-update-puzzle (
 ) {
   $!main.config.update-puzzle(
     %(
-      :Puzzle-index($puzzle),
+      :PuzzleID($puzzle<PuzzleID>),
       :Comment($comment.get-text),
       :Source($source.get-text),
     )

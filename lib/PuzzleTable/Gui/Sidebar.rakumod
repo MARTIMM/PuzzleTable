@@ -292,7 +292,7 @@ method fill-sidebar ( Bool :$init = False ) {
 
     my Gnome::Gtk4::Label $l;
 
-    my Array $totals = [ 0, 0, 0, 0];
+#    my Array $totals = [ 0, 0, 0, 0];
     for $!config.get-categories(:filter<lockable>) -> $category {
       with my Gnome::Gtk4::Button $cat-button .= new-button {
         $!config.set-css( .get-style-context, :css-class<sidebar-label>);
@@ -333,9 +333,11 @@ method fill-sidebar ( Bool :$init = False ) {
       .attach( $l, 4, $row-count, 1, 1);
       $totals[3] += $cat-status[3];
 
+}}
       $row-count++;
     }
 
+#`{{
     # Display gathered information in a tooltip
     .set-tooltip-text(Q:qq:to/EOTT/);
       Number of puzzles
@@ -379,7 +381,8 @@ method select-category ( Str :$category ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  my Seq $puzzles = $!config.get-puzzles($category);
+  $!config.select-category($category);
+  my Seq $puzzles = $!config.get-puzzles;
 #`{{
   my Seq $puzzles = $!config.get-puzzles($category).sort(
     -> $item1, $item2 { 
