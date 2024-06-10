@@ -19,7 +19,7 @@ has Gnome::Gtk4::CssProvider $!css-provider;
 
 has Version $.version = v0.5.0;
 has Array $.options = [<
-  category=s pala-collection=s puzzles lock h help version
+  category=s pala-collection=s puzzles lock h help version verbose
 >];
 
 has PuzzleTable::Config::Categories $!categories handles( <
@@ -28,8 +28,9 @@ has PuzzleTable::Config::Categories $!categories handles( <
       set-palapeli-preference get-palapeli-preference get-palapeli-image-size
       get-palapeli-collection run-palapeli
       get-categories add-category move-category select-category
+      save-categories-config get-current-category get-category-status
       add-puzzle move-puzzle update-puzzle get-puzzles get-puzzle
-      remove-puzzle save-categories-config get-current-category
+      remove-puzzle get-puzzle-image
     >);
 
 #-------------------------------------------------------------------------------

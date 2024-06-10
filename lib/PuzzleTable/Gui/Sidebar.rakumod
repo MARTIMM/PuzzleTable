@@ -33,7 +33,7 @@ also is Gnome::Gtk4::ScrolledWindow;
 has $!main is required;
 has PuzzleTable::Config $!config;
 has Gnome::Gtk4::Grid $!cat-grid;
-has Str $!current-category;
+#has Str $!current-category;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
@@ -261,10 +261,12 @@ method categories-refresh-sidebar ( N-Object $parameter ) {
   self.fill-sidebar;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method get-current-category ( --> Str ) {
   $!current-category // '';
 }
+}}
 
 #-------------------------------------------------------------------------------
 method set-cat-lock-info (
@@ -292,7 +294,7 @@ method fill-sidebar ( Bool :$init = False ) {
 
     my Gnome::Gtk4::Label $l;
 
-#    my Array $totals = [ 0, 0, 0, 0];
+    my Array $totals = [ 0, 0, 0, 0];
     for $!config.get-categories(:filter<lockable>) -> $category {
       with my Gnome::Gtk4::Button $cat-button .= new-button {
         $!config.set-css( .get-style-context, :css-class<sidebar-label>);
@@ -313,7 +315,6 @@ method fill-sidebar ( Bool :$init = False ) {
 
       .attach( $cat-button, 0, $row-count, 1, 1);
 
-#`{{
       # Get information of each category
       my Array $cat-status = $!config.get-category-status($category);
       $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
@@ -333,11 +334,9 @@ method fill-sidebar ( Bool :$init = False ) {
       .attach( $l, 4, $row-count, 1, 1);
       $totals[3] += $cat-status[3];
 
-}}
       $row-count++;
     }
 
-#`{{
     # Display gathered information in a tooltip
     .set-tooltip-text(Q:qq:to/EOTT/);
       Number of puzzles
@@ -348,7 +347,6 @@ method fill-sidebar ( Bool :$init = False ) {
       Totals
       [ $totals.join(', ') ]
       EOTT
-}}
   }
 
   self.set-child($!cat-grid);
@@ -361,44 +359,39 @@ method show-tooltip (
   Str :$category
   --> gboolean
 ) {
-#`{{
-  my Gnome::Gtk4::Picture $p .= new-picture;
-  $p.set-filename($!config.get-puzzle-image($category));
-  $tooltip.set-custom($p);
-}}
+  my Str $puzzle-id = $!config.get-puzzle-image($category);
+  if ?$puzzle-id {
+    my Gnome::Gtk4::Picture $p .= new-picture;
+    $p.set-filename($puzzle-id);
+    $tooltip.set-custom($p);
+  }
+
   True
 }
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category ( Str :$category ) {
-
-  $!current-category = $category;
+note $?LINE;
+#  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
 
-  # Clear the puzzletable before showing the puzzles of this category
+  # Clear the puzzle table before showing the puzzles of this category
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
   $!config.select-category($category);
   my Seq $puzzles = $!config.get-puzzles;
-#`{{
-  my Seq $puzzles = $!config.get-puzzles($category).sort(
-    -> $item1, $item2 { 
-      if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
-      elsif $item1<PieceCount> == $item2<PieceCount> { Order::Same }
-      else { Order::More }
-    }
-  );
-}}
 
+  # Fill the puzzle table with new puzzles
   $!main.table.add-puzzles-to-table($puzzles);
 }
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method set-category ( Str $category ) {
+note $?LINE;
 
   # Fill the sidebar in case there is a new entry
   self.fill-sidebar;

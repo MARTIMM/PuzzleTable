@@ -163,6 +163,73 @@ method get-current-category ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-category-status ( Str $category-name --> Array ) {
+  my Array $cat-status = [ 0, 0, 0, 0];
+
+  if $!categories-config<categories>{$category-name}<status>:exists {
+    $cat-status = $!categories-config<categories>{$category-name}<status>;
+  }
+
+  else {
+    my PuzzleTable::Config::Category $category .= new(
+      :$category-name, :$!root-dir
+    );
+
+    for $category.get-puzzle-ids -> $puzzle-id {
+      my Hash $puzzle-config = $category.get-puzzle($puzzle-id);
+
+      # Test for old version data
+      my Num() $progress;
+      if $puzzle-config<Progress> ~~ Hash {
+        $progress =
+          $puzzle-config<Progress>{$puzzle-config<Progress>.keys[0]} // 0e0;
+      }
+
+      else {
+        $progress = $puzzle-config<Progress> // 0e0;
+      }
+
+      $cat-status[0]++;
+      $cat-status[1]++ if $progress == 0e0;
+      $cat-status[2]++ if 0e0 < $progress < 1e2;
+      $cat-status[3]++ if $progress == 1e2;
+    }
+
+    $!categories-config<categories>{$category-name}<status> = $cat-status;
+  }
+
+  $cat-status
+}
+
+#-------------------------------------------------------------------------------
+method update-category-status ( ) {
+  my Array $cat-status = [ 0, 0, 0, 0];
+
+  my Str $category-name = $!current-category.category-name;
+  for $!current-category.get-puzzle-ids -> $puzzle-id {
+    my Hash $puzzle-config = $!current-category.get-puzzle($puzzle-id);
+
+    # Test for old version data
+    my Num() $progress;
+    if $puzzle-config<Progress> ~~ Hash {
+      $progress =
+        $puzzle-config<Progress>{$puzzle-config<Progress>.keys[0]} // 0e0;
+    }
+
+    else {
+      $progress = $puzzle-config<Progress> // 0e0;
+    }
+
+    $cat-status[0]++;
+    $cat-status[1]++ if $progress == 0e0;
+    $cat-status[2]++ if 0e0 < $progress < 1e2;
+    $cat-status[3]++ if $progress == 1e2;
+  }
+
+  $!categories-config<categories>{$category-name}<status> = $cat-status;
+}
+
+#-------------------------------------------------------------------------------
 method import-collection ( Str:D $collection-path --> Str ) {
   my Str $message = '';
 
@@ -244,6 +311,20 @@ method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name --> Str ) {
   }
 
   $message
+}
+
+#-------------------------------------------------------------------------------
+method get-puzzle-image ( Str $category-name --> Str ) {
+
+  my PuzzleTable::Config::Category $category .= new(
+    :$category-name, :$!root-dir
+  );
+
+  my Str $puzzle-id = $category.get-puzzle-ids.roll;
+  return Str unless ?$puzzle-id;
+
+  # Return path to image
+  $!root-dir ~ "$category-name/$puzzle-id/image400.jpg"
 }
 
 #-------------------------------------------------------------------------------
@@ -391,6 +472,9 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
     # Update the puzzle for its progress
     $!current-category.update-puzzle( $puzzle-id, %( :Progress($progress) ));
+
+    # Update the category status
+    self.update-category-status;
   }
 
   $progress

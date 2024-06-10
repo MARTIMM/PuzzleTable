@@ -77,7 +77,7 @@ method do-move-puzzles (
 #  note "do move";
   my Bool $sts-ok = False;
 
-  my Str $current-cat = $!main.category.get-current-category;
+  my Str $current-cat = $!config.get-current-category;
   my Str $dest-cat = $combobox.get-active-text;
   if $current-cat eq $dest-cat {
     $dialog.set-status('Selected category is same as current');
@@ -159,7 +159,7 @@ method do-remove-puzzles (
   #my Str $category = $!config
 
   if $check-button.get-active.Bool {
-    my Str $current-cat = $!main.category.get-current-category;
+    my Str $current-cat = $!config.get-current-category;
     $!config.select-category($current-cat);
 
     # Get the selected puzzles from the bitset and move them
