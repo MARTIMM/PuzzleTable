@@ -25,13 +25,18 @@ And a small list of things to change in the puzzle table program;
 
 What the new program should do
 
-* Gather the previously created puzzles from the installation collections and copy them elsewhere.
-* Be able to rename puzzles.
-* Be able to make categories from names or otherwise. Selecting a category shows the puzzles in that category thus displaying a smaller table.
-* Show a larger picture of the puzzle. Also make a more puzzle like display e.g.
-  ![](doc/puzzle-example.jpg)
-* Show on the same picture how much is finished.
-* Add newly created and exported puzzles.
+* [x] Gather the previously created puzzles from the several Palapeli collection directories and copy them elsewhere.
+* [x] Use the Palapeli program of different install types, os standard, Snap or Flatpak.
+* [x] Be able to make categories. Selecting a category shows the puzzles in that category thus displaying a smaller table.
+* [x] Be able to rename categories.
+* [ ] Show a larger picture of the puzzle. Also make a more puzzle like display e.g. ![](doc/puzzle-example.jpg) At the moment its just a larger image.
+* [x] Show on the same picture how much is finished.
+* [x] Add newly created and exported puzzles.
+* [x] Remove a puzzle. It is stored in an archive.
+* [x] Restore a puzzle.
+* [x] Move puzzles to other categories.
+* [x] Categories are shown in a sidebar
+* [ ] Grouping categories in an expandable widget to narrow a long list.
 
 
 ## Description

@@ -3,6 +3,7 @@
   * Saving the config Hash costs about 7 to 10 secs. It is getting too slow, even that the config is only saved once every 5 changes or at shutdown. So, the config will be tored apart and saved per category on disk and only loaded and saved when some category is selected or switched.
   * The **PuzzleTable::Config** module is also getting too large with too many functions. So, this will be split up into smaller parts.
   * Add program `convert-puzzle-data` to split up the configuration file `puzzle-data.yaml` into smaller files. One file for categories `categories.yaml` and one for each category, `puzzles.yaml` in the category directory.
+  * Merging the new modules in the application; overall merge completed and program works again. Some details have to be added stil.
 
 * 2024-05-20 0.4.7
   * Lost a lot of progress files because I found it neccesary to reinstall the snap version of Palapeli, -sic-. So, a backup of the progresfile is needed. It will be placed in the directory where the puzzle resides after returning from the Palapeli program.
