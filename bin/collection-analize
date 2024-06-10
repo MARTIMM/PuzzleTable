@@ -96,7 +96,6 @@ sub calculate-progress ( Str $puzzle-path, Str $puzzel-save --> Bool ) {
   my Hash $piece-coordinates = %();
 
   for $puzzel-save.IO.slurp.lines -> $line {
-#note $line;
     if $line ~~ m/ '[' [ 'XYCo-ordinates' | 'Relations' ] ']' / {
       $get-lines = True;
       next;
