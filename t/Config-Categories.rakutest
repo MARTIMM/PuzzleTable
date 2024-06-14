@@ -16,110 +16,177 @@ constant CONFDATA = TESTDATA ~ 'puzzle-table-data/';
 
 cleanup-puzzle-table-data(CONFDATA);
 
+my Str $message;
+my Hash $config;
 
 my PuzzleTable::Config::Categories $categories .= new(:root-dir(CONFDATA));
-with $categories {
-  is .get-password, '', '.get-password()';
-  ok .check-password(''), '.check-password()';
+subtest 'password', {
+  with $categories {
+    is .get-password, '', '.get-password()';
+    ok .check-password(''), '.check-password()';
 
-  .set-password( '', 'hoeperdepoep');
-  ok .check-password('hoeperdepoep'), '.set-password()';
-
-
-  #$category .= new( :category-name<cat-2>, :root-dir(CONFDATA));
-  my Str $message = .add-category( 'cat-2', :lockable);
-  ok ! $message, '.add-category()';
-  $message = .add-category( 'cat-2', :lockable);
-  is $message, "Category Cat-2 already exists", '.add-category() 2nd time fail';
-  $message = .add-category( 'cat-1', :!lockable);
-
-  is .get-current-category, 'Default', '.get-current-category(): Default';
-
-  $message = .select-category('Cat-3');
-  is $message, 'Category Cat-3 does not exist',
-     '.select-category(); Cat-3 not found';
-  $message = .select-category('Cat-2');
-  ok ! $message, '.select-category(); Cat-2 found';
-  is .get-current-category, 'Cat-2', '.get-current-category(); Cat-2';
-
-  ok ! .is-category-lockable('Cat-1'),
-       '.is-category-lockable() Cat 1 not lockable';
-  ok .is-category-lockable('Cat-2'), '.is-category-lockable() Cat 2 lockable';
-
-  $message = .import-collection('some-where-else');
-  is $message, 'Collection path does not exist or isn\'t a directory',
-     '.import-collection(); collection not found';
-
-  $message = .import-collection(COLLDATA);
-  ok ! $message, '.import-collection(); puzzles imported from collection';
-
-  .save-categories-config;
-  my Hash $config;
-
-  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-  is $config<categories>.elems, 3, '.save-categories-config()';
-  ok $config<categories><Cat-2><lockable>, 'Check categories config';
-
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-  is $config<members>.elems, 2, 'Check category config';
-#note $config.gist();
-
-  .add-puzzle(EXPDATA ~ 'e1.puzzle');
-  .save-categories-config;
-
-#  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-  is $config<members>.elems, 3, '.add-puzzle()';
-#note $config.gist();
-
-  $message = .remove-puzzle( 'p0005', ARCHDATA);
-  is $message, 'Puzzle id is wrong and/or Puzzle store not found',
-     '.remove-puzzle(): wrong puzzle id';
-
-  $message = .remove-puzzle( 'p000', ARCHDATA);
-  .save-categories-config;
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-  is $config<members>.elems, 2, '.remove-puzzle()';
-  ok $config<members><p000>:!exists, '.remove-puzzle(): Config check';
-
-  $message = .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
-  .save-categories-config;
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-  is $config<members>.elems, 3, '.restore-puzzle()';
-  ok $config<members><p003>:exists, '.restore-puzzle(): Config check';
-
-  my Array $puzzles = [|.get-puzzles];
-  is $puzzles.elems, 3, '.get-puzzles(); Check nbr puzzles returned';
-  ok $puzzles[0]<Category> eq
-        $puzzles[1]<Category> eq
-        $puzzles[2]<Category> eq 'Cat-2',
-         '.get-puzzles(); Check puzzles category';
-  ok $puzzles[0]<PieceCount> <=
-        $puzzles[1]<PieceCount> <=
-        $puzzles[2]<PieceCount>, '.get-puzzles(); Check order';
-
-#  note $puzzles.gist;
-
-  .set-palapeli-preference('Flatpak');
-  .save-categories-config;
-  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-  is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
-
-  # Works!
-  #lives-ok { .run-palapeli($puzzles[2]); }, '.run-palapeli()';
-
-  .move-category( 'Cat-1', 'Cat-5');
-  .save-categories-config;
-  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-  ok $config<categories><Cat-5>:exists, '.move-category()';
-
-  .move-puzzle( 'Cat-2', 'Cat-5', 'p002');
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-  ok $config<members><p002>:!exists, '.move-puzzle(): Config check';
-  $config = load-yaml("{CONFDATA}Cat-5/puzzles.yaml".IO.slurp);
-  ok $config<members><p000>:exists, '.move-puzzle(): Config check';
-
+    .set-password( '', 'hoeperdepoep');
+    ok .check-password('hoeperdepoep'), '.set-password()';
+  }
 }
+
+
+subtest 'category', {
+  with $categories {
+    #$category .= new( :category-name<cat-2>, :root-dir(CONFDATA));
+    $message = .add-category( 'cat-2', :lockable);
+    ok ! $message, '.add-category()';
+    $message = .add-category( 'cat-2', :lockable);
+    is $message, "Category Cat-2 already exists", '.add-category() 2nd time fail';
+    $message = .add-category( 'cat-1', :!lockable);
+
+    is .get-current-category, 'Default', '.get-current-category(): Default';
+
+    $message = .select-category('Cat-3');
+    is $message, 'Category Cat-3 does not exist',
+      '.select-category(); Cat-3 not found';
+    $message = .select-category('Cat-2');
+    ok ! $message, '.select-category(); Cat-2 found';
+    is .get-current-category, 'Cat-2', '.get-current-category(); Cat-2';
+
+    ok ! .is-category-lockable('Cat-1'),
+        '.is-category-lockable() Cat 1 not lockable';
+    ok .is-category-lockable('Cat-2'), '.is-category-lockable() Cat 2 lockable';
+  }
+}
+
+
+subtest 'puzzle', {
+  with $categories {
+    $message = .import-collection('some-where-else');
+    is $message, 'Collection path does not exist or isn\'t a directory',
+      '.import-collection(); collection not found';
+
+    $message = .import-collection(COLLDATA);
+    ok ! $message, '.import-collection(); puzzles imported from collection';
+
+    #.save-categories-config;
+
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    is $config<categories>.elems, 3, '.save-categories-config()';
+    ok $config<categories><Cat-2><lockable>, 'Check categories config';
+
+    $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+    is $config<members>.elems, 2, 'Check category config';
+  #note $config.gist();
+
+    .add-puzzle(EXPDATA ~ 'e1.puzzle');
+    #.save-categories-config;
+
+  #  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+    is $config<members>.elems, 3, '.add-puzzle()';
+  #note $config.gist();
+
+    $message = .remove-puzzle( 'p0005', ARCHDATA);
+    is $message, 'Puzzle id is wrong and/or Puzzle store not found',
+      '.remove-puzzle(): wrong puzzle id';
+
+    $message = .remove-puzzle( 'p000', ARCHDATA);
+    #.save-categories-config;
+    $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+    is $config<members>.elems, 2, '.remove-puzzle()';
+    ok $config<members><p000>:!exists, '.remove-puzzle(): Config check';
+
+    $message = .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
+    #.save-categories-config;
+    $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+    is $config<members>.elems, 3, '.restore-puzzle()';
+    ok $config<members><p003>:exists, '.restore-puzzle(): Config check';
+
+    my Array $puzzles = [|.get-puzzles];
+    is $puzzles.elems, 3, '.get-puzzles(); Check nbr puzzles returned';
+    ok $puzzles[0]<Category> eq
+          $puzzles[1]<Category> eq
+          $puzzles[2]<Category> eq 'Cat-2',
+          '.get-puzzles(); Check puzzles category';
+    ok $puzzles[0]<PieceCount> <=
+          $puzzles[1]<PieceCount> <=
+          $puzzles[2]<PieceCount>, '.get-puzzles(); Check order';
+  }
+}
+
+subtest 'palapeli', {
+  with $categories {
+
+  #  note $puzzles.gist;
+
+    .set-palapeli-preference('Flatpak');
+    #.save-categories-config;
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
+
+    # Works!
+    #lives-ok { .run-palapeli($puzzles[2]); }, '.run-palapeli()';
+  }
+}
+
+
+subtest 'move', {
+  with $categories {
+
+    .move-category( 'Cat-1', 'Cat-5');
+    #.save-categories-config;
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    ok $config<categories><Cat-5>:exists, '.move-category()';
+
+    .select-category('Cat-2');
+    .move-puzzle( 'Cat-5', 'p002');
+    $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+    ok $config<members><p002>:!exists, '.move-puzzle(): Config check';
+    $config = load-yaml("{CONFDATA}Cat-5/puzzles.yaml".IO.slurp);
+    ok $config<members><p000>:exists, '.move-puzzle(): Config check';
+
+    my Array $sts = .get-category-status('Cat-5');
+    lives-ok { .update-category-status; }, '.update-category-status()';
+    #.save-categories-config;
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    is-deeply $config<categories><Cat-5><status>, $sts,
+      '.get-category-status()';
+
+    my Seq $cats = .get-categories;
+    is $cats.elems, 3, '.get-categories(): unfiltered';
+    $cats = .get-categories(:filter<lockable>);
+    is $cats.elems, 2, '.get-categories(): lock filtered';
+    lives-ok { .unlock('hoeperdepoep'); }, '.unlock()';
+    $cats = .get-categories(:filter<lockable>);
+    is $cats.elems, 3, '.get-categories(): lock filtered, unlocked';
+    $cats = .get-categories(:filter<default>);
+    is $cats.elems, 2, '.get-categories(): lock filtered, default';
+  }
+}
+
+
+subtest 'grouping', {
+  with $categories {
+    $message = .add-category( 'opt 1', :!lockable);
+    $message = .add-category( 'opt 2', :!lockable);
+    .group-in-subcategory( 'options', 'opt 1');
+    .group-in-subcategory( 'options', 'opt 2');
+    #.save-categories-config;
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    ok $config<categories><Options_EX_>:exists,
+      '.group-in-subcategory() subcategory';
+    is $config<categories><Options_EX_>.elems, 2, '.group-in-subcategory() elems';
+
+    .ungroup-in-subcategory( 'options', 'opt 1');
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    is $config<categories><Options_EX_>.elems, 1,
+       '.ungroup-in-subcategory() elems';
+    ok $config<categories><opt 1>:exists, '.ungroup-in-subcategory() check';
+
+    .ungroup-in-subcategory( 'options', 'opt 2');
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    ok $config<categories><Options_EX_>:!exists,
+       '.ungroup-in-subcategory() drop';
+  }
+}
+
 
 done-testing;
 exit;
