@@ -543,8 +543,12 @@ method run-palapeli ( Hash $puzzle --> Str ) {
     $prog-backup-path.IO.copy($coll-filename);
   }
 
-  # Now start the puzzle, program will freeze!
-  shell "$exec '$puzzle-path'";
+  # Now start the puzzle, program will freeze! use :err to hide all errors like
+  # 'qt.qpa.wayland: Setting cursor position is not possible on wayland'.
+  # TODO maybe use Proc::Async, it then needs to know where it ends and how
+  # to update the progress
+  my Proc $p = shell "$exec '$puzzle-path'", :err;
+  $p.err.close;
 
   # Just starting and stopping does not create a progress file, so test
   # for its existence before copying it back to its local place.
