@@ -372,7 +372,6 @@ method show-tooltip (
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category ( Str :$category ) {
-note $?LINE;
 #  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
@@ -391,7 +390,6 @@ note $?LINE;
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method set-category ( Str $category ) {
-note $?LINE;
 
   # Fill the sidebar in case there is a new entry
   self.fill-sidebar;
