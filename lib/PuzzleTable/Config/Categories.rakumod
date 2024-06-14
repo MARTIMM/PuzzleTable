@@ -123,14 +123,15 @@ method move-category ( $cat-from, $cat-to ) {
 }
 
 #-------------------------------------------------------------------------------
-method select-category ( Str:D $category-name is copy --> Str ) {
+method select-category ( Str:D $cat-name, Str $subcat-name = '' --> Str ) {
   my Str $message = '';
-  $category-name .= tc;
+  my Str $category-name = $cat-name.tc;
+  my Str $subcategory-name = $subcat-name.tc ~ '_EX_';
 
-  if $!categories-config<categories>{$category-name}:exists {
-    # Save category before assigning a new
-#    $!current-category.save-category-config;
-
+  if ? $subcategory-name and
+     $!categories-config<categories>{$subcategory-name}{$category-name}:exists
+     or $!categories-config<categories>{$category-name}:exists
+  {
     # Set to new category
     $!current-category .= new( :$category-name, :$!root-dir);
   }
