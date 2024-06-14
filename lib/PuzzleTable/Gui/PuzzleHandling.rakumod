@@ -89,13 +89,12 @@ method do-move-puzzles (
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
       $!config.move-puzzle(
-        $current-cat, $dest-cat,
-        $!main.table.puzzle-objects.get-string($item-pos)
+        $dest-cat, $!main.table.puzzle-objects.get-string($item-pos)
       );
     }
 
     # Save admin and update puzzle table
-    $!config.save-categories-config;
+#    $!config.save-categories-config;
 
     # Selecting the category again will redraw the puzzle table
     $!main.category.select-category(:category($current-cat));
@@ -173,7 +172,7 @@ method do-remove-puzzles (
     }
 
     # Save admin and update puzzle table
-    $!config.save-categories-config;
+#    $!config.save-categories-config;
     $!main.category.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles

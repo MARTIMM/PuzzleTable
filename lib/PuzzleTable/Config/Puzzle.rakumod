@@ -174,6 +174,7 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
   my Str $extra-change = DateTime.now.Str;
 
   # Store the puzzle using a unique filename.
+  mkdir( $destination, 0o700) unless $destination.IO.e;
   my Str $unique-name = sha256-hex($puzzle-path ~ $extra-change) ~ ".puzzle";
   $puzzle-path.IO.copy( "$destination/$unique-name", :createonly);
 

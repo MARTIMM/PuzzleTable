@@ -39,11 +39,13 @@ submethod BUILD ( Str:D :$!category-name, Str:D :$root-dir ) {
 # Called reguarly after changes. Only every 5 times saved to save time.
 # except when forced.
 method save-category-config ( ) {
-  my $t0 = now;
-  $!config-path.IO.spurt(save-yaml($!category-config));
+  if ?self and ?$!category-config and ?$!config-path {
+    my $t0 = now;
+    $!config-path.IO.spurt(save-yaml($!category-config));
 
-#  note "Done saving puzzle category $!category-name.";
-  note "Time needed to save category $!category-name: {(now - $t0).fmt('%.1f sec')}.";
+  #  note "Done saving puzzle category $!category-name.";
+    note "Time needed to save category $!category-name: {(now - $t0).fmt('%.1f sec')}." if $*verbose-output;
+  }
 }
 
 #-------------------------------------------------------------------------------
@@ -85,6 +87,7 @@ method import-collection ( Str:D $collection-path ) {
     }
 
     $!category-config<members>{$puzzle-id} = $puzzle-config;
+    self.save-category-config;
   }
 }
 
@@ -103,6 +106,7 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
   );
 
   $!category-config<members>{$puzzle-id} = $puzzle-config;
+  self.save-category-config;
   
   $puzzle-id
 }
@@ -121,6 +125,7 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
   $!category-config<members>{$puzzle-id}<Image>:delete;
   $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
   $!category-config<members>{$puzzle-id}<Category>:delete;
+  self.save-category-config;
 
   True
 }
@@ -128,6 +133,7 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
 #-------------------------------------------------------------------------------
 # To copy a confguration call this method. Only neede for the converter
 method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
+note "$?LINE set puzzle id $puzzle-id in $!category-name";
   for $new-pairs.kv -> Str $field-name, $value {
     $!category-config<members>{$puzzle-id}{$field-name} = $value;
   }
@@ -136,6 +142,7 @@ method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
   $!category-config<members>{$puzzle-id}<Image>:delete;
   $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
   $!category-config<members>{$puzzle-id}<Category>:delete;
+  self.save-category-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -149,8 +156,9 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
   # Get the configuration data of this puzzle and remove it from the
   # configuration Hash.
   my Hash $puzzle-config = $!category-config<members>{$puzzle-id}:delete;
+  self.save-category-config;
 
-  my Str $progress-file = [~] '__FSC_', $puzzle-config<Filename>, '_0_.save';
+#  my Str $progress-file = [~] '__FSC_', $puzzle-config<Filename>, '_0_.save';
 
   my PuzzleTable::Config::Puzzle $puzzle .= new;
   $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-config);
@@ -176,6 +184,7 @@ method restore-puzzle (
 
   if ? $puzzle-config {
     $!category-config<members>{$puzzle-id} = $puzzle-config;
+    self.save-category-config;
     $restore-ok = True;
   }
 
@@ -184,13 +193,21 @@ method restore-puzzle (
 
 #-------------------------------------------------------------------------------
 method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
+
+  my Hash $h;
   if $delete {
-    $!category-config<members>{$puzzle-id}:delete
+#note "$?LINE get puzzle id $puzzle-id in $!category-name, delete: $delete";
+    $h = $!category-config<members>{$puzzle-id}:delete;
+#note "$?LINE get puzzle id $puzzle-id in $!category-name, exists: ", $!category-config<members>{$puzzle-id}:exists, "\n$!category-config<members>.keys()";
+
+    self.save-category-config;
   }
 
   else {
-    $!category-config<members>{$puzzle-id}
+    $h = $!category-config<members>{$puzzle-id};
   }
+
+  $h
 }
 
 #-------------------------------------------------------------------------------
@@ -203,7 +220,7 @@ method get-puzzle-destination ( Str $puzzle-id --> Str ) {
 
   # Create directory for the puzzles files
   my Str $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
-  mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
+#  mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
 
   $puzzle-destination
 }

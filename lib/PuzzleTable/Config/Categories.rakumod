@@ -55,6 +55,8 @@ submethod BUILD ( Str:D :$!root-dir ) {
     # Default width and height of displayed puzzle image
     $!categories-config<puzzle-image-width> = 300;
     $!categories-config<puzzle-image-height> = 300;
+
+    self.save-categories-config;
   }
 
   # Always lock at start
@@ -67,19 +69,26 @@ submethod BUILD ( Str:D :$!root-dir ) {
 #-------------------------------------------------------------------------------
 # Called after adding, removing, or other changes are made on a category
 method save-categories-config ( ) {
+#  my $frame = callframe(1);
+#  note "$?LINE Called from {$frame.file}:{$frame.line}.";
+
   my $t0 = now;
 
   # Save categories config
   $!config-path.IO.spurt(save-yaml($!categories-config));
 
   # Also save puzzle data of current category
-  $!current-category.save-category-config;
+#  $!current-category.save-category-config;
 
   #note "Done saving categories";
-  note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}.";
+  note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}."
+       if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
+# TODO check in subcats too. dir names are still on same level =>
+# all cats are unique
+# TODO add in subcats? or move afterwards
 method add-category (
   Str:D $category-name is copy, :$lockable = False --> Str
 ) {
@@ -92,6 +101,7 @@ method add-category (
 
   else {
     $!categories-config<categories>{$category-name}<lockable> = $lockable;
+    self.save-categories-config;
     mkdir $!root-dir ~ $category-name, 0o700;
   }
 
@@ -103,7 +113,9 @@ method move-category ( $cat-from, $cat-to ) {
   $!categories-config<categories>{$cat-to} =
     $!categories-config<categories>{$cat-from}:delete;
 
-  $!categories-config<categories><name> = $cat-to;
+  self.save-categories-config;
+
+#  $!categories-config<categories><name> = $cat-to;
 
   my Str $dir-from = $!root-dir ~ $cat-from;
   my Str $dir-to = $!root-dir ~ $cat-to;
@@ -117,7 +129,7 @@ method select-category ( Str:D $category-name is copy --> Str ) {
 
   if $!categories-config<categories>{$category-name}:exists {
     # Save category before assigning a new
-    $!current-category.save-category-config;
+#    $!current-category.save-category-config;
 
     # Set to new category
     $!current-category .= new( :$category-name, :$!root-dir);
@@ -131,30 +143,77 @@ method select-category ( Str:D $category-name is copy --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( Str :$filter --> Seq ) {
+method get-categories ( Str :$filter, Str :$subcategory-name = '' --> Seq ) {
+  my Bool $locked = self.is-locked;
   my @cat = ();
-  if $filter eq 'default' {
-    for $!categories-config<categories>.keys -> $category {
-      next if $category eq 'Default';
-      @cat.push: $category;
-    }
-  }
-
-  elsif $filter eq 'lockable' {
-    my Bool $locked = self.is-locked;
-    for $!categories-config<categories>.keys -> $category {
-      next if $locked and self.is-category-lockable($category);
-      @cat.push: $category;
-    }
+  my @cat-key-list;
+  if ?$subcategory-name {
+    @cat-key-list = $!categories-config<categories>{$subcategory-name}.keys;
   }
 
   else {
-    for $!categories-config<categories>.keys -> $category {
-      @cat.push: $category;
+    @cat-key-list = $!categories-config<categories>.keys;
+  }
+
+  for @cat-key-list -> $category {
+    given $filter {
+      when 'default' {
+        next if $category eq 'Default';
+      }
+
+      when 'lockable' {
+        next if $locked and self.is-category-lockable($category);
+      }
     }
+
+    @cat.push: $category;
   }
 
   @cat.sort
+}
+
+#-------------------------------------------------------------------------------
+method group-in-subcategory ( Str $subcat-name, Str $cat-name ) {
+  my Str $category-name = $cat-name.tc;
+  my Str $subcategory-name = $subcat-name.tc ~ '_EX_';
+  my Hash $categories := $!categories-config<categories>;
+
+  # Only move category when name is not in the subcategory
+  #TODO when cats are unique everywhere then test is not needed
+  if $categories{$category-name}:exists
+     and $categories{$subcategory-name}{$category-name}:!exists
+  {
+#    $categories{$subcategory-name} = %()
+#      unless $categories{$subcategory-name}:exists;
+
+    $categories{$subcategory-name}{$category-name} =
+      $categories{$category-name}:delete;
+
+    self.save-categories-config;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method ungroup-in-subcategory ( Str $subcat-name, Str $cat-name ) {
+  my Str $category-name = $cat-name.tc;
+  my Str $subcategory-name = $subcat-name.tc ~ '_EX_';
+  my Hash $categories := $!categories-config<categories>;
+
+  # Only move back when name in subcat is not in cat
+  #TODO when cats are unique everywhere then test is not needed
+  if $categories{$subcategory-name}{$category-name}:exists
+     and $categories{$category-name}:!exists
+  {
+    # Move category out of subcategory
+    $categories{$category-name} =
+      $categories{$subcategory-name}{$category-name}:delete;
+
+    # Delete subcategory when empty
+    $categories{$subcategory-name}:delete
+      unless ? $categories{$subcategory-name};
+
+    self.save-categories-config;
+  }
 }
 
 #-------------------------------------------------------------------------------
@@ -196,6 +255,7 @@ method get-category-status ( Str $category-name --> Array ) {
     }
 
     $!categories-config<categories>{$category-name}<status> = $cat-status;
+    self.save-categories-config;
   }
 
   $cat-status
@@ -227,6 +287,7 @@ method update-category-status ( ) {
   }
 
   $!categories-config<categories>{$category-name}<status> = $cat-status;
+  self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -235,6 +296,8 @@ method import-collection ( Str:D $collection-path --> Str ) {
 
   if $collection-path.IO.d {
     $!current-category.import-collection($collection-path);
+    self.update-category-status;
+    self.save-categories-config;
   }
 
   else {
@@ -262,6 +325,8 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 
   if $puzzle-path.IO.r {
     my Str $puzzle-id = $!current-category.add-puzzle($puzzle-path);
+    self.update-category-status;
+    self.save-categories-config;
   }
 
   else {
@@ -272,21 +337,37 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method move-puzzle ( Str $from-cat, Str $to-cat, Str:D $puzzle-id ) {
-  my PuzzleTable::Config::Category $c-from .=
-     new( :category-name($from-cat), :$!root-dir);
+method move-puzzle ( Str $to-cat, Str:D $puzzle-id ) {
+
+  # Init the categories initialized
+  my PuzzleTable::Config::Category $c-from = $!current-category;
 
   my PuzzleTable::Config::Category $c-to .=
      new( :category-name($to-cat), :$!root-dir);
 
-  my Hash $puzzle-config = $c-from.get-puzzle( $puzzle-id, :delete);
+  # Get path of puzzle where the puzzle is now
+  my Str $puzzle-source = $c-from.get-puzzle-destination($puzzle-id);
+
+  # Get a new id for the puzzle in the destination category
   my Str $new-puzzle-id = $c-to.new-puzzle-id;
+  # Get path of puzzle where the puzzle must go
+  my Str $puzzle-destination = $c-to.get-puzzle-destination($new-puzzle-id);
+
+#note "$?LINE rename $puzzle-source to $puzzle-destination";
+
+  # Rename the file to the new location
+  $puzzle-source.IO.rename( $puzzle-destination, :createonly);
+
+  # Get the puzzle config and remove it from source category config
+  my Hash $puzzle-config = $c-from.get-puzzle( $puzzle-id, :delete);
+
+  # Set the puzzle config in the destination category config
   $c-to.set-puzzle( $new-puzzle-id, $puzzle-config);
 
-  my Str $puzzle-source = $c-from.get-puzzle-destination($puzzle-id);
-  my Str $puzzle-destination = $c-to.get-puzzle-destination($new-puzzle-id);
-  $puzzle-source.IO.rename($puzzle-destination);
+  # Update overall status info
+  self.update-category-status;
 
+  # Save and categories
   $c-from.save-category-config;
   $c-to.save-category-config;
 }
@@ -297,6 +378,11 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
 
   if ! $!current-category.remove-puzzle( $puzzle-id, $archive-trashbin) {
     $message = 'Puzzle id is wrong and/or Puzzle store not found';
+  }
+
+  else {
+    self.update-category-status;
+    self.save-categories-config;
   }
 
   $message
@@ -383,6 +469,8 @@ method set-palapeli-preference ( Str $preference ) {
   else {
     $!categories-config<palapeli><preference> = 'Standard';
   }
+
+  self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -419,7 +507,6 @@ method run-palapeli ( Hash $puzzle --> Str ) {
   for $!categories-config<palapeli>{$pref}<env>.kv -> $env-key, $env-val {
     %*ENV{$env-key} = $env-val;
   }
-
 
   # Get executable program
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
@@ -475,6 +562,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
     # Update the category status
     self.update-category-status;
+    self.save-categories-config;
   }
 
   $progress
@@ -508,7 +596,10 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 
   # Check if old password matches before a new one is set
   $is-set = self.check-password($old-password);
-  $!categories-config<password> = sha256-hex($new-password) if $is-set;
+  if $is-set {
+    $!categories-config<password> = sha256-hex($new-password);
+    self.save-categories-config;
+  }
 
   $is-set
 }
@@ -524,6 +615,7 @@ method set-category-lockable ( Str:D $category, Bool:D $lockable --> Bool ) {
   my Bool $is-set = False;
   if $category ne 'Default' {
     $!categories-config<categories>{$category}<lockable> = $lockable;
+    self.save-categories-config;
     $is-set = True;
   }
 
@@ -540,6 +632,7 @@ method is-locked ( --> Bool ) {
 # Set the puzzle table locking state
 method lock ( ) {
   $!categories-config<locked> = True;
+  self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -547,6 +640,7 @@ method lock ( ) {
 method unlock ( Str $password --> Bool ) {
   my Bool $ok = self.check-password($password);
   $!categories-config<locked> = False if $ok;
+  self.save-categories-config;
   $ok
 }
 

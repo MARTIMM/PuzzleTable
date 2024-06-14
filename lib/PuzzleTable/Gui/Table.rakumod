@@ -150,7 +150,7 @@ method get-pala-puzzles (
 #last;
   }
 
-  $!config.save-categories-config;
+#  $!config.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
