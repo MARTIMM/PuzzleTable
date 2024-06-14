@@ -5,7 +5,7 @@ use v6.d;
 use PuzzleTable::Gui::MainWindow;
 
 # Show messages on terminal window if True
-my $*verbose-output = False;
+my $*verbose-output = True;
 
 #-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
