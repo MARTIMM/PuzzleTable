@@ -128,10 +128,14 @@ method select-category ( Str:D $cat-name, Str $subcat-name = '' --> Str ) {
   my Str $category-name = $cat-name.tc;
   my Str $subcategory-name = $subcat-name.tc ~ '_EX_';
 
+note "$?LINE $category-name, $subcategory-name";
   if ? $subcategory-name and
      $!categories-config<categories>{$subcategory-name}{$category-name}:exists
-     or $!categories-config<categories>{$category-name}:exists
   {
+    $!current-category .= new( :$category-name, :$!root-dir);
+  }
+
+  elsif $!categories-config<categories>{$category-name}:exists {
     # Set to new category
     $!current-category .= new( :$category-name, :$!root-dir);
   }
@@ -228,8 +232,11 @@ method get-current-category ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-category-status ( Str $category-name --> Array ) {
+method get-category-status ( Str $cat-name, Str $subcat-name = '' --> Array ) {
+  my Str $category-name = $cat-name.tc;
+  my Str $subcategory-name = $subcat-name.tc ~ '_EX_';
   my Array $cat-status = [ 0, 0, 0, 0];
+  my Hash $categories := $!categories-config<categories>;
 
   if $!categories-config<categories>{$category-name}<status>:exists {
     $cat-status = $!categories-config<categories>{$category-name}<status>;

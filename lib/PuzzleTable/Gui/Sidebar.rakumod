@@ -19,6 +19,7 @@ use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
+use Gnome::Gtk4::Expander:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
@@ -296,43 +297,44 @@ method fill-sidebar ( Bool :$init = False ) {
 
     my Array $totals = [ 0, 0, 0, 0];
     for $!config.get-categories(:filter<lockable>) -> $category {
-      with my Gnome::Gtk4::Button $cat-button .= new-button {
-        $!config.set-css( .get-style-context, :css-class<sidebar-label>);
+      if $category ~~ m/ '_EX_' $/ {
+        my $subcategory-name = $category;
+        $subcategory-name ~~ s/ '_EX_' $//;
+        my Int $subcat-row-count = 0;
+note "$?LINE $category -> $subcategory-name";
 
-        given $l .= new-label {
-          .set-text($category);
-          .set-hexpand(True);
-          .set-halign(GTK_ALIGN_START);
+        my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
+        for $!config.get-categories(
+              :filter<lockable>, :$subcategory-name
+            ) -> $sub-category
+        {
+note "$?LINE $sub-category";
+          my Gnome::Gtk4::Button $subcat-button =
+             self.sidebar-button( $sub-category, $subcategory-name);
+          $subcat-grid.attach( $subcat-button, 0, $subcat-row-count, 1, 1);
+
+#`{{
+            # Get information of each subcategory
+            self.sidebar-status(
+              $sub-category, $!cat-grid, $subcat-row-count, $totals
+            );
+}}
+          $subcat-row-count++;
         }
 
-        .set-child($l);
-        .set-hexpand(True);
-        .set-halign(GTK_ALIGN_FILL);
-        .set-has-tooltip(True);
-        .register-signal( self, 'show-tooltip', 'query-tooltip', :$category);
-        .register-signal( self, 'select-category', 'clicked', :$category);
+        my Gnome::Gtk4::Expander $expander =
+          self.sidebar-expander($subcategory-name);
+        $expander.set-child($subcat-grid);
+        .attach( $expander, 0, $row-count, 1, 1);
       }
 
-      .attach( $cat-button, 0, $row-count, 1, 1);
+      else {
+        my Gnome::Gtk4::Button $cat-button = self.sidebar-button($category);
+        .attach( $cat-button, 0, $row-count, 1, 1);
 
-      # Get information of each category
-      my Array $cat-status = $!config.get-category-status($category);
-      $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
-      .attach( $l, 1, $row-count, 1, 1);
-      $totals[0] += $cat-status[0];
-
-      $l .= new-label; $l.set-text($cat-status[1].fmt('%3d'));
-      .attach( $l, 2, $row-count, 1, 1);
-      $totals[1] += $cat-status[1];
-
-      $l .= new-label; $l.set-text($cat-status[2].fmt('%3d'));
-      .attach( $l, 3, $row-count, 1, 1);
-      $totals[2] += $cat-status[2];
-
-      $l .= new-label; $l.set-text($cat-status[3].fmt('%3d'));
-      $l.set-margin-end(10);
-      .attach( $l, 4, $row-count, 1, 1);
-      $totals[3] += $cat-status[3];
+        # Get information of each category
+        self.sidebar-status( $category, $!cat-grid, $row-count, $totals);
+      }
 
       $row-count++;
     }
@@ -354,6 +356,85 @@ method fill-sidebar ( Bool :$init = False ) {
 }
 
 #-------------------------------------------------------------------------------
+method sidebar-button (
+  Str $category, Str $subcategory = '' --> Gnome::Gtk4::Button
+) {
+  with my Gnome::Gtk4::Button $cat-button .= new-button {
+#    $!config.set-css( .get-style-context, :css-class<sidebar-button>);
+
+    my Str $catname = ?$subcategory ?? $subcategory !! $category;
+
+    given my Gnome::Gtk4::Label $l .= new-label {
+      .set-text($category);
+      .set-hexpand(True);
+      .set-halign(GTK_ALIGN_START);
+      $!config.set-css(
+        .get-style-context,
+        :css-class(?$subcategory ?? 'sidebar-sublabel' !! 'sidebar-label')
+      );
+    }
+
+    .set-child($l);
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_FILL);
+    .set-has-tooltip(True);
+    .register-signal(
+      self, 'show-tooltip', 'query-tooltip', :$category
+    );
+    .register-signal(
+      self, 'select-category', 'clicked', :$category, :$subcategory
+    );
+  }
+  
+  $cat-button
+}
+
+#-------------------------------------------------------------------------------
+method sidebar-expander ( Str $category --> Gnome::Gtk4::Expander ) {
+  with my Gnome::Gtk4::Expander $cat-expander .= new-expander(Str) {
+#    $!config.set-css( .get-style-context, :css-class<sidebar-expander>);
+
+    given my Gnome::Gtk4::Label $l .= new-label {
+      .set-text($category);
+      .set-hexpand(True);
+      .set-halign(GTK_ALIGN_START);
+      $!config.set-css( .get-style-context, :css-class('sidebar-ex-label'));
+    }
+
+    .set-label-widget($l);
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_FILL);
+  }
+  
+  $cat-expander
+}
+
+#-------------------------------------------------------------------------------
+method sidebar-status (
+  Str $category, Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals
+) {
+  my Gnome::Gtk4::Label $l;
+
+  my Array $cat-status = $!config.get-category-status($category);
+  $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
+  $grid.attach( $l, 1, $row-count, 1, 1);
+  $totals[0] += $cat-status[0];
+
+  $l .= new-label; $l.set-text($cat-status[1].fmt('%3d'));
+  $grid.attach( $l, 2, $row-count, 1, 1);
+  $totals[1] += $cat-status[1];
+
+  $l .= new-label; $l.set-text($cat-status[2].fmt('%3d'));
+  $grid.attach( $l, 3, $row-count, 1, 1);
+  $totals[2] += $cat-status[2];
+
+  $l .= new-label; $l.set-text($cat-status[3].fmt('%3d'));
+  $l.set-margin-end(10);
+  $grid.attach( $l, 4, $row-count, 1, 1);
+  $totals[3] += $cat-status[3];
+}
+
+#-------------------------------------------------------------------------------
 method show-tooltip (
   Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip,
   Str :$category
@@ -371,7 +452,7 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method select-category ( Str :$category ) {
+method select-category ( Str :$category, Str :$subcategory = '' ) {
 #  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
@@ -380,7 +461,7 @@ method select-category ( Str :$category ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  $!config.select-category($category);
+  $!config.select-category( $category, $subcategory);
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
