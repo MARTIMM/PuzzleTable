@@ -166,30 +166,48 @@ subtest 'grouping', {
   with $categories {
     $message = .add-category( 'opt 1', :!lockable);
     $message = .add-category( 'opt 2', :!lockable);
+    $message = .add-category( 'opt 3', :!lockable);
     .group-in-subcategory( 'options', 'opt 1');
     .group-in-subcategory( 'options', 'opt 2');
+    .group-in-subcategory( 'options', 'opt 3');
+
     #.save-categories-config;
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
     ok $config<categories><Options_EX_>:exists,
       '.group-in-subcategory() subcategory';
-    is $config<categories><Options_EX_>.elems, 2, '.group-in-subcategory() elems';
+    is $config<categories><Options_EX_>.elems, 3,
+      '.group-in-subcategory() elems';
 
-    $message = .select-category( 'opt 1');
+    my Seq $cats = .get-categories;
+    is $cats.elems, 4, '.get-categories(): unfiltered, top level';
+    is-deeply $cats, ( 'Cat-2', 'Cat-5', 'Default', 'Options_EX_'),
+      '.get-categories(): check keynames';
+    $cats = .get-categories(:subcategory-name<options>);
+    is $cats.elems, 3, '.get-categories(): unfiltered, sub cat';
+    is-deeply $cats, ( 'Opt 1', 'Opt 2', 'Opt 3'),
+      '.get-categories(): check key names in subcat';
+
+    $message = .select-category('opt 1');
     is $message, "Category Opt 1 does not exist",
        '.select-category() subcat fail';
     $message = .select-category( 'opt 1', 'options');
-    ok !$message, '.select-category() subcat ok';
+    ok !$message, '.select-category() found in options subcat';
 
     .ungroup-in-subcategory( 'options', 'opt 1');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<categories><Options_EX_>.elems, 1,
+    is $config<categories><Options_EX_>.elems, 2,
        '.ungroup-in-subcategory() elems';
     ok $config<categories><opt 1>:exists, '.ungroup-in-subcategory() check';
 
     .ungroup-in-subcategory( 'options', 'opt 2');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
+    ok $config<categories><Options_EX_>:exists,
+       '.ungroup-in-subcategory() sub cat still exists';
+
+    .ungroup-in-subcategory( 'options', 'opt 3');
+    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
     ok $config<categories><Options_EX_>:!exists,
-       '.ungroup-in-subcategory() drop';
+       '.ungroup-in-subcategory() subcat deleted';
   }
 }
 

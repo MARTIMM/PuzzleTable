@@ -144,11 +144,16 @@ method select-category ( Str:D $cat-name, Str $subcat-name = '' --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( Str :$filter, Str :$subcategory-name = '' --> Seq ) {
+method get-categories (
+  Str :$filter, Str :subcategory-name($subcat-name) = '' --> Seq
+) {
   my Bool $locked = self.is-locked;
+  my Str $subcategory-name = $subcat-name.tc ~ '_EX_';
+
   my @cat = ();
   my @cat-key-list;
-  if ?$subcategory-name {
+
+  if ?$subcat-name {
     @cat-key-list = $!categories-config<categories>{$subcategory-name}.keys;
   }
 

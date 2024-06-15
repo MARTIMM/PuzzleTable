@@ -133,7 +133,6 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
 #-------------------------------------------------------------------------------
 # To copy a confguration call this method. Only neede for the converter
 method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
-note "$?LINE set puzzle id $puzzle-id in $!category-name";
   for $new-pairs.kv -> Str $field-name, $value {
     $!category-config<members>{$puzzle-id}{$field-name} = $value;
   }
