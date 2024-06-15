@@ -4340,13 +4340,36 @@ progressbar.osd {
 }
 
 /*
-.sidebar-label {
-  background-color: rgb(255, 182, 182);
+.sidebar-expander {
+  background-image: none;
+  background-color: rgb(82, 3, 3);
+  color: #ffa9f9;
 }
 
-.sidebar-label label {
-  color: rgb(255, 193, 193);
+.sidebar-button {
+  background: linear-gradient( 0deg, #600 0%, #a00 50%, #300 100%);
 }
+*/
+
+.sidebar-label {
+  color: #a3d4fd;
+}
+  
+.sidebar-sublabel {
+  color: #dea9ff;
+  margin-left: 17px;
+}
+  
+.sidebar-ex-label {
+  color: #83ff64;
+}
+
+
+/*
+.sidebar-label label {
+  color: rgb(4, 4, 168);
+}
+
 */
 
 .toolbar-icon {
