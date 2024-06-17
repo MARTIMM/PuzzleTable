@@ -10,14 +10,19 @@ use PuzzleTable::Config::Puzzle;
 unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
 
 has Str $.category-name;
+has Str $.category-container-name;
 has Str $!config-dir;
 has Hash $!category-config;
 has Str $!config-path;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str:D :$!category-name, Str:D :$root-dir ) {
+
+submethod BUILD (
+  Str:D :$!category-name, Str :$!category-container-name = '', Str:D :$root-dir
+) {
 
   $!category-name .= tc;
+  $!category-container-name .= tc;
 
   $!config-dir = "$root-dir/$!category-name";
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
@@ -125,6 +130,7 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
   $!category-config<members>{$puzzle-id}<Image>:delete;
   $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
   $!category-config<members>{$puzzle-id}<Category>:delete;
+  $!category-config<members>{$puzzle-id}<Category-Container>:delete;
   self.save-category-config;
 
   True
@@ -141,6 +147,7 @@ method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
   $!category-config<members>{$puzzle-id}<Image>:delete;
   $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
   $!category-config<members>{$puzzle-id}<Category>:delete;
+  $!category-config<members>{$puzzle-id}<Category-Container>:delete;
   self.save-category-config;
 }
 
