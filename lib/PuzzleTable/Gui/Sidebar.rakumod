@@ -33,7 +33,7 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-has Gnome::Gtk4::Grid $!cat-grid;
+#has Gnome::Gtk4::Grid $!cat-grid;
 #has Str $!current-category;
 
 #-------------------------------------------------------------------------------
@@ -274,6 +274,7 @@ method set-cat-lock-info (
   Gnome::Gtk4::ComboBoxText() :_native-object($combobox),
   Gnome::Gtk4::CheckButton :$check-button
 ) {
+#TODO container name
   $check-button.set-active(
     $!config.is-category-lockable($combobox.get-active-text)
   );
@@ -281,66 +282,73 @@ method set-cat-lock-info (
 
 #-------------------------------------------------------------------------------
 method fill-sidebar ( Bool :$init = False ) {
+  my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
+  $cat-grid.clear-object;
 
   # Remove all buttons and info from sidebar
-  if ?$!cat-grid and $!cat-grid.is-valid {
-    $!cat-grid.clear-object;
-  }
+#  if ?$!cat-grid and $!cat-grid.is-valid {
+#    $!cat-grid.clear-object;
+#  }
 
   # Create new sidebar
   my $row-count = 0;
-  with $!cat-grid .= new-grid {
-    .set-name('sidebar');
-    .set-size-request( 200, 100);
+  #with $!cat-grid .= new-grid {
+    $cat-grid .= new-grid;
+    $cat-grid.set-name('sidebar');
+    $cat-grid.set-size-request( 200, 100);
+    $!config.set-css(
+      $cat-grid.get-style-context, :css-class<pt-sidebar>
+    );
 
     my Gnome::Gtk4::Label $l;
 
     my Array $totals = [ 0, 0, 0, 0];
     for $!config.get-categories(:filter<lockable>) -> $category {
       if $category ~~ m/ '_EX_' $/ {
-        my $subcategory-name = $category;
-        $subcategory-name ~~ s/ '_EX_' $//;
+        my $category-container-name = $category;
+        $category-container-name ~~ s/ '_EX_' $//;
         my Int $subcat-row-count = 0;
-note "$?LINE $category -> $subcategory-name";
-
         my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
         for $!config.get-categories(
-              :filter<lockable>, :$subcategory-name
+              :filter<lockable>, :$category-container-name
             ) -> $sub-category
         {
-note "$?LINE $sub-category";
           my Gnome::Gtk4::Button $subcat-button =
-             self.sidebar-button( $sub-category, $subcategory-name);
+             self.sidebar-button( $sub-category, $category-container-name);
+
           $subcat-grid.attach( $subcat-button, 0, $subcat-row-count, 1, 1);
 
-#`{{
-            # Get information of each subcategory
-            self.sidebar-status(
-              $sub-category, $!cat-grid, $subcat-row-count, $totals
-            );
-}}
+          # Get information of each subcategory
+          self.sidebar-status(
+            $sub-category, $subcat-grid, $subcat-row-count, $totals,
+            :$category-container-name
+          );
+
           $subcat-row-count++;
         }
 
-        my Gnome::Gtk4::Expander $expander =
-          self.sidebar-expander($subcategory-name);
-        $expander.set-child($subcat-grid);
-        .attach( $expander, 0, $row-count, 1, 1);
+        # Only show container if there are any categories visible
+        if $subcat-row-count {
+          my Gnome::Gtk4::Expander $expander =
+            self.sidebar-expander($category-container-name);
+          $expander.set-child($subcat-grid);
+          $cat-grid.attach( $expander, 0, $row-count, 5, 1);
+        }
       }
 
       else {
         my Gnome::Gtk4::Button $cat-button = self.sidebar-button($category);
-        .attach( $cat-button, 0, $row-count, 1, 1);
+        $cat-grid.attach( $cat-button, 0, $row-count, 1, 1);
 
         # Get information of each category
-        self.sidebar-status( $category, $!cat-grid, $row-count, $totals);
+        self.sidebar-status( $category, $cat-grid, $row-count, $totals);
       }
 
       $row-count++;
     }
 
     # Display gathered information in a tooltip
-    .set-tooltip-text(Q:qq:to/EOTT/);
+    $cat-grid.set-tooltip-text(Q:qq:to/EOTT/);
       Number of puzzles
       Untouched puzzles
       Unfinished puzzles
@@ -349,28 +357,41 @@ note "$?LINE $sub-category";
       Totals
       [ $totals.join(', ') ]
       EOTT
-  }
+  #}
 
-  self.set-child($!cat-grid);
+  self.set-child($cat-grid);
   self.select-category(:category<Default>) if $init;
 }
 
 #-------------------------------------------------------------------------------
 method sidebar-button (
-  Str $category, Str $subcategory = '' --> Gnome::Gtk4::Button
+  Str $category, Str $category-container-name = '' --> Gnome::Gtk4::Button
 ) {
   with my Gnome::Gtk4::Button $cat-button .= new-button {
-#    $!config.set-css( .get-style-context, :css-class<sidebar-button>);
+    $!config.set-css(
+      .get-style-context,
+      :css-class( ?$category-container-name
+                  ?? 'pt-sidebar-container-button'
+                  !! 'pt-sidebar-category-button'
+                )
+    );
 
-    my Str $catname = ?$subcategory ?? $subcategory !! $category;
+    my Str $catname = ?$category-container-name ?? $category-container-name !! $category;
 
     given my Gnome::Gtk4::Label $l .= new-label {
       .set-text($category);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
+#      .set-max-width-chars(? $category-container-name ?? 23 !! 25 );
+#      .set-ellipsize(True);
+
       $!config.set-css(
         .get-style-context,
-        :css-class(?$subcategory ?? 'sidebar-sublabel' !! 'sidebar-label')
+        :css-class(
+          ? $category-container-name
+            ?? 'pt-sidebar-container-label'
+            !! 'pt-sidebar-category-label'
+        )
       );
     }
 
@@ -378,11 +399,12 @@ method sidebar-button (
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
     .set-has-tooltip(True);
+
     .register-signal(
       self, 'show-tooltip', 'query-tooltip', :$category
     );
     .register-signal(
-      self, 'select-category', 'clicked', :$category, :$subcategory
+      self, 'select-category', 'clicked', :$category, :$category-container-name
     );
   }
   
@@ -392,13 +414,15 @@ method sidebar-button (
 #-------------------------------------------------------------------------------
 method sidebar-expander ( Str $category --> Gnome::Gtk4::Expander ) {
   with my Gnome::Gtk4::Expander $cat-expander .= new-expander(Str) {
-#    $!config.set-css( .get-style-context, :css-class<sidebar-expander>);
+    $!config.set-css( .get-style-context, :css-class<pt-sidebar-expander>);
 
     given my Gnome::Gtk4::Label $l .= new-label {
       .set-text($category);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
-      $!config.set-css( .get-style-context, :css-class('sidebar-ex-label'));
+      $!config.set-css(
+        .get-style-context, :css-class('sidebar-expander-label')
+      );
     }
 
     .set-label-widget($l);
@@ -411,11 +435,15 @@ method sidebar-expander ( Str $category --> Gnome::Gtk4::Expander ) {
 
 #-------------------------------------------------------------------------------
 method sidebar-status (
-  Str $category, Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals
+  Str $category,
+  Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals,
+  Str :$category-container-name = ''
 ) {
   my Gnome::Gtk4::Label $l;
 
-  my Array $cat-status = $!config.get-category-status($category);
+  my Array $cat-status =
+     $!config.get-category-status( $category, $category-container-name);
+
   $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
   $totals[0] += $cat-status[0];
@@ -452,7 +480,7 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method select-category ( Str :$category, Str :$subcategory = '' ) {
+method select-category ( Str :$category, Str :$category-container-name = '' ) {
 #  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
@@ -461,7 +489,7 @@ method select-category ( Str :$category, Str :$subcategory = '' ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  $!config.select-category( $category, $subcategory);
+  $!config.select-category( $category, $category-container-name);
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
