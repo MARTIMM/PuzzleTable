@@ -4339,29 +4339,44 @@ progressbar.osd {
   margin-bottom: 5px;
 }
 
-/*
-.sidebar-expander {
+/* Sidebar grid. */
+.pt-sidebar {
   background-image: none;
-  background-color: rgb(82, 3, 3);
-  color: #ffa9f9;
+  background-color: #010531;
 }
 
-.sidebar-button {
-  background: linear-gradient( 0deg, #600 0%, #a00 50%, #300 100%);
-}
+/* Sidebar button.
+   prefix .pt (for puzzle table) is needed because above button.sidebar is used
 */
+.pt-sidebar-category-button {
+  background-image: none;
+  background-color: #010531;
+}
 
-.sidebar-label {
+/* Label of the sidebar button */
+.pt-sidebar-category-label {
   color: #a3d4fd;
 }
-  
-.sidebar-sublabel {
-  color: #dea9ff;
-  margin-left: 17px;
+
+/* the sidebar grid of the expander child */
+.pt-sidebar-expander {
+  background-image: none;
+  background-color: #1b0024;
 }
-  
-.sidebar-ex-label {
+
+/* The label in the expander */
+.sidebar-expander-label {
   color: #83ff64;
+}
+
+.pt-sidebar-container-button {
+  background-image: none;
+  background-color: #250130;  
+}
+
+.pt-sidebar-container-label {
+  color: #dea9ff;
+  margin-left: 17px;  
 }
 
 
