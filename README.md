@@ -83,6 +83,8 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
   * ['FlatIcon - Anggara'](https://www.flaticon.com/free-icons/categories)
   * ['FlatIcon - mynamepong'](https://www.flaticon.com/free-icons/puzzle)
   * ['FlatIcon - paonkz'](https://www.flaticon.com/free-icons/files-and-folders)
+  * ['Freepik - Icon by judanna](https://www.freepik.com/icon/add_10110024#fromView=keyword&page=1&position=14&uuid=d07d88e3-b3e7-48da-9f3b-f1fc0703d53c)
+
 
 <!--
 * Icon from set ['Run icons created by Smashicons'](https://www.flaticon.com/free-icons/run).
