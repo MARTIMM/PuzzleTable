@@ -4,6 +4,8 @@ use v6.d;
 
 use PuzzleTable::Gui::MainWindow;
 
+%*ENV<IGNORE_GNOME_DEPRECATION_MESSAGES> = 1;
+
 # Show messages on terminal window if True
 my $*verbose-output = True;
 
