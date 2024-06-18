@@ -38,8 +38,9 @@ submethod BUILD ( ) {
 
   # Copy images to the data directory
   my Str $png-file;
-  for <start-puzzle-64.png edit-puzzle-64.png add-cat.png ren-cat.png
-       rem-cat.png move-64.png remove-64.png archive-64.png config-64.png
+  for <start-puzzle-64.png edit-puzzle-64.png
+       add-cat.png add-cont.png ren-cat.png rem-cat.png
+       move-64.png remove-64.png archive-64.png config-64.png
       > -> $i {
     $png-file = [~] DATA_DIR, 'images/', $i;
     %?RESOURCES{$i}.copy($png-file) unless $png-file.IO.e;

@@ -90,7 +90,8 @@ method save-categories-config ( ) {
 # all cats are unique
 # TODO add in subcats? or move afterwards
 method add-category (
-  Str:D $category-name is copy, :$lockable = False --> Str
+  Str:D $category-name is copy, Str :$category-container-name is copy = '',
+  :$lockable = False --> Str
 ) {
   my Str $message = '';
   $category-name .= tc;
@@ -123,10 +124,13 @@ method move-category ( $cat-from, $cat-to ) {
 }
 
 #-------------------------------------------------------------------------------
-method select-category ( Str:D $cat-name, Str $cat-container-name = '' --> Str ) {
+method select-category (
+  Str:D $cat-name, Str :$category-container-name is copy = '' --> Str
+) {
   my Str $message = '';
   my Str $category-name = $cat-name.tc;
-  my Str $category-container-name = $cat-container-name.tc ~ '_EX_';
+  $category-container-name = $category-container-name.tc ~ '_EX_'
+      if ? $category-container-name;
 
   if ? $category-container-name and
      $!categories-config<categories>{$category-container-name}{$category-name}:exists
@@ -150,22 +154,23 @@ method select-category ( Str:D $cat-name, Str $cat-container-name = '' --> Str )
 
 #-------------------------------------------------------------------------------
 method get-categories (
-  Str :$filter, Str :category-container-name($cat-container-name) = '' --> Seq
+  Str :$filter, Str :$category-container-name is copy = '' --> Seq
 ) {
   my Bool $locked = self.is-locked;
-  my Str $category-container-name = $cat-container-name.tc ~ '_EX_';
+  $category-container-name = $category-container-name.tc ~ '_EX_'
+     if ? $category-container-name;
 
-  my @cat = ();
   my @cat-key-list;
-
-  if ?$cat-container-name {
-    @cat-key-list = $!categories-config<categories>{$category-container-name}.keys;
+  if ? $category-container-name {
+    @cat-key-list =
+      $!categories-config<categories>{$category-container-name}.keys;
   }
 
   else {
     @cat-key-list = $!categories-config<categories>.keys;
   }
 
+  my @cat = ();
   for @cat-key-list -> $category {
     given $filter {
       when 'default' {
@@ -174,7 +179,7 @@ method get-categories (
 
       when 'lockable' {
         next if $locked and
-                self.is-category-lockable( $category, $cat-container-name);
+                self.is-category-lockable( $category, $category-container-name);
       }
     }
 
@@ -185,13 +190,16 @@ method get-categories (
 }
 
 #-------------------------------------------------------------------------------
-method group-in-subcategory ( Str $cat-container-name, Str $cat-name ) {
+method group-in-subcategory (
+  Str $category-container-name is copy, Str $cat-name
+) {
   my Str $category-name = $cat-name.tc;
-  my Str $category-container-name = $cat-container-name.tc ~ '_EX_';
-  my Hash $categories := $!categories-config<categories>;
+  $category-container-name = $cat-container-name.tc ~ '_EX_'
+     if ? $category-container-name;
 
   # Only move category when name is not in the subcategory
   #TODO when cats are unique everywhere then test is not needed
+  my Hash $categories := $!categories-config<categories>;
   if $categories{$category-name}:exists
      and $categories{$category-container-name}{$category-name}:!exists
   {
@@ -220,9 +228,9 @@ method ungroup-in-subcategory ( Str $cat-container-name, Str $cat-name ) {
     $categories{$category-name} =
       $categories{$category-container-name}{$category-name}:delete;
 
-    # Delete subcategory when empty
-    $categories{$category-container-name}:delete
-      unless ? $categories{$category-container-name};
+#    # Delete subcategory when empty
+#    $categories{$category-container-name}:delete
+#      unless ? $categories{$category-container-name};
 
     self.save-categories-config;
   }
@@ -543,6 +551,8 @@ method run-palapeli ( Hash $puzzle --> Str ) {
   # Get executable program
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
 
+note "\n$?LINE Error missing \$puzzle-id: Hash = $puzzle.gist()"
+unless ? $puzzle<PuzzleID>;
   my Str $puzzle-id = $puzzle<PuzzleID>;
   my Str $puzzle-path = [~]
     $!current-category.get-puzzle-destination($puzzle-id),
@@ -645,12 +655,19 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 method is-category-lockable (
   Str:D $category, Str $container-name = '' --> Bool
 ) {
+  my Hash $c := $!categories-config<categories>;
   if ? $container-name {
-    $!categories-config<categories>{$container-name ~ '_EX_'}{$category}<lockable>.Bool
+    if $container-name ~~ m/ '_EX_' $/ {
+      $c{$container-name}{$category}<lockable>.Bool
+    }
+
+    else {
+      $c{$container-name ~ '_EX_'}{$category}<lockable>.Bool
+    }
   }
 
   else {
-    $!categories-config<categories>{$category}<lockable>.Bool
+    $c{$category}<lockable>.Bool
   }
 }
 

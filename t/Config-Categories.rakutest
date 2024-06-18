@@ -182,7 +182,7 @@ subtest 'grouping', {
     is $cats.elems, 4, '.get-categories(): unfiltered, top level';
     is-deeply $cats, ( 'Cat-2', 'Cat-5', 'Default', 'Options_EX_'),
       '.get-categories(): check keynames';
-    $cats = .get-categories(:subcategory-name<options>);
+    $cats = .get-categories(:category-container-name<options>);
     is $cats.elems, 3, '.get-categories(): unfiltered, sub cat';
     is-deeply $cats, ( 'Opt 1', 'Opt 2', 'Opt 3'),
       '.get-categories(): check key names in subcat';
@@ -190,7 +190,7 @@ subtest 'grouping', {
     $message = .select-category('opt 1');
     is $message, "Category Opt 1 does not exist",
        '.select-category() subcat fail';
-    $message = .select-category( 'opt 1', 'options');
+    $message = .select-category( 'opt 1', :category-container-name<options>);
     ok !$message, '.select-category() found in options subcat';
 
     .ungroup-in-subcategory( 'options', 'opt 1');
@@ -206,8 +206,8 @@ subtest 'grouping', {
 
     .ungroup-in-subcategory( 'options', 'opt 3');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    ok $config<categories><Options_EX_>:!exists,
-       '.ungroup-in-subcategory() subcat deleted';
+    is $config<categories><Options_EX_>.elems, 0,
+       '.ungroup-in-subcategory() subcat empty';
   }
 }
 

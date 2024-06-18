@@ -328,12 +328,12 @@ method fill-sidebar ( Bool :$init = False ) {
         }
 
         # Only show container if there are any categories visible
-        if $subcat-row-count {
+#        if $subcat-row-count {
           my Gnome::Gtk4::Expander $expander =
             self.sidebar-expander($category-container-name);
           $expander.set-child($subcat-grid);
           $cat-grid.attach( $expander, 0, $row-count, 5, 1);
-        }
+#        }
       }
 
       else {

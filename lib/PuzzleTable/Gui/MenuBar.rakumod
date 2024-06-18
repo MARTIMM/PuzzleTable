@@ -75,6 +75,10 @@ method make-menu (
         :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
       );
       self.bind-action(
+        $menu, $menu-name, $!cat, 'Add Container', 'app.add-container',
+        :path(DATA_DIR ~ 'images/add-cont.png'), :tooltip('Add a new category container')
+      );
+      self.bind-action(
         $menu, $menu-name, $!cat, 'Lock Category', 'app.lock-category'
       );
       self.bind-action(
@@ -83,7 +87,7 @@ method make-menu (
       );
       self.bind-action(
         $menu, $menu-name, $!cat, 'Remove Category', 'app.remove-category',
-        :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
+#        :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
       );
       self.bind-action(
         $menu, $menu-name, $!cat, 'Refresh Sidebar', 'app.refresh-sidebar',
@@ -98,7 +102,7 @@ method make-menu (
       );
       self.bind-action(
         $menu, $menu-name, $!phandling, 'Remove Puzzles', 'app.remove-puzzles',
-#        :path(DATA_DIR ~ 'images/remove-64.png'), :tooltip('Remove puzzles')
+        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Remove puzzles')
       );
     }
 
