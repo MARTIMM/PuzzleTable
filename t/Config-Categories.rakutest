@@ -65,23 +65,16 @@ subtest 'puzzle', {
     $message = .import-collection(COLLDATA);
     ok ! $message, '.import-collection(); puzzles imported from collection';
 
-    #.save-categories-config;
-
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<categories>.elems, 3, '.save-categories-config()';
+    is $config<categories>.elems, 3, '.save-categories-config() (implicit)';
     ok $config<categories><Cat-2><lockable>, 'Check categories config';
 
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 2, 'Check category config';
-  #note $config.gist();
 
     .add-puzzle(EXPDATA ~ 'e1.puzzle');
-    #.save-categories-config;
-
-  #  $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 3, '.add-puzzle()';
-  #note $config.gist();
 
     $message = .remove-puzzle( 'p0005', ARCHDATA);
     is $message, 'Puzzle id is wrong and/or Puzzle store not found',
@@ -182,7 +175,7 @@ subtest 'grouping', {
     is $cats.elems, 4, '.get-categories(): unfiltered, top level';
     is-deeply $cats, ( 'Cat-2', 'Cat-5', 'Default', 'Options_EX_'),
       '.get-categories(): check keynames';
-    $cats = .get-categories(:category-container-name<options>);
+    $cats = .get-categories(:category-container<options>);
     is $cats.elems, 3, '.get-categories(): unfiltered, sub cat';
     is-deeply $cats, ( 'Opt 1', 'Opt 2', 'Opt 3'),
       '.get-categories(): check key names in subcat';
@@ -190,7 +183,7 @@ subtest 'grouping', {
     $message = .select-category('opt 1');
     is $message, "Category Opt 1 does not exist",
        '.select-category() subcat fail';
-    $message = .select-category( 'opt 1', :category-container-name<options>);
+    $message = .select-category( 'opt 1', :category-container<options>);
     ok !$message, '.select-category() found in options subcat';
 
     .ungroup-in-subcategory( 'options', 'opt 1');
@@ -208,6 +201,27 @@ subtest 'grouping', {
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
     is $config<categories><Options_EX_>.elems, 0,
        '.ungroup-in-subcategory() subcat empty';
+
+    $message =
+      .add-category( 'set 1', :category-container<sets>, :!lockable);
+    $message =
+      .add-category( 'set 2', :category-container<sets>, :!lockable);
+    $cats = .get-categories(:category-container<sets>);
+    is-deeply $cats, ( 'Set 1', 'Set 2' ), '.add-category() add in container';
+    $message =
+      .add-category( 'set 2', :category-container<sets>, :!lockable);
+    is $message, "Category Set 2 already exists in this container",
+       '.add-category(): ' ~ $message;
+
+    .select-category( 'set 2', :category-container<sets>);
+    .add-puzzle(EXPDATA ~ 'e2.puzzle');
+    $config = load-yaml("{CONFDATA}Set 2/puzzles.yaml".IO.slurp);
+    is $config<members>.elems, 1, '.add-puzzle() in container Sets';
+
+    my Array $puzzles = [|.get-puzzles()];
+    .move-puzzle( 'set 1', $puzzles[0]<PuzzleID>);
+    $config = load-yaml("{CONFDATA}Set 1/puzzles.yaml".IO.slurp);
+    is $config<members>.elems, 1, '.move-puzzle() in container Sets';
   }
 }
 

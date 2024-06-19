@@ -10,7 +10,7 @@ use PuzzleTable::Config::Puzzle;
 unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
 
 has Str $.category-name;
-has Str $.category-container-name;
+has Str $.category-container;
 has Str $!config-dir;
 has Hash $!category-config;
 has Str $!config-path;
@@ -18,11 +18,11 @@ has Str $!config-path;
 #-------------------------------------------------------------------------------
 
 submethod BUILD (
-  Str:D :$!category-name, Str :$!category-container-name = '', Str:D :$root-dir
+  Str:D :$!category-name, Str :$!category-container = '', Str:D :$root-dir
 ) {
 
   $!category-name .= tc;
-  $!category-container-name .= tc;
+  $!category-container .= tc;
 
   $!config-dir = "$root-dir/$!category-name";
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
