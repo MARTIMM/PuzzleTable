@@ -210,7 +210,7 @@ subtest 'grouping', {
     is-deeply $cats, ( 'Set 1', 'Set 2' ), '.add-category() add in container';
     $message =
       .add-category( 'set 2', :category-container<sets>, :!lockable);
-    is $message, "Category Set 2 already exists in this container",
+    is $message, "Category Set 2 already exists",
        '.add-category(): ' ~ $message;
 
     .select-category( 'set 2', :category-container<sets>);
@@ -222,6 +222,13 @@ subtest 'grouping', {
     .move-puzzle( 'set 1', $puzzles[0]<PuzzleID>);
     $config = load-yaml("{CONFDATA}Set 1/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 1, '.move-puzzle() in container Sets';
+
+    my Str $container = .find-category('set 1');
+    is $container, 'Sets', '.find-category(): found Set 1 in Sets';
+    $container = .find-category('opt 1');
+    is $container, '', '.find-category(): found Opt 1';
+    $container = .find-category('opt 1001');
+    ok !$container.defined, '.find-category(): Did not find Opt 1001';
   }
 }
 

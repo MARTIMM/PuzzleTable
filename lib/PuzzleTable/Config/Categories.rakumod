@@ -87,8 +87,8 @@ method save-categories-config ( ) {
 
 #-------------------------------------------------------------------------------
 # TODO check in subcats too. dir names are still on same level =>
-# all cats are unique
-# TODO add in subcats? or move afterwards
+# all cats must be unique
+# DONE add in subcats? or move afterwards
 method add-category (
   Str:D $category-name is copy, Str :$category-container is copy = '',
   :$lockable = False --> Str
@@ -96,21 +96,16 @@ method add-category (
   my Str $message = '';
   $category-name .= tc;
   $category-container = $category-container.tc ~ '_EX_'
-      if ? $category-container;
+      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+
   my Hash $categories := $!categories-config<categories>;
 
-  if ? $category-container {
-    if $categories{$category-container}{$category-name}:exists {
-      $message = "Category $category-name already exists in this container";
-    }
-
-    else {
-      $categories{$category-container}{$category-name}<lockable> = $lockable;
-    }
+  if self.find-category($category-name).defined {
+    $message = "Category $category-name already exists";
   }
 
-  elsif $categories{$category-name}:exists {
-    $message = "Category $category-name already exists";
+  elsif ? $category-container {
+    $categories{$category-container}{$category-name}<lockable> = $lockable;
   }
 
   else {
@@ -123,7 +118,9 @@ method add-category (
 }
 
 #-------------------------------------------------------------------------------
-method move-category ( $cat-from, $cat-to ) {
+method move-category (
+  $cat-from, $cat-to, Str :$category-container is copy = ''
+) {
   $!categories-config<categories>{$cat-to} =
     $!categories-config<categories>{$cat-from}:delete;
 
@@ -171,7 +168,7 @@ method get-categories (
 ) {
   my Bool $locked = self.is-locked;
   $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container;
+     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
   my @cat-key-list;
   if ? $category-container {
@@ -204,9 +201,9 @@ method get-categories (
 
 #-------------------------------------------------------------------------------
 method group-in-subcategory (
-  Str $category-container is copy, Str $cat-name
+  Str:D $category-container is copy, Str:D $category-name is copy
 ) {
-  my Str $category-name = $cat-name.tc;
+  $category-name .= tc;
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container;
 
@@ -228,9 +225,9 @@ method group-in-subcategory (
 
 #-------------------------------------------------------------------------------
 method ungroup-in-subcategory (
-  Str $category-container is copy, Str $cat-name
+  Str $category-container is copy, Str $category-name is copy
 ) {
-  my Str $category-name = $cat-name.tc;
+  $category-name .= tc;
   $category-container = $category-container.tc ~ '_EX_';
 
   # Only move back when name in subcat is not in cat
@@ -258,17 +255,25 @@ method get-current-category ( --> Str ) {
 
 #-------------------------------------------------------------------------------
 method get-category-status (
-  Str $cat-name, Str $cat-container-name = '' --> Array
+  Str $category-name is copy , Str :$category-container is copy = '' --> Array
 ) {
 #my $frame = callframe(2);
 #note "$?LINE Called from {$frame.file}:{$frame.line}.";
-  my Str $category-name = $cat-name.tc;
-  my Str $category-container = $cat-container-name.tc ~ '_EX_';
+  $category-name .= tc;
+  $category-container = $category-container.tc ~ '_EX_'
+     if ?$category-container;
   my Array $cat-status = [ 0, 0, 0, 0];
-  my Hash $categories := (?$cat-container-name
-    ?? $!categories-config<categories>{$category-container}
-    !! $!categories-config<categories>);
 
+  my Hash $categories;
+  if ? $category-container {
+     $categories := $!categories-config<categories>{$category-container};
+  }
+
+  else {
+    $categories := $!categories-config<categories>;
+  }
+
+#note "$?LINE $category-container, $category-name";
   if $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
   }
@@ -342,6 +347,31 @@ method update-category-status ( ) {
   }
 
   self.save-categories-config;
+}
+
+#-------------------------------------------------------------------------------
+method find-category ( Str:D $category-name is copy --> Str ) {
+  $category-name .= tc;
+
+  my Str $container;
+  for $!categories-config<categories>.keys -> $cat {
+    if $cat ~~ m/ '_EX_' $/ {
+      for $!categories-config<categories>{$cat}.keys -> $subcat {
+        if $category-name eq $subcat {
+          $container = S/ '_EX_' $// with $cat;
+          last;
+        }
+      }
+    }
+
+    elsif $category-name eq $cat {
+      $container = '';
+      last;
+    }
+  }
+
+  # If undefined, the $category-name is not found
+  $container
 }
 
 #-------------------------------------------------------------------------------
