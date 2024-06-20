@@ -74,10 +74,10 @@ method make-menu (
         $menu, $menu-name, $!cat, 'Add Category', 'app.add-category',
         :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
       );
-      self.bind-action(
-        $menu, $menu-name, $!cat, 'Add Container', 'app.add-container',
-        :path(DATA_DIR ~ 'images/add-cont.png'), :tooltip('Add a new category container')
-      );
+#      self.bind-action(
+#        $menu, $menu-name, $!cat, 'Add Container', 'app.add-container',
+#        :path(DATA_DIR ~ 'images/add-cont.png'), :tooltip('Add a new category container')
+#      );
       self.bind-action(
         $menu, $menu-name, $!cat, 'Lock Category', 'app.lock-category'
       );
