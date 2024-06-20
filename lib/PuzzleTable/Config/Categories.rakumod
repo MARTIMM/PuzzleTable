@@ -375,6 +375,18 @@ method find-category ( Str:D $category-name is copy --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-containers ( --> Seq ) {
+
+  my @containers;
+  for $!categories-config<categories>.keys -> $cat {
+    (@containers.push: S/ '_EX_' $// with $cat) if $cat ~~ m/ '_EX_' $/;
+  }
+
+  # Sort containers
+  @containers.sort
+}
+
+#-------------------------------------------------------------------------------
 method import-collection ( Str:D $collection-path --> Str ) {
   my Str $message = '';
 
@@ -535,7 +547,7 @@ method get-puzzles ( --> Seq ) {
     $cat-puzzle-data.push: $puzzle-config;
   }
 
-  # Sort pusles on its size
+  # Sort puzzles on its size
   my Seq $puzzles = $cat-puzzle-data.sort(
     -> $item1, $item2 { 
       if $item1<PieceCount> < $item2<PieceCount> { Order::Less }
