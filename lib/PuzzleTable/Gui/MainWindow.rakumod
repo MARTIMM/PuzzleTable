@@ -262,6 +262,7 @@ method usage ( ) {
     puzzle-table --version
     puzzle-table --help
     puzzle-table --puzzles <puzzle-path>
+                 [--category <name>] [--container <name>] [--lock
     puzzle-table --pala-collection <collection-path>
 
   Options:
@@ -270,9 +271,15 @@ method usage ( ) {
       with. The category is created if not available. When `--import` or
       `--puzzle` is used, the imported puzzles are placed in that category.
 
+    --container <name>
+      By default it is the empty string. It defines a subcontainer for categories.
+
     -h --help
       Show this information. This is also shown, with an error, when there are
       faulty arguments or options.
+    
+    --lock
+      Lock a category.
 
     --pala-collection <path to palapeli collection>
       Get puzzles from a Palapeli collection into a category. The puzzles in
