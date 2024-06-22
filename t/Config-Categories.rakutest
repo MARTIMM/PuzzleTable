@@ -143,14 +143,10 @@ subtest 'move', {
       '.get-category-status()';
 
     my Seq $cats = .get-categories;
-    is $cats.elems, 3, '.get-categories(): unfiltered';
-    $cats = .get-categories(:filter<lockable>);
-    is $cats.elems, 2, '.get-categories(): lock filtered';
+    is $cats.elems, 2, '.get-categories(): lockable filtered';
     lives-ok { .unlock('hoeperdepoep'); }, '.unlock()';
-    $cats = .get-categories(:filter<lockable>);
+    $cats = .get-categories;
     is $cats.elems, 3, '.get-categories(): lock filtered, unlocked';
-    $cats = .get-categories(:filter<default>);
-    is $cats.elems, 2, '.get-categories(): lock filtered, default';
   }
 }
 

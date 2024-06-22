@@ -52,8 +52,19 @@ method puzzles-move-puzzles ( N-Object $parameter ) {
     :$!main, :dialog-header('Move Puzzles Dialog')
   ) {
     my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
-    for $!config.get-categories(:filter<lockable>) -> $category {
-      $combobox.append-text($category);
+    for $!config.get-categories -> $category {
+      if $category ~~ m/ '_EX_' $/ {
+        for $!config.get-categories(
+              :category-container($category)
+            ) -> $subcategory
+        {
+          $combobox.append-text($subcategory);
+        }
+      }
+
+      else {
+        $combobox.append-text($category);
+      }
     }
     $combobox.set-active(0);
 
