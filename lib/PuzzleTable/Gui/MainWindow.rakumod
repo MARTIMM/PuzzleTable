@@ -153,11 +153,24 @@ method remote-options (
 
 #TODO select category if registered
   $!category.set-category($opt-category);
-  $!config.select-category($opt-category);
+  my Str $category-container = $!config.find-category($opt-category);
+  if ?$category-container {
+    $!config.select-category( $opt-category, :$category-container);
+  }
+
+  else {
+    $!config.select-category($opt-category);
+  }
 
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
-      next unless $puzzle-path ~~ m/ \. puzzle $/;
+      $puzzle-path ~~ s@^ '~/' @$*HOME/@;
+      unless $puzzle-path ~~ m/ \. puzzle $/ and $puzzle-path.IO.r {
+        note "Puzzle $puzzle-path not found or is not a puzzle file";
+        next;
+      }
+
+note "$?LINE $puzzle-path";
       #my Str $puzzle-id = $!config.add-puzzle( $opt-category, $puzzle-path);
       my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
 
@@ -261,8 +274,7 @@ method usage ( ) {
   Usage:
     puzzle-table --version
     puzzle-table --help
-    puzzle-table --puzzles <puzzle-path>
-                 [--category <name>] [--container <name>] [--lock
+    puzzle-table --puzzles <puzzle-path> [--category <name>] [--lock]
     puzzle-table --pala-collection <collection-path>
 
   Options:
@@ -271,15 +283,12 @@ method usage ( ) {
       with. The category is created if not available. When `--import` or
       `--puzzle` is used, the imported puzzles are placed in that category.
 
-    --container <name>
-      By default it is the empty string. It defines a subcontainer for categories.
-
     -h --help
       Show this information. This is also shown, with an error, when there are
       faulty arguments or options.
     
     --lock
-      Lock a category.
+      Set the category lockable.
 
     --pala-collection <path to palapeli collection>
       Get puzzles from a Palapeli collection into a category. The puzzles in
