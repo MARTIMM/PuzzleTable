@@ -27,7 +27,8 @@ has PuzzleTable::Config::Categories $!categories handles( <
       is-category-lockable set-category-lockable is-locked lock unlock
       set-palapeli-preference get-palapeli-preference get-palapeli-image-size
       get-palapeli-collection run-palapeli
-      get-categories add-category move-category select-category
+      get-categories add-category move-category select-category find-category
+      get-containers
       save-categories-config get-current-category get-category-status
       add-puzzle move-puzzle update-puzzle get-puzzles get-puzzle
       remove-puzzle get-puzzle-image
