@@ -23,6 +23,8 @@ use Gnome::Gtk4::Expander:api<2>;
 use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
+use Gnome::Gtk4::DropDown:api<2>;
+use Gnome::Gtk4::StringList:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -59,21 +61,41 @@ method categories-add-category ( N-Object $parameter ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Add Category Dialog')
   ) {
+    # Make a string list to be used in a combobox (dropdown)
+    my Gnome::Gtk4::StringList $container-strings .= new-stringlist([]);
+    my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-strings);
+
+    # Add an entry to be able to select a category at toplevel
+    $container-strings.append('--');
+
+    # Add the container strings
+    for $!config.get-containers -> $container {
+      $container-strings.append($container);
+    }
+
+    # Show dropdown
+    .add-content( 'Select a container', $dropdown);
+
+    # Show entry for input
     .add-content(
       'Specify a new category', my Gnome::Gtk4::Entry $entry .= new-entry
     );
 
+    # Show checkbutton to make the category locakbel
     .add-content(
       '', my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
-        'Locked Category'
+        'Lockable Category'
       )
     );
 
+    # Buttons to add the category or cancel
     .add-button(
-      self, 'do-category-add', 'Add', :$entry, :$check-button, :$dialog
+      self, 'do-category-add', 'Add', :$entry, :$check-button,
+      :$dialog, :$dropdown, :$container-strings
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
+
     .show-dialog;
   }
 }
@@ -81,7 +103,8 @@ method categories-add-category ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-add (
   PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button
+  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button,
+  Gnome::Gtk4::DropDown :$dropdown, Gnome::Gtk4::StringList :$container-strings
 ) {
   my Bool $sts-ok = False;
   my Str $cat-text = $entry.get-text.tc;
@@ -102,8 +125,11 @@ method do-category-add (
 
   else {
     # Add category to list. Message gets defined if something is wrong.
+    my UInt $container-idx = $dropdown.get-selected;
+    my Str $category-container = $container-strings.get-string($container-idx);
+    $category-container = '' if $category-container eq '--';
     my Str $msg = $!main.config.add-category(
-      $cat-text, :lockable($check-button.get-active)
+      $cat-text, :lockable($check-button.get-active), :$category-container
     );
 
     if ?$msg {
@@ -137,7 +163,7 @@ method categories-lock-category ( N-Object $parameter ) {
 
     # Fill the combobox in the dialog. Using this filter, it isn't necessary to
     # check passwords. One is already authenticated or not.
-    for $!config.get-categories(:filter<lockable>) -> $category {
+    for $!config.get-categories -> $category {
       # skip 'default'
       next if $category eq 'Default';
       $combobox.append-text($category);
@@ -184,7 +210,7 @@ method categories-rename-category ( N-Object $parameter ) {
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
 
   # Fill the combobox in the dialog
-  for $!config.get-categories(:filter<lockable>) -> $category {
+  for $!config.get-categories -> $category {
     next if $category eq 'Default';
     $combobox.append-text($category);
   }
@@ -303,17 +329,14 @@ method fill-sidebar ( Bool :$init = False ) {
     my Gnome::Gtk4::Label $l;
 
     my Array $totals = [ 0, 0, 0, 0];
-    for $!config.get-categories(:filter<lockable>) -> $category {
-note "$?LINE $category";
+    for $!config.get-categories -> $category {
+#note "$?LINE $category";
       if $category ~~ m/ '_EX_' $/ {
         my Str $category-container = $category;
         $category-container ~~ s/ '_EX_' $//;
         my Int $subcat-row-count = 0;
         my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
-        for $!config.get-categories(
-              :filter<lockable>, :$category-container
-            ) -> $sub-category
-        {
+        for $!config.get-categories(:$category-container) -> $sub-category {
           my Gnome::Gtk4::Button $subcat-button =
              self.sidebar-button( $sub-category, $category-container);
 
