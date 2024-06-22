@@ -16,6 +16,11 @@ has Hash $.categories-config;
 has PuzzleTable::Config::Category $!current-category;
 
 #-------------------------------------------------------------------------------
+method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
+  $!current-category.get-puzzle( $puzzle-id, :$delete)
+}
+
+#-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$!root-dir ) {
 
   $!config-path = "$!root-dir/categories.yaml";
@@ -163,9 +168,7 @@ method select-category (
 }
 
 #-------------------------------------------------------------------------------
-method get-categories (
-  Str :$filter, Str :$category-container is copy = '' --> Seq
-) {
+method get-categories ( Str :$category-container is copy = '' --> Seq ) {
   my Bool $locked = self.is-locked;
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
@@ -182,16 +185,8 @@ method get-categories (
 
   my @cat = ();
   for @cat-key-list -> $category {
-    given $filter {
-      when 'default' {
-        next if $category eq 'Default';
-      }
-
-      when 'lockable' {
-        next if $locked and
-                self.is-category-lockable( $category, $category-container);
-      }
-    }
+    next if $locked and
+            self.is-category-lockable( $category, $category-container);
 
     @cat.push: $category;
   }
@@ -377,13 +372,37 @@ method find-category ( Str:D $category-name is copy --> Str ) {
 #-------------------------------------------------------------------------------
 method get-containers ( --> Seq ) {
 
-  my @containers;
+  my Bool $locked = self.is-locked;
+  my @containers = ();
+  my Bool $lockable = False;
   for $!categories-config<categories>.keys -> $cat {
-    (@containers.push: S/ '_EX_' $// with $cat) if $cat ~~ m/ '_EX_' $/;
+    if $cat ~~ m/ '_EX_' $/ {
+      $lockable = self.has-lockable-categories($cat);
+      (@containers.push: S/ '_EX_' $// with $cat) unless $lockable and $locked;
+    }
   }
 
   # Sort containers
   @containers.sort
+}
+
+#-------------------------------------------------------------------------------
+# Method to check if container needs to be hidden
+method has-lockable-categories (
+  Str $category-container is copy = '' --> Bool
+) {
+  my Bool $lockable-categeries = False;
+  $category-container = $category-container.tc ~ '_EX_'
+     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+
+  for $!categories-config<categories>{$category-container}.keys -> $category {
+    if self.is-category-lockable( $category, $category-container) {
+      $lockable-categeries = True;
+      last
+    }
+  }
+
+  $lockable-categeries
 }
 
 #-------------------------------------------------------------------------------
