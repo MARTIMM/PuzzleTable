@@ -62,16 +62,7 @@ method categories-add-category ( N-Object $parameter ) {
     :$!main, :dialog-header('Add Category Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
-    my Gnome::Gtk4::StringList $container-strings .= new-stringlist([]);
-    my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-strings);
-
-    # Add an entry to be able to select a category at toplevel
-    $container-strings.append('--');
-
-    # Add the container strings
-    for $!config.get-containers -> $container {
-      $container-strings.append($container);
-    }
+    my Gnome::Gtk4::DropDown() $dropdown = self.fill-containers;
 
     # Show dropdown
     .add-content( 'Select a container', $dropdown);
@@ -91,7 +82,7 @@ method categories-add-category ( N-Object $parameter ) {
     # Buttons to add the category or cancel
     .add-button(
       self, 'do-category-add', 'Add', :$entry, :$check-button,
-      :$dialog, :$dropdown, :$container-strings
+      :$dialog, :$dropdown
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -104,7 +95,7 @@ method categories-add-category ( N-Object $parameter ) {
 method do-category-add (
   PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button,
-  Gnome::Gtk4::DropDown :$dropdown, Gnome::Gtk4::StringList :$container-strings
+  Gnome::Gtk4::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
   my Str $cat-text = $entry.get-text.tc;
@@ -119,15 +110,11 @@ method do-category-add (
     );
   }
 
-#  elsif $!config.check-category($cat-text.tc) {
-#    $dialog.set-status('Category already defined');
-#  }
-
   else {
-    # Add category to list. Message gets defined if something is wrong.
-    my UInt $container-idx = $dropdown.get-selected;
-    my Str $category-container = $container-strings.get-string($container-idx);
+    my Str $category-container = self.get-dropdown-text($dropdown);
     $category-container = '' if $category-container eq '--';
+
+    # Add category to list. Message gets defined if something is wrong.
     my Str $msg = $!main.config.add-category(
       $cat-text, :lockable($check-button.get-active), :$category-container
     );
@@ -156,6 +143,9 @@ method categories-lock-category ( N-Object $parameter ) {
       new-with-label('Lock or unlock category');
     $check-button.set-active(False);
 
+    my Gnome::Gtk4::DropDown $dropdown = self.fill-categories(:skip-default);
+
+#`{{
     my Gnome::Gtk4::ComboBoxText $combobox .= new-comboboxtext;
     $combobox.register-signal(
       self, 'set-cat-lock-info', 'changed', :$check-button
@@ -166,15 +156,24 @@ method categories-lock-category ( N-Object $parameter ) {
     for $!config.get-categories -> $category {
       # skip 'default'
       next if $category eq 'Default';
-      $combobox.append-text($category);
+      if $category ~~ m/ '_EX_' $/ {
+        for $!config.get-categories(:category-container($category)) -> $subcat {
+          $combobox.append-text($subcat);
+        }
+      }
+
+      else {
+        $combobox.append-text($category);
+      }
     }
     $combobox.set-active(0);
+}}
 
-    .add-content( 'Category to (un)lock', $combobox);
+    .add-content( 'Category to (un)lock', $dropdown);
     .add-content( '', $check-button);
 
     .add-button(
-      self, 'do-category-lock', 'Lock / Unlock', :$combobox, :$dialog, :$check-button
+      self, 'do-category-lock', 'Lock / Unlock', :$dropdown, :$dialog, :$check-button
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -184,14 +183,13 @@ method categories-lock-category ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-lock (
-  PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::CheckButton :$check-button,
-  Gnome::Gtk4::ComboBox :$combobox
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
+  Gnome::Gtk4::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
 
   $!config.set-category-lockable(
-    $combobox.get-active-text, $check-button.get-active.Bool
+    self.get-dropdown-text($dropdown), $check-button.get-active.Bool
   );
 
   # Sidebar changes when a category is set lockable and table is locked
@@ -207,24 +205,38 @@ method categories-rename-category ( N-Object $parameter ) {
 #  say 'category rename';
 
   my Gnome::Gtk4::Entry $entry .= new-entry;
+  my Gnome::Gtk4::DropDown $dropdown-cat = self.fill-categories(:skip-default);
+  my Gnome::Gtk4::DropDown $dropdown-cont = self.fill-containers;
+#`{{
   my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
 
   # Fill the combobox in the dialog
   for $!config.get-categories -> $category {
     next if $category eq 'Default';
-    $combobox.append-text($category);
+    if $category ~~ m/ '_EX_' $/ {
+      for $!config.get-categories(:category-container($category)) -> $subcat {
+        $combobox.append-text($subcat);
+      }
+    }
+
+    else {
+      $combobox.append-text($category);
+    }
   }
   $combobox.set-active(0);
+}}
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Specify the category to rename', $combobox);
-    .add-content( 'Text to rename category', $entry);
+#    .add-content( 'Specify the category to rename', $combobox);
+    .add-content( 'Specify the category to rename', $dropdown-cat);
+    .add-content( 'Select container', $dropdown-cont);
+    .add-content( 'New category name', $entry);
 
     .add-button(
       self, 'do-category-rename', 'Rename',
-      :$entry, :$combobox, :$dialog
+      :$entry, :$dropdown-cat, :$dropdown-cont, :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -235,10 +247,11 @@ method categories-rename-category ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-rename (
   PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
+  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::DropDown :$dropdown-cat,
+  Gnome::Gtk4::DropDown :$dropdown-cont,
 ) {
   my Bool $sts-ok = False;
-
+  my Str $category = self.get-dropdown-text($dropdown-cat);
   my Str $cat-text = $entry.get-text.tc;
 
   if !$cat-text {
@@ -249,17 +262,17 @@ method do-category-rename (
     $dialog.set-status('Category \'default\' cannot be renamed');
   }
 
-#  elsif $!config.check-category($cat-text.tc) {
-#    $dialog.set-status('Category already defined');
-#  }
-
-  elsif $cat-text.tc eq $combobox.get-active-text {
+  elsif $cat-text.tc eq $category {
     $dialog.set-status('Category text same as selected');
   }
 
   else {
     # Move members to other category
-    $!config.move-category( $combobox.get-active-text, $cat-text.tc);
+    my Str $container = self.get-dropdown-text($dropdown-cont);
+    $container = '' if $container eq '--';
+    $!config.move-category(
+      $category, $cat-text.tc, :category-container($container)
+    );
     self.fill-sidebar;
     $sts-ok = True;
   }
@@ -281,6 +294,52 @@ method do-category-remove (
 ) {
 }
 }}
+
+#-------------------------------------------------------------------------------
+method fill-categories (
+  Bool :$skip-default = False --> Gnome::Gtk4::DropDown
+) {
+  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
+  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
+
+  for $!config.get-categories -> $category {
+    next if $skip-default and $category eq 'Default';
+
+    if $category ~~ m/ '_EX_' $/ {
+      for $!config.get-categories(:category-container($category)) -> $subcat {
+        $category-list.append($subcat);
+      }
+    }
+
+    else {
+      $category-list.append($category);
+    }
+  }
+
+  $dropdown
+}
+
+#-------------------------------------------------------------------------------
+method fill-containers ( --> Gnome::Gtk4::DropDown ) {
+  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
+  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
+
+  # Add an entry to be able to select a category at toplevel
+  $category-list.append('--');
+
+  # Add the container strings
+  for $!config.get-containers -> $container {
+    $category-list.append($container);
+  }
+
+  $dropdown
+}
+
+#-------------------------------------------------------------------------------
+method get-dropdown-text ( Gnome::Gtk4::DropDown $dropdown --> Str ) {
+  my Gnome::Gtk4::StringList() $string-list = $dropdown.get-model;
+  $string-list.get-string($dropdown.get-selected)
+}
 
 #-------------------------------------------------------------------------------
 # Select from menu to refresh the sidebar
