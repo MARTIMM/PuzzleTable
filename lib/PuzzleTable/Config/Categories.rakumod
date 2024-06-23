@@ -124,10 +124,32 @@ method add-category (
 
 #-------------------------------------------------------------------------------
 method move-category (
-  $cat-from, $cat-to, Str :$category-container is copy = ''
+  Str $cat-from is copy, Str $cat-to is copy,
+  Str :$category-container is copy = ''
 ) {
-  $!categories-config<categories>{$cat-to} =
-    $!categories-config<categories>{$cat-from}:delete;
+  $cat-from .= tc;
+  $cat-to .= tc;
+
+  my Str $source-container = self.find-category($cat-from);
+  my Hash $hfrom;
+  if ? $source-container {
+    $hfrom := $!categories-config<categories>{$source-container ~ '_EX_'};
+  }
+
+  else {
+    $hfrom := $!categories-config<categories>;
+  }
+
+  my Hash $hto;
+  if ? $category-container {
+    $hto := $!categories-config<categories>{$category-container ~ '_EX_'};
+  }
+
+  else {
+    $hto := $!categories-config<categories>;
+  }
+
+  $hto{$cat-to} = $hfrom{$cat-from}:delete;
 
   self.save-categories-config;
 
