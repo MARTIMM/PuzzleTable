@@ -170,7 +170,6 @@ method remote-options (
         next;
       }
 
-note "$?LINE $puzzle-path";
       #my Str $puzzle-id = $!config.add-puzzle( $opt-category, $puzzle-path);
       my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
 
