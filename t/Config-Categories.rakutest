@@ -226,7 +226,9 @@ subtest 'grouping', {
     $container = .find-category('opt 1001');
     ok !$container.defined, '.find-category(): Did not find Opt 1001';
 
-    is-deeply .get-containers, ( 'Options', 'Sets'), '.get-containers()';
+    ok .add-container('abc'), '.add-container()';
+    nok .add-container('abc'), '.add-container() duplicate';
+    is-deeply .get-containers, ( 'Abc', 'Options', 'Sets'), '.get-containers()';
   }
 }
 
