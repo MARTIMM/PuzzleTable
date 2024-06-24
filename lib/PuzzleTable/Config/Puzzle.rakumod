@@ -183,8 +183,26 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
   $extracter.extract( $destination, $puzzle-path);
 
   # Convert the image into a smaller one to be displayed on the puzzle table
-  run '/usr/bin/convert', "$destination/image.jpg",
-      '-resize', '400x400', "$destination/image400.jpg";
+  # Modern version (IMv7) of magick has convert deprecated
+  my Proc $p = shell "/usr/bin/magick -version", :out;
+  my Bool $is-new = False;
+  for $p.out.lines -> $l {
+    if $l ~~ m/^ Version ':' \s ImageMagick \s $<v> = \d+ / {
+      $is-new = True if $/<v>.Str.Int > 6;
+      last;
+    }
+  }
+  $p.out.close;
+
+  if $is-new {
+    run '/usr/bin/magick', "$destination/image.jpg",
+        '-resize', '400x400', "$destination/image400.jpg";
+  }
+
+  else {
+    run '/usr/bin/magick', 'convert', "$destination/image.jpg",
+        '-resize', '400x400', "$destination/image400.jpg";
+  }
 
   # Get some info from the desktop file
   my Hash $info = $extracter.palapeli-info($destination);
