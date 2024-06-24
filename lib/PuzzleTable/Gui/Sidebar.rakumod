@@ -55,6 +55,47 @@ submethod BUILD ( :$!main ) {
 }
 
 #-------------------------------------------------------------------------------
+method categories-add-container ( N-Object $parameter ) {
+
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Add Category Dialog')
+  ) {
+    # Show entry for input
+    .add-content(
+      'Specify a new container', my Gnome::Gtk4::Entry $entry .= new-entry
+    );
+
+    # Buttons to add the container or cancel
+    .add-button( self, 'do-container-add', 'Add', :$entry, :$dialog);
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+
+    .show-dialog;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method do-container-add (
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::Entry :$entry
+) {
+  my Bool $sts-ok = False;
+  my Str $container-text = $entry.get-text.tc;
+  if ! $container-text {
+    $dialog.set-status('No category name specified');
+  }
+
+  elsif not $!config.add-container($container-text) {
+    $dialog.set-status('Container already exists');
+  }
+
+  else {
+    self.fill-sidebar;
+    $sts-ok = True;
+  }
+
+  $dialog.destroy-dialog if $sts-ok;
+}
+
+#-------------------------------------------------------------------------------
 # Select from menu to add a category
 method categories-add-category ( N-Object $parameter ) {
 
@@ -251,27 +292,27 @@ method do-category-rename (
   Gnome::Gtk4::DropDown :$dropdown-cont,
 ) {
   my Bool $sts-ok = False;
-  my Str $category = self.get-dropdown-text($dropdown-cat);
-  my Str $cat-text = $entry.get-text.tc;
+  my Str $old-category = self.get-dropdown-text($dropdown-cat);
+  my Str $new-category = $entry.get-text.tc;
 
-  if !$cat-text {
+  if ! $new-category {
     $dialog.set-status('No category name specified');
   }
 
-  elsif $cat-text.lc eq 'default' {
+  elsif $new-category.lc eq 'default' {
     $dialog.set-status('Category \'default\' cannot be renamed');
   }
 
-  elsif $cat-text.tc eq $category {
+  elsif $new-category.tc eq $old-category {
     $dialog.set-status('Category text same as selected');
   }
 
   else {
-    # Move members to other category
+    # Move members to other category and container
     my Str $container = self.get-dropdown-text($dropdown-cont);
     $container = '' if $container eq '--';
     $!config.move-category(
-      $category, $cat-text.tc, :category-container($container)
+      $old-category, $new-category.tc, :category-container($container)
     );
     self.fill-sidebar;
     $sts-ok = True;
