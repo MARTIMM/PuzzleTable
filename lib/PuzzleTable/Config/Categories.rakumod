@@ -392,6 +392,23 @@ method find-category ( Str:D $category-name is copy --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
+method add-container ( Str $category-container is copy = '' --> Bool ) {
+  my Bool $add-ok = True;
+  $category-container = $category-container.tc ~ '_EX_'
+    if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+  
+  if $!categories-config<categories>{$category-container}:exists {
+    $add-ok = False;
+  }
+
+  else {
+    $!categories-config<categories>{$category-container} = %();
+  }
+  
+  $add-ok
+}
+
+#-------------------------------------------------------------------------------
 method get-containers ( --> Seq ) {
 
   my Bool $locked = self.is-locked;
