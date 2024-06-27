@@ -592,10 +592,10 @@ method show-tooltip (
   Str :$category
   --> gboolean
 ) {
-  my Str $puzzle-id = $!config.get-puzzle-image($category);
-  if ?$puzzle-id {
+  my Str $puzzle-image-name = $!config.get-puzzle-image($category);
+  if ?$puzzle-image-name {
     my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename($puzzle-id);
+    $p.set-filename($puzzle-image-name);
     $tooltip.set-custom($p);
   }
 
