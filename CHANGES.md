@@ -1,4 +1,8 @@
 
+
+* 2024-06-27 0.5.2
+  * Bugfix; Assignment of Hash in `get-puzzle()` in **PuzzleTable::Config::Category** changed to make a clone. Changes made elsewhere to the puzzle data were visible in original caused by assigning a scalar (=container) Hash.
+
 * 2024-06-10 0.5.1
   * Implemented some prolonged details
     * Status overview in sidebar. It is stored together with categories config.
