@@ -126,7 +126,8 @@ method update-puzzle ( Str:D $puzzle-id, Hash $new-pairs --> Bool ) {
     }
   }
 
-  # Drop a few fields if they stick
+  #TODO remove temprary until all puzzles are slimmed down
+  # Drop a few fields if they stick.
   $!category-config<members>{$puzzle-id}<Image>:delete;
   $!category-config<members>{$puzzle-id}<PuzzleID>:delete;
   $!category-config<members>{$puzzle-id}<Category>:delete;
@@ -210,7 +211,9 @@ method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
   }
 
   else {
-    $h = $!category-config<members>{$puzzle-id};
+    # Must clone the hash when it is a scaler. Changes in $h are visible
+    # in the source $!category-config<members>{$puzzle-id}
+    $h = $!category-config<members>{$puzzle-id}.clone;
   }
 
   $h
