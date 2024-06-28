@@ -236,7 +236,7 @@ method calculate-progress (
   Str $progress-path, Int $number-of-pieces --> Str
 ) {
   my Bool $get-lines = False;
-  my Hash $piece-coordinates = %();
+  my SetHash $piece-coordinates .= new;
 
   for $progress-path.IO.slurp.lines -> $line {
     if $line ~~ m/ '[' [ 'XYCo-ordinates' | 'Relations' ] ']' / {
@@ -248,7 +248,7 @@ method calculate-progress (
 
     if $get-lines {
       my Str ( $, $piece-coordinate ) = $line.split('=');
-      $piece-coordinates{$piece-coordinate} = 1;
+      $piece-coordinates.set($piece-coordinate);
     }
   }
 
