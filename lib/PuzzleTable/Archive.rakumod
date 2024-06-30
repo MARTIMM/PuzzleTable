@@ -4,7 +4,7 @@ use Archive::Libarchive;
 use Archive::Libarchive::Constants;
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::ExtractDataFromPuzzle:auth<github:MARTIMM>;
+unit class PuzzleTable::Archive:auth<github:MARTIMM>;
 
 my Str $puzzle-file;
 my regex extract-regex {^ [ image \. | pala \. desktop ] };
@@ -16,12 +16,17 @@ my regex extract-regex {^ [ image \. | pala \. desktop ] };
 # Extract image and desktop file from $puzzle-file, a tar file, and
 # store the data at $store-path.
 method extract ( Str:D $store-path, Str:D $puzzle-file ) {
+  unless $puzzle-file ~~ m/ '.puzzle' $/ {
+    note "'$puzzle-file' does not have proper extension, should be .puzzle";
+    return;
+  }
+
   unless $puzzle-file.IO.r {
     note "file '$puzzle-file' not found";
     return;
   }
 
-  my Archive::Libarchive $a .= new(
+  my Archive::Libarchive $archive .= new(
     operation => LibarchiveExtract,
     file => $puzzle-file,
     flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
@@ -29,13 +34,13 @@ method extract ( Str:D $store-path, Str:D $puzzle-file ) {
   );
 
   try {
-    $a.extract( &extract, $store-path);
+    $archive.extract( &extract, $store-path);
     CATCH {
       say "Can't extract files: $_";
     }
   }
 
-  $a.close;
+  $archive.close;
 }
 
 #-------------------------------------------------------------------------------
@@ -56,8 +61,9 @@ method palapeli-info( Str:D $store-path --> Hash ) {
     next unless $line ~~ m/ '=' /;
     $piece-count++ if $do-count;
 
-    my ( $name, $val) = $line.split('=');
     my Str $slicer = '';
+    my ( $name, $val) = $line.split('=');
+#note "$?LINE $name, $val" if $name !~~ m/^ \d+ $/;
     given $name {
       when 'Comment' {
         $h<Comment> = $val // '';

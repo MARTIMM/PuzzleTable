@@ -1,7 +1,7 @@
 use v6.d;
 
 use PuzzleTable::Types;
-use PuzzleTable::ExtractDataFromPuzzle;
+use PuzzleTable::Archive;
 
 use Digest::SHA256::Native;
 use Archive::Libarchive;
@@ -179,9 +179,10 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
   $puzzle-path.IO.copy( "$destination/$unique-name", :createonly);
 
   # Get the image and desktop file from the puzzle file, a tar archive.
-  my PuzzleTable::ExtractDataFromPuzzle $extracter .= new;
-  $extracter.extract( $destination, $puzzle-path);
+  my PuzzleTable::Archive $archive .= new;
+  $archive.extract( $destination, $puzzle-path);
 
+#`{{
   # Convert the image into a smaller one to be displayed on the puzzle table
   # Modern version (IMv7) of magick has convert deprecated
   my Proc $p = shell "/usr/bin/magick -version", :out;
@@ -203,9 +204,12 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
     run '/usr/bin/magick', 'convert', "$destination/image.jpg",
         '-resize', '400x400', "$destination/image400.jpg";
   }
+}}
+  # Add a smaller version of image
+  self.convert-image($destination);
 
   # Get some info from the desktop file
-  my Hash $info = $extracter.palapeli-info($destination);
+  my Hash $info = $archive.palapeli-info($destination);
 
   # Remove unneeded data
   "$destination/image.jpg".IO.unlink;
@@ -223,6 +227,32 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
     :Slicer($info<Slicer>),
     :SlicerMode($info<SlicerMode>),
   )
+}
+
+#-------------------------------------------------------------------------------
+# Convert the image into a smaller one to be displayed on the puzzle table
+# Modern version (IMv7) of magick has convert deprecated
+method convert-image ( Str $destination ) {
+
+  my Bool $is-new = False;
+  my Proc $p = shell "/usr/bin/magick -version", :out;
+  for $p.out.lines -> $l {
+    if $l ~~ m/^ Version ':' \s ImageMagick \s $<v> = \d+ / {
+      $is-new = True if $/<v>.Str.Int > 6;
+      last;
+    }
+  }
+  $p.out.close;
+
+  if $is-new {
+    run '/usr/bin/magick', "$destination/image.jpg",
+        '-resize', '400x400', "$destination/image400.jpg";
+  }
+
+  else {
+    run '/usr/bin/magick', 'convert', "$destination/image.jpg",
+        '-resize', '400x400', "$destination/image400.jpg";
+  }
 }
 
 #-------------------------------------------------------------------------------
