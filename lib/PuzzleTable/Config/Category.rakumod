@@ -227,9 +227,8 @@ method get-puzzle-ids ( --> Seq ) {
 #-------------------------------------------------------------------------------
 method get-puzzle-destination ( Str $puzzle-id --> Str ) {
 
-  # Create directory for the puzzles files
+  # Define path to directory for the puzzle
   my Str $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
-#  mkdir $puzzle-destination, 0o700 unless $puzzle-destination.IO.e;
 
   $puzzle-destination
 }
