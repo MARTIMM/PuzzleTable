@@ -1,7 +1,22 @@
 
+<!--
+TODO
+* container delete
+* category delete
+* restore archived puzzles
+* add container option
+* move category without renaming the category
+* rename and move archiving into one module
+* drag and drop
+* remember state of opened container
+* importing puzzles should be shown in table and counts updated
+* generating palapeli puzzles from commandline -> C++
+-->
 
 * 2024-06-27 0.5.2
   * Bugfix; Assignment of Hash in `get-puzzle()` in **PuzzleTable::Config::Category** changed to make a clone. Changes made elsewhere to the puzzle data were visible in original caused by assigning a scalar (=container) Hash.
+  * Changed progres calculation using type **SetHash** instead of **Hash**.
+  * Rename **PuzzleTable::ExtractDataFromPuzzle** to **PuzzleTable::Archive** and use it to handle all tasks to get puzzles and categories in and out of the puzzle table program.
 
 * 2024-06-10 0.5.1
   * Implemented some prolonged details

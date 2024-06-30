@@ -25,15 +25,15 @@
     "PuzzleTable::Config::Categories": "lib/PuzzleTable/Config/Categories.rakumod",
     "PuzzleTable::Config::Category": "lib/PuzzleTable/Config/Category.rakumod",
     "PuzzleTable::Config::Puzzle": "lib/PuzzleTable/Config/Puzzle.rakumod",
-    "PuzzleTable::ExtractDataFromPuzzle": "lib/PuzzleTable/ExtractDataFromPuzzle.rakumod",
+    "PuzzleTable::Archive": "lib/PuzzleTable/Archive.rakumod",
     "PuzzleTable::Types": "lib/PuzzleTable/Types.rakumod"
   },
 
   "source-url": "git://github.com/MARTIMM/.git",
 
   "depends": [
-    "Gnome::Gtk4:api<2>", "Archive::Libarchive", "Getopt::Long",
-    "Digest::SHA256::Native"
+    "Gnome::Gtk4:api<2>", "Archive::Libarchive",
+    "Getopt::Long", "Digest::SHA256::Native"
   ],
   "test-depends": [ ],
   "build-depends": [ ],
