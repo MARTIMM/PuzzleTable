@@ -229,6 +229,9 @@ subtest 'grouping', {
     ok .add-container('abc'), '.add-container()';
     nok .add-container('abc'), '.add-container() duplicate';
     is-deeply .get-containers, ( 'Abc', 'Options', 'Sets'), '.get-containers()';
+
+    nok .delete-container('sets'), '.delete-container(): container not empty';
+    ok .delete-container('abc'), '.delete-container(): container deleted';
   }
 }
 

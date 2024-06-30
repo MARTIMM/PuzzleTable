@@ -96,6 +96,42 @@ method do-container-add (
 }
 
 #-------------------------------------------------------------------------------
+method categories-delete-container ( N-Object $parameter ) {
+
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Add Category Dialog')
+  ) {
+    # Make a string list to be used in a combobox (dropdown)
+    my Gnome::Gtk4::DropDown() $dropdown = self.fill-containers(:no-enpty);
+
+    # Buttons to delete the container or cancel
+    .add-button( self, 'do-container-delete', 'Delete', :$dropdown, :$dialog);
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+
+    .show-dialog;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method do-container-delete (
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::DropDown() :$dropdown
+) {
+  my Bool $sts-ok = False;
+  my Str $container = self.get-dropdown-text($dropdown);
+  
+  if not $!config.delete-container($container) {
+    $dialog.set-status("Container $container not empty");
+  }
+
+  else {
+    self.fill-sidebar;
+    $sts-ok = True;
+  }
+
+  $dialog.destroy-dialog if $sts-ok;
+}
+
+#-------------------------------------------------------------------------------
 # Select from menu to add a category
 method categories-add-category ( N-Object $parameter ) {
 
@@ -361,12 +397,12 @@ method fill-categories (
 }
 
 #-------------------------------------------------------------------------------
-method fill-containers ( --> Gnome::Gtk4::DropDown ) {
+method fill-containers ( Bool :$no-enpty = False --> Gnome::Gtk4::DropDown ) {
   my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
   my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
 
   # Add an entry to be able to select a category at toplevel
-  $category-list.append('--');
+  $category-list.append('--') unless $no-enpty;
 
   # Add the container strings
   for $!config.get-containers -> $container {

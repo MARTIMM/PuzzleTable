@@ -396,7 +396,7 @@ method add-container ( Str $category-container is copy = '' --> Bool ) {
   my Bool $add-ok = True;
   $category-container = $category-container.tc ~ '_EX_'
     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
-  
+
   if $!categories-config<categories>{$category-container}:exists {
     $add-ok = False;
   }
@@ -406,6 +406,25 @@ method add-container ( Str $category-container is copy = '' --> Bool ) {
   }
   
   $add-ok
+}
+
+#-------------------------------------------------------------------------------
+method delete-container ( Str $category-container is copy = '' --> Bool ) {
+  my Bool $delete-ok = True;
+  $category-container = $category-container.tc ~ '_EX_'
+    if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+
+  if $!categories-config<categories>{$category-container}:exists
+     and $!categories-config<categories>{$category-container}.elems
+  {
+    $delete-ok = False;
+  }
+
+  else {
+    $!categories-config<categories>{$category-container}:delete;
+  }
+
+  $delete-ok
 }
 
 #-------------------------------------------------------------------------------

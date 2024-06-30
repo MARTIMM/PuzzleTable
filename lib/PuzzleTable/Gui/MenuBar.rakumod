@@ -72,7 +72,9 @@ method make-menu (
     when 'Categories' {
       self.bind-action(
         $menu, $menu-name, $!cat, 'Add Container', 'app.add-container',
-#        :path(DATA_DIR ~ 'images/add-cont.png'), :tooltip('Add a new category container')
+      );
+      self.bind-action(
+        $menu, $menu-name, $!cat, 'Delete Container', 'app.delete-container',
       );
       self.bind-action(
         $menu, $menu-name, $!cat, 'Add Category', 'app.add-category',
@@ -102,7 +104,7 @@ method make-menu (
       );
       self.bind-action(
         $menu, $menu-name, $!phandling, 'Remove Puzzles', 'app.remove-puzzles',
-        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Remove puzzles')
+#        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Remove puzzles')
       );
     }
 
