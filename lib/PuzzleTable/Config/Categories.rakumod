@@ -103,18 +103,18 @@ method add-category (
   $category-container = $category-container.tc ~ '_EX_'
       if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
-  my Hash $categories := $!categories-config<categories>;
+  my Hash $cats := $!categories-config<categories>;
 
-  if self.find-category($category-name).defined {
+  if self.find-container($category-name).defined {
     $message = "Category $category-name already exists";
   }
 
   elsif ? $category-container {
-    $categories{$category-container}{$category-name}<lockable> = $lockable;
+    $cats{$category-container}<categories>{$category-name}<lockable> = $lockable;
   }
 
   else {
-    $categories{$category-name}<lockable> = $lockable;
+    $cats{$category-name}<lockable> = $lockable;
     self.save-categories-config;
     mkdir $!root-dir ~ $category-name, 0o700;
   }
@@ -130,30 +130,30 @@ method move-category (
   $cat-from .= tc;
   $cat-to .= tc;
 
-  my Str $source-container = self.find-category($cat-from);
+  my Hash $cats := $!categories-config<categories>;
+
+  my Str $source-container = self.find-container($cat-from);
   my Hash $hfrom;
   if ? $source-container {
-    $hfrom := $!categories-config<categories>{$source-container ~ '_EX_'};
+    $hfrom := $cats{$source-container ~ '_EX_'}<categories>;
   }
 
   else {
-    $hfrom := $!categories-config<categories>;
+    $hfrom := $cats;
   }
 
   my Hash $hto;
   if ? $category-container {
-    $hto := $!categories-config<categories>{$category-container ~ '_EX_'};
+    $hto := $cats{$category-container ~ '_EX_'}<categories>;
   }
 
   else {
-    $hto := $!categories-config<categories>;
+    $hto := $cats;
   }
 
   $hto{$cat-to} = $hfrom{$cat-from}:delete;
 
   self.save-categories-config;
-
-#  $!categories-config<categories><name> = $cat-to;
 
   my Str $dir-from = $!root-dir ~ $cat-from;
   my Str $dir-to = $!root-dir ~ $cat-to;
@@ -169,15 +169,17 @@ method select-category (
   $category-container = $category-container.tc ~ '_EX_'
       if ? $category-container;
 
+  my Hash $cats := $!categories-config<categories>;
+
   if ? $category-container and
-     $!categories-config<categories>{$category-container}{$category-name}:exists
+     $cats{$category-container}<categories>{$category-name}:exists
   {
     $!current-category .= new(
       :$category-name, :$category-container, :$!root-dir
     );
   }
 
-  elsif $!categories-config<categories>{$category-name}:exists {
+  elsif $cats{$category-name}:exists {
     # Set to new category
     $!current-category .= new( :$category-name, :$!root-dir);
   }
@@ -197,8 +199,9 @@ method get-categories ( Str :$category-container is copy = '' --> Seq ) {
 
   my @cat-key-list;
   if ? $category-container {
-    @cat-key-list =
-      $!categories-config<categories>{$category-container}.keys;
+    @cat-key-list = $!categories-config<categories>{
+      $category-container
+    }<categories>.keys;
   }
 
   else {
@@ -222,7 +225,7 @@ method group-in-subcategory (
 ) {
   $category-name .= tc;
   $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container;
+     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
   # Only move category when name is not in the subcategory
   #TODO when cats are unique everywhere then test is not needed
@@ -233,7 +236,7 @@ method group-in-subcategory (
 #    $categories{$category-container} = %()
 #      unless $categories{$category-container}:exists;
 
-    $categories{$category-container}{$category-name} =
+    $categories{$category-container}<categories>{$category-name} =
       $categories{$category-name}:delete;
 
     self.save-categories-config;
@@ -241,25 +244,22 @@ method group-in-subcategory (
 }
 
 #-------------------------------------------------------------------------------
-method ungroup-in-subcategory (
+method ungroup-from-subcategory (
   Str $category-container is copy, Str $category-name is copy
 ) {
   $category-name .= tc;
-  $category-container = $category-container.tc ~ '_EX_';
+  $category-container = $category-container.tc ~ '_EX_'
+     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
   # Only move back when name in subcat is not in cat
   #TODO when cats are unique everywhere then test is not needed
   my Hash $categories := $!categories-config<categories>;
-  if $categories{$category-container}{$category-name}:exists
+  if $categories{$category-container}<categories>{$category-name}:exists
      and $categories{$category-name}:!exists
   {
     # Move category out of subcategory
     $categories{$category-name} =
-      $categories{$category-container}{$category-name}:delete;
-
-#    # Delete subcategory when empty
-#    $categories{$category-container}:delete
-#      unless ? $categories{$category-container};
+      $categories{$category-container}<categories>{$category-name}:delete;
 
     self.save-categories-config;
   }
@@ -355,8 +355,7 @@ method update-category-status ( ) {
   my Str $container-name = $!current-category.category-container;
 
   if ? $container-name {
-    $!categories-config<categories>{$container-name}{$category-name}<status> =
-      $cat-status;
+    $!categories-config<categories>{$container-name}<categories>{$category-name}<status> = $cat-status;
   }
 
   else {
@@ -367,13 +366,14 @@ method update-category-status ( ) {
 }
 
 #-------------------------------------------------------------------------------
-method find-category ( Str:D $category-name is copy --> Str ) {
+method find-container ( Str:D $category-name is copy --> Str ) {
   $category-name .= tc;
 
+  my Hash $cats := $!categories-config<categories>;
   my Str $container;
-  for $!categories-config<categories>.keys -> $cat {
+  for $cats.keys -> $cat {
     if $cat ~~ m/ '_EX_' $/ {
-      for $!categories-config<categories>{$cat}.keys -> $subcat {
+      for $cats{$cat}<categories>.keys -> $subcat {
         if $category-name eq $subcat {
           $container = S/ '_EX_' $// with $cat;
           last;
@@ -453,7 +453,9 @@ method has-lockable-categories (
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
-  for $!categories-config<categories>{$category-container}.keys -> $category {
+  for $!categories-config<categories>{$category-container}.keys
+      -> $category
+  {
     if self.is-category-lockable( $category, $category-container) {
       $lockable-categeries = True;
       last
@@ -789,21 +791,18 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 #-------------------------------------------------------------------------------
 # Get the category lockable state
 method is-category-lockable (
-  Str:D $category, Str $container-name = '' --> Bool
+  Str:D $category, Str $category-container is copy = '' --> Bool
 ) {
-  my Hash $c := $!categories-config<categories>;
-  if ? $container-name {
-    if $container-name ~~ m/ '_EX_' $/ {
-      $c{$container-name}{$category}<lockable>.Bool
-    }
+  $category-container = $category-container.tc ~ '_EX_'
+     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
-    else {
-      $c{$container-name ~ '_EX_'}{$category}<lockable>.Bool
-    }
+  my Hash $cats := $!categories-config<categories>;
+  if ? $category-container {
+    $cats{$category-container}<categories>{$category}<lockable>.Bool
   }
 
   else {
-    $c{$category}<lockable>.Bool
+    $cats{$category}<lockable>.Bool
   }
 }
 
