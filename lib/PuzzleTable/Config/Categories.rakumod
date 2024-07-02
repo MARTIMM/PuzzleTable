@@ -283,7 +283,7 @@ method get-category-status (
 
   my Hash $categories;
   if ? $category-container {
-     $categories := $!categories-config<categories>{$category-container};
+     $categories := $!categories-config<categories>{$category-container}<categories>;
   }
 
   else {
