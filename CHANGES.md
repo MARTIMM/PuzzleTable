@@ -1,17 +1,18 @@
 
-<!--
-TODO
-* container delete
-* category delete
-* restore archived puzzles
-* add container option
-* move category without renaming the category
-* rename and move archiving into one module
-* drag and drop
-* remember state of opened container
-* importing puzzles should be shown in table and counts updated
-* generating palapeli puzzles from commandline -> C++
--->
+### TODO
+* [ ] container delete, only when empty
+* [ ] category delete, all puzzles into archive
+* [ ] delete selected puzzles must go into one archive as if a category delete
+* [ ] restore archived puzzles
+* [ ] add `--container=<name>` option to program
+* [ ] move category without renaming the category
+* [ ] rename and move archiving operations into one module
+* [ ] drag and drop. On wayland a lot is going wrong!
+* [ ] remember state of an opened container
+* [x] need to add key `<categories>` in containers to add other keys
+* [ ] add state info to containers to sum up states of contained categories
+* [ ] importing puzzles should be shown in table and counts updated
+* [ ] generating palapeli puzzles from commandline -> C++
 
 * 2024-06-27 0.5.2
   * Bugfix; Assignment of Hash in `get-puzzle()` in **PuzzleTable::Config::Category** changed to make a clone. Changes made elsewhere to the puzzle data were visible in original caused by assigning a scalar (=container) Hash.
