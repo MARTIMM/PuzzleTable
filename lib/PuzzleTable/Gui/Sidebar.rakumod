@@ -222,30 +222,6 @@ method categories-lock-category ( N-Object $parameter ) {
 
     my Gnome::Gtk4::DropDown $dropdown = self.fill-categories(:skip-default);
 
-#`{{
-    my Gnome::Gtk4::ComboBoxText $combobox .= new-comboboxtext;
-    $combobox.register-signal(
-      self, 'set-cat-lock-info', 'changed', :$check-button
-    );
-
-    # Fill the combobox in the dialog. Using this filter, it isn't necessary to
-    # check passwords. One is already authenticated or not.
-    for $!config.get-categories -> $category {
-      # skip 'default'
-      next if $category eq 'Default';
-      if $category ~~ m/ '_EX_' $/ {
-        for $!config.get-categories(:category-container($category)) -> $subcat {
-          $combobox.append-text($subcat);
-        }
-      }
-
-      else {
-        $combobox.append-text($category);
-      }
-    }
-    $combobox.set-active(0);
-}}
-
     .add-content( 'Category to (un)lock', $dropdown);
     .add-content( '', $check-button);
 
@@ -284,29 +260,10 @@ method categories-rename-category ( N-Object $parameter ) {
   my Gnome::Gtk4::Entry $entry .= new-entry;
   my Gnome::Gtk4::DropDown $dropdown-cat = self.fill-categories(:skip-default);
   my Gnome::Gtk4::DropDown $dropdown-cont = self.fill-containers;
-#`{{
-  my Gnome::Gtk4::ComboBoxText $combobox.= new-comboboxtext;
-
-  # Fill the combobox in the dialog
-  for $!config.get-categories -> $category {
-    next if $category eq 'Default';
-    if $category ~~ m/ '_EX_' $/ {
-      for $!config.get-categories(:category-container($category)) -> $subcat {
-        $combobox.append-text($subcat);
-      }
-    }
-
-    else {
-      $combobox.append-text($category);
-    }
-  }
-  $combobox.set-active(0);
-}}
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
   ) {
-#    .add-content( 'Specify the category to rename', $combobox);
     .add-content( 'Specify the category to rename', $dropdown-cat);
     .add-content( 'Select container', $dropdown-cont);
     .add-content( 'New category name', $entry);
@@ -431,6 +388,7 @@ method get-current-category ( --> Str ) {
 }
 }}
 
+#`{{ is available in Config::Category
 #-------------------------------------------------------------------------------
 method set-cat-lock-info (
   Gnome::Gtk4::ComboBoxText() :_native-object($combobox),
@@ -441,6 +399,7 @@ method set-cat-lock-info (
     $!config.is-category-lockable($combobox.get-active-text)
   );
 }
+}}
 
 #-------------------------------------------------------------------------------
 method fill-sidebar ( Bool :$init = False ) {
