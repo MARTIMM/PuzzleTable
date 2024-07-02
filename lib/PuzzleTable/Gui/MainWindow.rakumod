@@ -153,7 +153,7 @@ method remote-options (
 
 #TODO select category if registered
   $!category.set-category($opt-category);
-  my Str $category-container = $!config.find-category($opt-category);
+  my Str $category-container = $!config.find-container($opt-category);
   if ?$category-container {
     $!config.select-category( $opt-category, :$category-container);
   }
