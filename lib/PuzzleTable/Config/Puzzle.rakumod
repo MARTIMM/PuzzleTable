@@ -32,7 +32,7 @@ The information stored in a Hash have the following keys
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config::Puzzle:auth<github:MARTIMM>;
-
+#`{{
 #-------------------------------------------------------------------------------
 method archive-puzzle (
   Str:D $archive-trashbin, Str:D $puzzle-path, Hash:D $puzzle-data
@@ -83,6 +83,7 @@ method archive-puzzle (
   chdir($cwd);
   $archive-path.IO.rmdir;
 }
+}}
 
 #-------------------------------------------------------------------------------
 method restore-puzzle (

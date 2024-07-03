@@ -548,12 +548,32 @@ method move-puzzle ( Str $to-cat is copy, Str:D $puzzle-id ) {
   $c-to.save-category-config;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
   my Str $message = '';
 
   if ! $!current-category.remove-puzzle( $puzzle-id, $archive-trashbin) {
     $message = 'Puzzle id is wrong and/or Puzzle store not found';
+  }
+
+  else {
+    self.update-category-status;
+    self.save-categories-config;
+  }
+
+  $message
+}
+}}
+
+#-------------------------------------------------------------------------------
+method archive-puzzles (
+  Array:D $puzzle-ids, Str:D $archive-trashbin --> Str
+) {
+  my Str $message = '';
+
+  if ! $!current-category.archive-puzzles( $puzzle-ids, $archive-trashbin) {
+    $message = 'One of the puzzle ids is wrong and/or puzzle store not found';
   }
 
   else {

@@ -5,6 +5,7 @@ use YAMLish;
 
 #use PuzzleTable::Types;
 use PuzzleTable::Config::Puzzle;
+use PuzzleTable::Archive;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
@@ -152,6 +153,7 @@ method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
   self.save-category-config;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
 
@@ -165,10 +167,43 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
   my Hash $puzzle-config = $!category-config<members>{$puzzle-id}:delete;
   self.save-category-config;
 
-#  my Str $progress-file = [~] '__FSC_', $puzzle-config<Filename>, '_0_.save';
-
   my PuzzleTable::Config::Puzzle $puzzle .= new;
   $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-config);
+
+  True
+}
+}}
+
+#-------------------------------------------------------------------------------
+method archive-puzzles (
+  Array:D $puzzle-ids, Str:D $archive-trashbin --> Bool
+) {
+  my Hash $puzzles = %();
+
+  # First check all puzzles before changing the config
+  for @$puzzle-ids -> $puzzle-id {
+    return False unless
+      $!category-config<members>{$puzzle-id}:exists
+      and "$!config-dir/$puzzle-id".IO.d;
+  }
+
+  # Create the archive info
+  for @$puzzle-ids -> $puzzle-id {
+    $puzzles{$puzzle-id} = %();
+    $puzzles{$puzzle-id}<puzzle-path> = "$!config-dir/$puzzle-id";
+    $puzzles{$puzzle-id}<puzzle-data> =
+      $!category-config<members>{$puzzle-id}:delete;
+  }
+
+  # And archive the puzzles
+  my PuzzleTable::Archive $archive .= new;
+  $archive.archive-puzzles(
+    $archive-trashbin, $!category-name, $puzzles,
+    :container($!category-container)
+  );
+
+  # Save all changes
+  self.save-category-config;
 
   True
 }

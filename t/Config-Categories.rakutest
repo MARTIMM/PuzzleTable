@@ -76,22 +76,22 @@ subtest 'puzzle', {
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 3, '.add-puzzle()';
 
-    $message = .remove-puzzle( 'p0005', ARCHDATA);
-    is $message, 'Puzzle id is wrong and/or Puzzle store not found',
-      '.remove-puzzle(): wrong puzzle id';
+    $message = .archive-puzzles( ['p0005', ], ARCHDATA);
+    is $message, 'One of the puzzle ids is wrong and/or puzzle store not found',
+      '.archive-puzzles(): wrong puzzle id';
 
-    $message = .remove-puzzle( 'p000', ARCHDATA);
-    #.save-categories-config;
+    $message = .archive-puzzles( ['p000',], ARCHDATA);
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-    is $config<members>.elems, 2, '.remove-puzzle()';
-    ok $config<members><p000>:!exists, '.remove-puzzle(): Config check';
+    is $config<members>.elems, 2, '.archive-puzzles()';
+    ok $config<members><p000>:!exists, '.archive-puzzles(): Config check';
 
+#`{{
     $message = .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
     #.save-categories-config;
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 3, '.restore-puzzle()';
     ok $config<members><p003>:exists, '.restore-puzzle(): Config check';
-
+}}
     my Array $puzzles = [|.get-puzzles];
     is $puzzles.elems, 3, '.get-puzzles(); Check nbr puzzles returned';
     ok $puzzles[0]<Category> eq

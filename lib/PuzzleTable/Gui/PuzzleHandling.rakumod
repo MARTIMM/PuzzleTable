@@ -173,17 +173,20 @@ method do-remove-puzzles (
     $!config.select-category($current-cat);
 
     # Get the selected puzzles from the bitset and move them
+    my Array $puzzle-ids = [];
     my Int $n = $bitset.get-size;
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
-      $!config.remove-puzzle(
-#        $current-cat, $!main.table.puzzle-objects.get-string($item-pos)
-        $!main.table.puzzle-objects.get-string($item-pos), PUZZLE_TRASH
-      );
+      $puzzle-ids.push: $!main.table.puzzle-objects.get-string($item-pos);
     }
 
-    # Save admin and update puzzle table
-#    $!config.save-categories-config;
+    # Archive the puzzles and remove from configuration
+    $!config.archive-puzzles(
+      PUZZLE_TRASH, $current-cat.category-name, $puzzle-ids,
+      :container($current-cat.category-container)
+    );
+
+    # Update puzzle table
     $!main.category.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles

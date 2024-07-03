@@ -2,6 +2,7 @@ use v6.d;
 
 use Archive::Libarchive;
 use Archive::Libarchive::Constants;
+use YAMLish;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Archive:auth<github:MARTIMM>;
@@ -112,4 +113,68 @@ method palapeli-info( Str:D $store-path --> Hash ) {
   $h<PieceCount> = $piece-count;
 
   $h
+}
+
+#-------------------------------------------------------------------------------
+method archive-puzzles (
+  Str:D $archive-trashbin, Str:D $category, Hash:D $puzzles,
+  Str :$container is copy = ''
+) {
+  # Drop the container marker if any
+  $container ~~ s/ '_EX_' $//;
+
+  # Create the name of the archive
+  my Str $archive-name;
+  $archive-name = DateTime.now.Str;         # 2024-07-03T09:55:12.196236+02:00
+  $archive-name ~~ s/ '.' (...) .* $/.$0/;  # keep 3 digits behind the dot
+  $archive-name ~~ s:g/ <[:-]> //;          # remove all '-' and ':'
+  $archive-name ~~ s:g/ <[T.]> /-/;         # replace 'T' with '-'
+                                            # 20240703-095512-196
+  $archive-name ~= ":$container:$category";
+
+  # Change dir to archive path
+  my Str $cwd = $*CWD.Str;
+  my Str $archive-path = $archive-trashbin;
+  chdir($archive-path);
+
+  # Create a bzipped tar archive
+  my Archive::Libarchive $archive .= new(
+    operation => LibarchiveWrite,
+    file => "$archive-trashbin$archive-name.tbz2",
+    format => 'v7tar',
+    filters => ['bzip2']
+  );
+
+  for $puzzles.keys -> $puzzle-id {
+    my Str $puzzle-path = $puzzles{$puzzle-id}<puzzle-path>;
+    my Hash $puzzle-data = $puzzles{$puzzle-id}<puzzle-data>;
+
+    # Rename the puzzle path into the archive path, effectively removing the
+    # puzzle data from the other puzzles.
+    "$cwd/$puzzle-path".IO.rename("./$puzzle-id");
+
+    # Save config into a yaml file in the archive dir
+    "$puzzle-id/puzzle-data.yaml".IO.spurt(save-yaml($puzzle-data));
+
+    # Store each file in this path into the archive
+    $archive.write-header($puzzle-id, :filetype(AE_IFDIR));
+    for dir($puzzle-id) -> $file {
+      $archive.write-header($file.Str);
+      $archive.write-data($file.Str);
+    }
+
+    # Cleanup files in directory
+    for dir($puzzle-id) -> $file {
+      $file.IO.unlink;
+    }
+
+    # And the directory itself
+    $puzzle-id.IO.rmdir;
+  }
+
+  # And close the archive
+  $archive.close;
+
+  # Return to dir where we started
+  chdir($cwd);
 }
