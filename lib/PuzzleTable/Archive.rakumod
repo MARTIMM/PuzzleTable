@@ -152,7 +152,7 @@ method archive-puzzles (
 
     # Rename the puzzle path into the archive path, effectively removing the
     # puzzle data from the other puzzles.
-    "$cwd/$puzzle-path".IO.rename("./$puzzle-id");
+    $puzzle-path.IO.rename("./$puzzle-id");
 
     # Save config into a yaml file in the archive dir
     "$puzzle-id/puzzle-data.yaml".IO.spurt(save-yaml($puzzle-data));

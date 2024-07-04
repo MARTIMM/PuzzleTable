@@ -7,7 +7,7 @@ use Digest::SHA256::Native;
 use PuzzleTable::Config::Categories;
 
 #-------------------------------------------------------------------------------
-constant TESTDATA = 't/test-data/';
+constant TESTDATA = $*CWD ~ '/t/test-data/';
 constant COLLDATA = TESTDATA ~ 'puzzle-collection/';
 constant EXPDATA = TESTDATA ~ 'exported-puzzles/';
 constant ARCHDATA = TESTDATA ~ 'archived-puzzles/';
