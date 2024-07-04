@@ -181,10 +181,7 @@ method do-remove-puzzles (
     }
 
     # Archive the puzzles and remove from configuration
-    $!config.archive-puzzles(
-      PUZZLE_TRASH, $current-cat.category-name, $puzzle-ids,
-      :container($current-cat.category-container)
-    );
+    $!config.archive-puzzles( $puzzle-ids, PUZZLE_TRASH);
 
     # Update puzzle table
     $!main.category.select-category(:category($current-cat));
