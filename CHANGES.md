@@ -2,9 +2,10 @@
 ### TODO
 * [ ] container delete, only when empty
 * [ ] category delete, all puzzles into archive
-* [ ] delete selected puzzles must go into one archive as if a category delete
-* [ ] restore archived puzzles
+* [x] delete selected puzzles must go into one archive as if a category delete
+* [*] restore archived puzzles
 * [ ] add `--container=<name>` option to program
+* [ ] add `--restore=<name>` option to program to restore an archive.
 * [ ] move category without renaming the category
 * [ ] rename and move archiving operations into one module
 * [ ] drag and drop. On wayland a lot is going wrong!
@@ -14,9 +15,13 @@
 * [ ] importing puzzles should be shown in table and counts updated
 * [ ] generating palapeli puzzles from commandline -> C++
 
+* 2024-07-04 0.5.3
+  * Archiving is done for multiple puzzles in one archive instead of one per archive. Also the name now holds the category and container where it came from.
+  * Restoring an archive.
+
 * 2024-06-27 0.5.2
   * Bugfix; Assignment of Hash in `get-puzzle()` in **PuzzleTable::Config::Category** changed to make a clone. Changes made elsewhere to the puzzle data were visible in original caused by assigning a scalar (=container) Hash.
-  * Changed progres calculation using type **SetHash** instead of **Hash**.
+  * Changed progress calculation using type **SetHash** instead of **Hash**.
   * Rename **PuzzleTable::ExtractDataFromPuzzle** to **PuzzleTable::Archive** and use it to handle all tasks to get puzzles and categories in and out of the puzzle table program.
 
 * 2024-06-10 0.5.1
