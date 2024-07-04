@@ -31,7 +31,7 @@ has PuzzleTable::Config::Categories $!categories handles( <
       get-containers add-container delete-container
       save-categories-config get-current-category get-category-status
       add-puzzle move-puzzle update-puzzle get-puzzles get-puzzle
-      archive-puzzles get-puzzle-image
+      archive-puzzles get-puzzle-image restore-puzzles
     >);
 
 #-------------------------------------------------------------------------------

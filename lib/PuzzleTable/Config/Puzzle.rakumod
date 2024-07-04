@@ -85,6 +85,7 @@ method archive-puzzle (
 }
 }}
 
+#`{{
 #-------------------------------------------------------------------------------
 method restore-puzzle (
   Str:D $archive-trashbin, Str:D $archive-name, Str:D $puzzle-path --> Hash
@@ -163,6 +164,7 @@ method restore-puzzle (
 
   $config
 }
+}}
 
 #-------------------------------------------------------------------------------
 # Get data of a puzzle and store in a Hash. Also a $destination where puzzle

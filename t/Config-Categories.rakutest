@@ -30,7 +30,6 @@ subtest 'password', {
   }
 }
 
-
 subtest 'category', {
   with $categories {
     #$category .= new( :category-name<cat-2>, :root-dir(CONFDATA));
@@ -55,7 +54,6 @@ subtest 'category', {
   }
 }
 
-
 subtest 'puzzle', {
   with $categories {
     $message = .import-collection('some-where-else');
@@ -68,7 +66,6 @@ subtest 'puzzle', {
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
     is $config<categories>.elems, 3, '.save-categories-config() (implicit)';
     ok $config<categories><Cat-2><lockable>, 'Check categories config';
-
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 2, 'Check category config';
 
@@ -76,22 +73,21 @@ subtest 'puzzle', {
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 3, '.add-puzzle()';
 
-    $message = .archive-puzzles( ['p0005', ], ARCHDATA);
-    is $message, 'One of the puzzle ids is wrong and/or puzzle store not found',
+    my @ap = .archive-puzzles( ['p0005', ], ARCHDATA);
+    is @ap[0], 'One of the puzzle ids is wrong and/or puzzle store not found',
       '.archive-puzzles(): wrong puzzle id';
+    @ap = .archive-puzzles( ['p000', ], ARCHDATA);
 
-    $message = .archive-puzzles( ['p000',], ARCHDATA);
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 2, '.archive-puzzles()';
     ok $config<members><p000>:!exists, '.archive-puzzles(): Config check';
 
-#`{{
-    $message = .restore-puzzle( ARCHDATA, '20240523-182323-830.tbz2');
-    #.save-categories-config;
+    my $archive-name = @ap[1];
+    $message = .restore-puzzles( ARCHDATA, $archive-name);
     $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
-    is $config<members>.elems, 3, '.restore-puzzle()';
-    ok $config<members><p003>:exists, '.restore-puzzle(): Config check';
-}}
+    is $config<members>.elems, 3, '.restore-puzzles()';
+    ok $config<members><p002>:exists, '.restore-puzzles(): Config check';
+
     my Array $puzzles = [|.get-puzzles];
     is $puzzles.elems, 3, '.get-puzzles(); Check nbr puzzles returned';
     ok $puzzles[0]<Category> eq

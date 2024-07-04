@@ -568,11 +568,11 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
 
 #-------------------------------------------------------------------------------
 method archive-puzzles (
-  Array:D $puzzle-ids, Str:D $archive-trashbin --> Str
+  Array:D $puzzle-ids, Str:D $archive-trashbin --> List
 ) {
   my Str $message = '';
-
-  if ! $!current-category.archive-puzzles( $puzzle-ids, $archive-trashbin) {
+  my @ap = $!current-category.archive-puzzles( $puzzle-ids, $archive-trashbin);
+  if ! @ap[0] {
     $message = 'One of the puzzle ids is wrong and/or puzzle store not found';
   }
 
@@ -581,15 +581,51 @@ method archive-puzzles (
     self.save-categories-config;
   }
 
-  $message
+  ( $message, @ap[1])
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name --> Str ) {
   my Str $message = '';
 
   if ! $!current-category.restore-puzzle( $archive-trashbin, $archive-name) {
     $message = 'Archive not found or does not have the proper contents';
+  }
+
+  $message
+}
+}}
+
+#-------------------------------------------------------------------------------
+method restore-puzzles (
+  Str:D $archive-trashbin, Str:D $archive-name --> Str
+) {
+  my Str $message = '';
+
+  my Str $category;
+  my Str $container;
+  ( $, $container, $category) = $archive-name.split(':');
+  $container = $container.tc ~ '_EX_'
+    if ? $container and $container !~~ m/ '_EX_' $/;
+
+  $category ~~ s/ '.tbz2' $//;
+
+  # Restoring puzzles can be for another category or in the current one
+  if $category eq $!current-category.category-name {
+    $message = 'Archive not found or does not have the proper contents'
+      unless $!current-category.restore-puzzles(
+        $archive-trashbin, $archive-name
+      );
+  }
+
+  else {
+    my PuzzleTable::Config::Category $cat .= new(
+      :category-name($category), :category-container($container), :$!root-dir
+    );
+
+    $message = 'Archive not found or does not have the proper contents'
+      unless $cat.restore-puzzles( $archive-trashbin, $archive-name);
   }
 
   $message

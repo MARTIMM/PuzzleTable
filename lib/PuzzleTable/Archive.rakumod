@@ -119,6 +119,7 @@ method palapeli-info( Str:D $store-path --> Hash ) {
 method archive-puzzles (
   Str:D $archive-trashbin, Str:D $category, Hash:D $puzzles,
   Str :$container is copy = ''
+  --> Str
 ) {
   # Drop the container marker if any
   $container ~~ s/ '_EX_' $//;
@@ -157,7 +158,9 @@ method archive-puzzles (
     "$puzzle-id/puzzle-data.yaml".IO.spurt(save-yaml($puzzle-data));
 
     # Store each file in this path into the archive
-    $archive.write-header($puzzle-id, :filetype(AE_IFDIR));
+    #$archive.write-header(
+    #  $puzzle-id, #:filetype(AE_IFDIR)
+    #);
     for dir($puzzle-id) -> $file {
       $archive.write-header($file.Str);
       $archive.write-data($file.Str);
@@ -177,4 +180,63 @@ method archive-puzzles (
 
   # Return to dir where we started
   chdir($cwd);
+
+  "$archive-name.tbz2"
+}
+
+#-------------------------------------------------------------------------------
+method restore-puzzles (
+  Str:D $archive-trashbin, Str:D $archive-name, Str:D $puzzle-root-path --> Hash
+) {
+  return Hash unless "$archive-trashbin$archive-name".IO.r;
+
+  # Extract the data from the archive
+  my Archive::Libarchive $archive .= new(
+    operation => LibarchiveExtract,
+    file => "$archive-trashbin$archive-name",
+    flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
+             ARCHIVE_EXTRACT_ACL +|  ARCHIVE_EXTRACT_FFLAGS
+  );
+
+  try {
+    $archive.extract("$archive-trashbin/puzzles");
+    CATCH {
+      $archive.close;
+      say "Can't extract files: $_";
+      return Hash;
+    }
+  }
+
+  # Close the archive
+  $archive.close;
+
+  my Str $config-file;
+  my Hash $puzzles = %();
+  for dir("$archive-trashbin/puzzles") -> $pid {
+    # Get the puzzle config data
+    $config-file = "$pid/puzzle-data.yaml";
+
+    my $puzzle-id = $pid.Str;
+    $puzzle-id ~~ s/^ .*? (p\d\d\d) $/orig-$0/;
+    $puzzles{$puzzle-id}<puzzle-data> = load-yaml($config-file.IO.slurp);
+    $config-file.IO.unlink;
+
+    # Remove unneeded data, older version might have it saved in the archive
+    "/$pid/image.jpg".IO.unlink if "$pid/image.jpg".IO.e;
+    "$pid/pala.desktop".IO.unlink if "$pid/pala.desktop".IO.e;
+
+    # Rename the archive path into the puzzle path, effectively adding the
+    # puzzle data into a category.
+    my Int $count = 0;
+    my Str $puzzle-path = "$puzzle-root-path/";
+    while "$puzzle-path/$count.fmt('p%03d')".IO.e { $count++; }
+    my Str $new-puzzle-id = $count.fmt('p%03d');
+
+    $pid.rename("$puzzle-path/$new-puzzle-id");
+    $puzzles{$puzzle-id}<puzzle-id> = $new-puzzle-id;
+  }
+
+  "$archive-trashbin/puzzles".IO.rmdir;
+
+  $puzzles
 }

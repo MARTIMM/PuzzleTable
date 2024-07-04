@@ -17,7 +17,6 @@ has Hash $!category-config;
 has Str $!config-path;
 
 #-------------------------------------------------------------------------------
-
 submethod BUILD (
   Str:D :$!category-name, Str :$!category-container = '', Str:D :$root-dir
 ) {
@@ -176,13 +175,13 @@ method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
 
 #-------------------------------------------------------------------------------
 method archive-puzzles (
-  Array:D $puzzle-ids, Str:D $archive-trashbin --> Bool
+  Array:D $puzzle-ids, Str:D $archive-trashbin --> List
 ) {
   my Hash $puzzles = %();
 
   # First check all puzzles before changing the config
   for @$puzzle-ids -> $puzzle-id {
-    return False unless
+    return ( False, '') unless
       $!category-config<members>{$puzzle-id}:exists
       and "$!config-dir/$puzzle-id".IO.d;
   }
@@ -197,7 +196,7 @@ method archive-puzzles (
 
   # And archive the puzzles
   my PuzzleTable::Archive $archive .= new;
-  $archive.archive-puzzles(
+  my Str $archive-name = $archive.archive-puzzles(
     $archive-trashbin, $!category-name, $puzzles,
     :container($!category-container)
   );
@@ -205,9 +204,10 @@ method archive-puzzles (
   # Save all changes
   self.save-category-config;
 
-  True
+  ( True, $archive-name)
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method restore-puzzle (
   Str:D $archive-trashbin, Str:D $archive-name  --> Bool
@@ -232,16 +232,36 @@ method restore-puzzle (
 
   $restore-ok
 }
+}}
+
+#-------------------------------------------------------------------------------
+method restore-puzzles (
+  Str:D $archive-trashbin, Str:D $archive-name --> Bool
+) {
+  my PuzzleTable::Archive $archive .= new;
+
+  my Hash $puzzles =
+    $archive.restore-puzzles( $archive-trashbin, $archive-name, $!config-dir);
+
+  return False unless ?$puzzles;
+
+  for $puzzles.keys -> $puzzle {
+    my Str $puzzle-id = $puzzles{$puzzle}<puzzle-id>;
+    my Hash $puzzle-data = $puzzles{$puzzle}<puzzle-data>;
+    $!category-config<members>{$puzzle-id} = $puzzle-data;
+  }
+
+  # Save all changes
+  self.save-category-config;
+  True
+}
 
 #-------------------------------------------------------------------------------
 method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
 
   my Hash $h;
   if $delete {
-#note "$?LINE get puzzle id $puzzle-id in $!category-name, delete: $delete";
     $h = $!category-config<members>{$puzzle-id}:delete;
-#note "$?LINE get puzzle id $puzzle-id in $!category-name, exists: ", $!category-config<members>{$puzzle-id}:exists, "\n$!category-config<members>.keys()";
-
     self.save-category-config;
   }
 
