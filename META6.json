@@ -10,6 +10,7 @@
   "license": "Artistic-2.0",
 
   "provides": {
+    "PuzzleTable::Gui::Container": "lib/PuzzleTable/Gui/Container.rakumod",
     "PuzzleTable::Gui::Sidebar": "lib/PuzzleTable/Gui/Sidebar.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
     "PuzzleTable::Gui::Help": "lib/PuzzleTable/Gui/Help.rakumod",
