@@ -20,6 +20,7 @@ has Gnome::Gtk4::CssProvider $!css-provider;
 has Version $.version = v0.5.0;
 has Array $.options = [<
   category=s pala-collection=s puzzles lock h help version verbose
+  restore=s
 >];
 
 has PuzzleTable::Config::Categories $!categories handles( <

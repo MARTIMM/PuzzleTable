@@ -182,6 +182,13 @@ method remote-options (
     $!table.get-pala-puzzles( $opt-category, $o<pala-collection>);
   }
 
+  if $o<restore>:exists {
+    my Str $archive-dir = $o<restore>.IO.parent.Str ~ '/';
+    my Str $archive-name = $o<restore>.IO.basename.Str;
+    my Str $message = $!config.restore-puzzles( $archive-dir, $archive-name);
+    note "Error: $message" if ?$message;
+  }
+
   # Activate unless table is already displayed
   $!application.activate unless $!table-is-displayed;
   $command-line.set-exit-status($exit-code);
@@ -273,8 +280,9 @@ method usage ( ) {
   Usage:
     puzzle-table --version
     puzzle-table --help
-    puzzle-table --puzzles <puzzle-path> [--category <name>] [--lock]
-    puzzle-table --pala-collection <collection-path>
+    puzzle-table --puzzles [--category=<name>] [--lock] <puzzle-path> …
+    puzzle-table --pala-collection=<collection-path>
+    puzzle-table --restore=<archive>
 
   Options:
     --category <name>
@@ -298,6 +306,11 @@ method usage ( ) {
     --puzzles.
       Import one or more puzzles. The paths to the puzzles are given as the
       arguments.
+    
+    --restore <archive>
+      Restore a previously archived set of puzzles in original category
+      and container. When container and category are deleted, these will be
+      created in this restore proces.
 
     --version
       Show current version of distribution.
