@@ -12,159 +12,26 @@ use YAMLish;
 =begin pod
 
 PuzzleConfig handles a separate puzzle. Its tasks are
-=item Archiving; Archiving is done when a puzzle is removed from the puzzle table.
-=item Restore; This is the opposite of the archiving operation when one wants the puzzle back on the puzzle table.
 =item Import; Create a new structure when reading an exported puzzle from disk or a puzzle found in a Palapeli collection
 
 The information stored in a Hash have the following keys
-=item Comment; Info from exported file and is editable.
-=item Filename; The filename after it is imported. It is a sha256 encoded .source file with a prefixed timestamp to make the file unique.
-=item ImageSize; Size as it is found in the puzzle.
-=item Name; Short name of the puzzle.
-=item PieceCount; Number of pieces.
-=item Progress; Progress of the played puzzle in percentage finished. It has a subkey of Snap, Flatpak or Standard, depending on the Palapeli program used.
-=item Slicer; Type of puzzle piece slicer used to generate the puzzle. This is done by the Palapeli program.
-=item SlicerMode; The mode used by the slicer.
-=item Source; Remarks of the origin of the picture.
-=item SourceFile; The source filename of the original puzzle.
+=item2 Comment; Info from exported file and is editable.
+=item2 Filename; The filename after it is imported. It is a sha256 encoded .source file with a prefixed timestamp to make the file unique.
+=item2 ImageSize; Size as it is found in the puzzle.
+=item2 Name; Short name of the puzzle.
+=item2 PieceCount; Number of pieces.
+=item2 Progress; Progress of the played puzzle in percentage finished. It has a subkey of Snap, Flatpak or Standard, depending on the Palapeli program used.
+=item2 Slicer; Type of puzzle piece slicer used to generate the puzzle. This is done by the Palapeli program.
+=item2 SlicerMode; The mode used by the slicer.
+=item2 Source; Remarks of the origin of the picture.
+=item2 SourceFile; The source filename of the original puzzle.
+
+=item Calculate the progress of a puzzle
 
 =end pod
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config::Puzzle:auth<github:MARTIMM>;
-#`{{
-#-------------------------------------------------------------------------------
-method archive-puzzle (
-  Str:D $archive-trashbin, Str:D $puzzle-path, Hash:D $puzzle-data
-) {
-
-  # Create the name of the archive
-  my Str $archive-name = DateTime.now.Str;
-  $archive-name ~~ s/ '.' (...) .* $/.$0/;
-  $archive-name ~~ s:g/ <[:-]> //;
-  $archive-name ~~ s:g/ <[T.]> /-/;
-
-  my Str $archive-path = [~] $archive-trashbin, $archive-name;
-
-  # Rename the puzzle path into the archive path, effectively removing the
-  # puzzle data from the other puzzles.
-  $puzzle-path.IO.rename($archive-path);
-
-  # Change dir to archive path
-  my Str $cwd = $*CWD.Str;
-  chdir($archive-path);
-
-  # Save config into a yaml file in the archive dir
-  "puzzle-data.yaml".IO.spurt(save-yaml($puzzle-data));
-
-  # Create a bzipped tar archive
-  my Archive::Libarchive $a .= new(
-    operation => LibarchiveWrite,
-    file => "$archive-path.tbz2",
-    format => 'v7tar',
-    filters => ['bzip2']
-  );
-
-  # Store each file in this path into the archive
-  for dir('.') -> $file {
-    $a.write-header($file.Str);
-    $a.write-data($file.Str);
-  }
-
-  # And close the archive
-  $a.close;
-
-  # Cleanup the directory and leave tarfile in the trash dir
-  for dir('.') -> $file {
-    $file.IO.unlink;
-  }
-
-  # Return to dir where we started
-  chdir($cwd);
-  $archive-path.IO.rmdir;
-}
-}}
-
-#`{{
-#-------------------------------------------------------------------------------
-method restore-puzzle (
-  Str:D $archive-trashbin, Str:D $archive-name, Str:D $puzzle-path --> Hash
-) {
-
-  my Str $archive-path = [~] $archive-trashbin, $archive-name;
-  return Hash unless $archive-path.IO.r;
-
-  my Archive::Libarchive $a .= new(
-    operation => LibarchiveExtract,
-    file => "$archive-path",
-    flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
-             ARCHIVE_EXTRACT_ACL +|  ARCHIVE_EXTRACT_FFLAGS
-  );
-
-  try {
-    $a.extract("$archive-trashbin/puzzle");
-    CATCH {
-      say "Can't extract files: $_";
-      return Hash;
-    }
-  }
-
-  $a.close;
-
-  # Older versions of archives hold the config in a '<puzzle-id>.yaml' file
-  # Now it is stored in a straight forward name 'puzzle-data.yaml'.
-  my Str $config-file;
-  if "$archive-trashbin/puzzle/puzzle-data.yaml".IO.e {
-    $config-file = "$archive-trashbin/puzzle/puzzle-data.yaml";
-  }
-
-  else {
-    for dir("$archive-trashbin/puzzle") -> $f {
-      if $f.Str ~~ m/ '/' p \d+ '.yaml' $/ {
-        $config-file = $f.Str;
-        last;
-      }
-    }
-  }
-
-  my Hash $config;
-  if ? $config-file {
-    $config = load-yaml($config-file.IO.slurp);
-    $config-file.IO.unlink;
-
-    # Remove unneeded data, older version might have it saved in the archive
-    "$archive-trashbin/puzzle/image.jpg".IO.unlink
-      if "$archive-trashbin/puzzle/image.jpg".IO.e;
-    "$archive-trashbin/puzzle/pala.desktop".IO.unlink
-      if "$archive-trashbin/puzzle/pala.desktop".IO.e;
-
-    # Rename the archive path into the puzzle path, effectively adding the
-    # puzzle data into a category.
-    "$archive-trashbin/puzzle".IO.rename($puzzle-path);
-  }
-
-  else {
-    sub cleanup-extracted-data ( Str:D $d ) {
-      for dir($d) -> $f {
-        if $f.d {
-          cleanup-extracted-data($f.Str);
-        }
-
-        else {
-          $f.unlink;
-        }
-      }
-
-      $d.rmdir;
-    }
-
-    cleanup-extracted-data("$archive-trashbin/puzzle");
-    return Hash;
-  }
-
-  $config
-}
-}}
 
 #-------------------------------------------------------------------------------
 # Get data of a puzzle and store in a Hash. Also a $destination where puzzle
@@ -185,29 +52,6 @@ method import-puzzle ( Str $puzzle-path, Str $destination --> Hash ) {
   my PuzzleTable::Archive $archive .= new;
   $archive.extract( $destination, $puzzle-path);
 
-#`{{
-  # Convert the image into a smaller one to be displayed on the puzzle table
-  # Modern version (IMv7) of magick has convert deprecated
-  my Proc $p = shell "/usr/bin/magick -version", :out;
-  my Bool $is-new = False;
-  for $p.out.lines -> $l {
-    if $l ~~ m/^ Version ':' \s ImageMagick \s $<v> = \d+ / {
-      $is-new = True if $/<v>.Str.Int > 6;
-      last;
-    }
-  }
-  $p.out.close;
-
-  if $is-new {
-    run '/usr/bin/magick', "$destination/image.jpg",
-        '-resize', '400x400', "$destination/image400.jpg";
-  }
-
-  else {
-    run '/usr/bin/magick', 'convert', "$destination/image.jpg",
-        '-resize', '400x400', "$destination/image400.jpg";
-  }
-}}
   # Add a smaller version of image
   self.convert-image($destination);
 

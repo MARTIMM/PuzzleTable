@@ -74,26 +74,17 @@ submethod BUILD ( Str:D :$!root-dir ) {
 #-------------------------------------------------------------------------------
 # Called after adding, removing, or other changes are made on a category
 method save-categories-config ( ) {
-#  my $frame = callframe(1);
-#  note "$?LINE Called from {$frame.file}:{$frame.line}.";
 
   my $t0 = now;
 
   # Save categories config
   $!config-path.IO.spurt(save-yaml($!categories-config));
 
-  # Also save puzzle data of current category
-#  $!current-category.save-category-config;
-
-  #note "Done saving categories";
   note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}."
        if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
-# TODO check in subcats too. dir names are still on same level =>
-# all cats must be unique
-# DONE add in subcats? or move afterwards
 method add-category (
   Str:D $category-name is copy, Str :$category-container is copy = '',
   :$lockable = False --> Str
@@ -233,9 +224,6 @@ method group-in-subcategory (
   if $categories{$category-name}:exists
      and $categories{$category-container}{$category-name}:!exists
   {
-#    $categories{$category-container} = %()
-#      unless $categories{$category-container}:exists;
-
     $categories{$category-container}<categories>{$category-name} =
       $categories{$category-name}:delete;
 
@@ -274,8 +262,6 @@ method get-current-category ( --> Str ) {
 method get-category-status (
   Str $category-name is copy , Str :$category-container is copy = '' --> Array
 ) {
-#my $frame = callframe(2);
-#note "$?LINE Called from {$frame.file}:{$frame.line}.";
   $category-name .= tc;
   $category-container = $category-container.tc ~ '_EX_'
      if ?$category-container;
@@ -290,7 +276,6 @@ method get-category-status (
     $categories := $!categories-config<categories>;
   }
 
-#note "$?LINE $category-container, $category-name";
   if $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
   }
@@ -482,17 +467,6 @@ method import-collection ( Str:D $collection-path --> Str ) {
   $message
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-multi method add-puzzle ( Str $category, Str:D $puzzle-path --> Str ) {
-  my PuzzleTable::Config::Category $c .=
-     new( :category-name($category // 'Default'), :$!root-dir);
-
-  self.select-category($category // 'Default');
-  $!current-category.add-puzzle($puzzle-path) if $puzzle-path.IO.r;
-}
-}}
-
 #-------------------------------------------------------------------------------
 #multi method add-puzzle ( Str:D $puzzle-path --> Str ) {
 method add-puzzle ( Str:D $puzzle-path --> Str ) {
@@ -548,24 +522,6 @@ method move-puzzle ( Str $to-cat is copy, Str:D $puzzle-id ) {
   $c-to.save-category-config;
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Str ) {
-  my Str $message = '';
-
-  if ! $!current-category.remove-puzzle( $puzzle-id, $archive-trashbin) {
-    $message = 'Puzzle id is wrong and/or Puzzle store not found';
-  }
-
-  else {
-    self.update-category-status;
-    self.save-categories-config;
-  }
-
-  $message
-}
-}}
-
 #-------------------------------------------------------------------------------
 method archive-puzzles (
   Array:D $puzzle-ids, Str:D $archive-trashbin --> List
@@ -583,19 +539,6 @@ method archive-puzzles (
 
   ( $message, @ap[1])
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method restore-puzzle ( Str:D $archive-trashbin, Str:D $archive-name --> Str ) {
-  my Str $message = '';
-
-  if ! $!current-category.restore-puzzle( $archive-trashbin, $archive-name) {
-    $message = 'Archive not found or does not have the proper contents';
-  }
-
-  $message
-}
-}}
 
 #-------------------------------------------------------------------------------
 method restore-puzzles (
@@ -745,7 +688,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
   # Get executable program
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
 
-note "\n$?LINE Error missing \$puzzle-id: Hash = $puzzle.gist()"
+#note "\n$?LINE Error missing \$puzzle-id: Hash = $puzzle.gist()"
 unless ? $puzzle<PuzzleID>;
   my Str $puzzle-id = $puzzle<PuzzleID>;
   my Str $puzzle-path = [~]

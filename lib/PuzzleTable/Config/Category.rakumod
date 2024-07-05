@@ -3,7 +3,6 @@ use v6.d;
 
 use YAMLish;
 
-#use PuzzleTable::Types;
 use PuzzleTable::Config::Puzzle;
 use PuzzleTable::Archive;
 
@@ -20,7 +19,6 @@ has Str $!config-path;
 submethod BUILD (
   Str:D :$!category-name, Str :$!category-container = '', Str:D :$root-dir
 ) {
-
   $!category-name .= tc;
   $!category-container .= tc;
 
@@ -152,27 +150,6 @@ method set-puzzle ( Str:D $puzzle-id, Hash $new-pairs ) {
   self.save-category-config;
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method remove-puzzle ( Str:D $puzzle-id, Str:D $archive-trashbin --> Bool ) {
-
-  return False unless $!category-config<members>{$puzzle-id}:exists;
-
-  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
-  return False unless $puzzle-path.IO.d;
-
-  # Get the configuration data of this puzzle and remove it from the
-  # configuration Hash.
-  my Hash $puzzle-config = $!category-config<members>{$puzzle-id}:delete;
-  self.save-category-config;
-
-  my PuzzleTable::Config::Puzzle $puzzle .= new;
-  $puzzle.archive-puzzle( $archive-trashbin, $puzzle-path, $puzzle-config);
-
-  True
-}
-}}
-
 #-------------------------------------------------------------------------------
 method archive-puzzles (
   Array:D $puzzle-ids, Str:D $archive-trashbin --> List
@@ -206,33 +183,6 @@ method archive-puzzles (
 
   ( True, $archive-name)
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method restore-puzzle (
-  Str:D $archive-trashbin, Str:D $archive-name  --> Bool
-) {
-  my Bool $restore-ok = False;
-
-  # Get a new puzzle id
-  my Str $puzzle-id = self.new-puzzle-id;
-  my Str $puzzle-path = [~] $!config-dir, '/', $puzzle-id;
-
-  # Restore puzzle at $puzzle-path
-  my PuzzleTable::Config::Puzzle $puzzle .= new;
-  my Hash $puzzle-config = $puzzle.restore-puzzle(
-    $archive-trashbin, $archive-name, $puzzle-path
-  );
-
-  if ? $puzzle-config {
-    $!category-config<members>{$puzzle-id} = $puzzle-config;
-    self.save-category-config;
-    $restore-ok = True;
-  }
-
-  $restore-ok
-}
-}}
 
 #-------------------------------------------------------------------------------
 method restore-puzzles (
