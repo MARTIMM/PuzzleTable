@@ -689,7 +689,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
 
 #note "\n$?LINE Error missing \$puzzle-id: Hash = $puzzle.gist()"
-unless ? $puzzle<PuzzleID>;
+#unless ? $puzzle<PuzzleID>;
   my Str $puzzle-id = $puzzle<PuzzleID>;
   my Str $puzzle-path = [~]
     $!current-category.get-puzzle-destination($puzzle-id),

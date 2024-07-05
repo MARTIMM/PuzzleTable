@@ -11,16 +11,16 @@ use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::Entry:api<2>;
-use Gnome::Gtk4::PasswordEntry:api<2>;
-use Gnome::Gtk4::Picture:api<2>;
-use Gnome::Gtk4::Tooltip:api<2>;
-use Gnome::Gtk4::CheckButton:api<2>;
-use Gnome::Gtk4::Button:api<2>;
-use Gnome::Gtk4::Label:api<2>;
+#use Gnome::Gtk4::PasswordEntry:api<2>;
+#use Gnome::Gtk4::Picture:api<2>;
+#use Gnome::Gtk4::Tooltip:api<2>;
+#use Gnome::Gtk4::CheckButton:api<2>;
+#use Gnome::Gtk4::Button:api<2>;
+#use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
-use Gnome::Gtk4::Expander:api<2>;
-use Gnome::Gtk4::ComboBoxText:api<2>;
+#use Gnome::Gtk4::Expander:api<2>;
+#use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::DropDown:api<2>;
@@ -30,8 +30,8 @@ use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::Gui::Sidebar:auth<github:MARTIMM>;
-also is Gnome::Gtk4::ScrolledWindow;
+unit class PuzzleTable::Gui::Container:auth<github:MARTIMM>;
+#also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
@@ -43,20 +43,19 @@ has PuzzleTable::Config $!config;
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
 
-  self.set-halign(GTK_ALIGN_FILL);
-  self.set-valign(GTK_ALIGN_FILL);
-  self.set-vexpand(True);
-  self.set-propagate-natural-width(True);
+#  self.set-halign(GTK_ALIGN_FILL);
+#  self.set-valign(GTK_ALIGN_FILL);
+#  self.set-vexpand(True);
+#  self.set-propagate-natural-width(True);
 
-  self.set-min-content-width(0);
-  self.set-max-content-width(450);
+#  self.set-min-content-width(0);
+#  self.set-max-content-width(450);
 
-  self.fill-sidebar(:init);
+#  self.fill-sidebar(:init);
 }
 
-#`{{
 #-------------------------------------------------------------------------------
-method categories-add-container ( N-Object $parameter ) {
+method container-add ( N-Object $parameter ) {
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Add Category Dialog')
@@ -97,7 +96,7 @@ method do-container-add (
 }
 
 #-------------------------------------------------------------------------------
-method categories-delete-container ( N-Object $parameter ) {
+method container-delete ( N-Object $parameter ) {
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Add Category Dialog')
@@ -132,8 +131,11 @@ method do-container-delete (
   $dialog.destroy-dialog if $sts-ok;
 }
 
-}}
 
+
+
+
+=finish
 #-------------------------------------------------------------------------------
 # Select from menu to add a category
 method categories-add ( N-Object $parameter ) {
