@@ -10,17 +10,12 @@ use v6.d;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
 
-#use Gnome::Gtk4::Entry:api<2>;
-#use Gnome::Gtk4::PasswordEntry:api<2>;
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
-#use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
-#use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::Expander:api<2>;
-#use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::DropDown:api<2>;
@@ -35,8 +30,6 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
-#has Gnome::Gtk4::Grid $!cat-grid;
-#has Str $!current-category;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
@@ -59,11 +52,6 @@ method fill-sidebar ( Bool :$init = False ) {
   my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
   $cat-grid.clear-object;
 
-  # Remove all buttons and info from sidebar
-#  if ?$!cat-grid and $!cat-grid.is-valid {
-#    $!cat-grid.clear-object;
-#  }
-
   # Create new sidebar
   my $row-count = 0;
   #with $!cat-grid .= new-grid {
@@ -78,10 +66,13 @@ method fill-sidebar ( Bool :$init = False ) {
 
     my Array $totals = [ 0, 0, 0, 0];
     for $!config.get-categories -> $category {
-#note "$?LINE $category";
+
+      # Check if $category is a container
       if $category ~~ m/ '_EX_' $/ {
         my Str $category-container = $category;
         $category-container ~~ s/ '_EX_' $//;
+
+        # Create a container grid for subcategories
         my Int $subcat-row-count = 0;
         my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
         for $!config.get-categories(:$category-container) -> $sub-category {
@@ -99,7 +90,7 @@ method fill-sidebar ( Bool :$init = False ) {
           $subcat-row-count++;
         }
 
-        # Only show container if there are any categories visible
+        # Only show container in an expander if there are any categories visible
         if $subcat-row-count {
           my Gnome::Gtk4::Expander $expander =
             self.sidebar-expander($category-container);

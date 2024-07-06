@@ -230,7 +230,6 @@ method do-category-rename (
   $dialog.destroy-dialog if $sts-ok;
 }
 
-#`{{
 #-------------------------------------------------------------------------------
 # Select from menu to remove a category
 method category-remove-category ( N-Object $parameter ) {
@@ -243,45 +242,4 @@ method do-category-remove (
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
 ) {
 }
-}}
 
-=finish
-#-------------------------------------------------------------------------------
-method fill-categories (
-  Bool :$skip-default = False --> Gnome::Gtk4::DropDown
-) {
-  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
-  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
-
-  for $!config.get-categories -> $category {
-    next if $skip-default and $category eq 'Default';
-
-    if $category ~~ m/ '_EX_' $/ {
-      for $!config.get-categories(:category-container($category)) -> $subcat {
-        $category-list.append($subcat);
-      }
-    }
-
-    else {
-      $category-list.append($category);
-    }
-  }
-
-  $dropdown
-}
-
-#-------------------------------------------------------------------------------
-method fill-containers ( Bool :$no-enpty = False --> Gnome::Gtk4::DropDown ) {
-  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
-  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
-
-  # Add an entry to be able to select a category at toplevel
-  $category-list.append('--') unless $no-enpty;
-
-  # Add the container strings
-  for $!config.get-containers -> $container {
-    $category-list.append($container);
-  }
-
-  $dropdown
-}
