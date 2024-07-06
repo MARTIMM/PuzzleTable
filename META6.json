@@ -10,15 +10,16 @@
   "license": "Artistic-2.0",
 
   "provides": {
+    "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
     "PuzzleTable::Gui::Container": "lib/PuzzleTable/Gui/Container.rakumod",
-    "PuzzleTable::Gui::Sidebar": "lib/PuzzleTable/Gui/Sidebar.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
     "PuzzleTable::Gui::Help": "lib/PuzzleTable/Gui/Help.rakumod",
     "PuzzleTable::Gui::IconButton": "lib/PuzzleTable/Gui/IconButton.rakumod",
     "PuzzleTable::Gui::MainWindow": "lib/PuzzleTable/Gui/MainWindow.rakumod",
     "PuzzleTable::Gui::MenuBar": "lib/PuzzleTable/Gui/MenuBar.rakumod",
-    "PuzzleTable::Gui::PuzzleHandling": "lib/PuzzleTable/Gui/PuzzleHandling.rakumod",
+    "PuzzleTable::Gui::Puzzle": "lib/PuzzleTable/Gui/Puzzle.rakumod",
     "PuzzleTable::Gui::Settings": "lib/PuzzleTable/Gui/Settings.rakumod",
+    "PuzzleTable::Gui::Sidebar": "lib/PuzzleTable/Gui/Sidebar.rakumod",
     "PuzzleTable::Gui::Statusbar": "lib/PuzzleTable/Gui/Statusbar.rakumod",
     "PuzzleTable::Gui::Table": "lib/PuzzleTable/Gui/Table.rakumod",
     "PuzzleTable::Gui::TableItemLabel": "lib/PuzzleTable/Gui/TableItemLabel.rakumod",
