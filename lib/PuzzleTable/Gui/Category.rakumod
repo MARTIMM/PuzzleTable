@@ -54,7 +54,7 @@ method category-add ( N-Object $parameter ) {
     :$!main, :dialog-header('Add Category Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
-    my Gnome::Gtk4::DropDown() $dropdown = self.fill-containers;
+    my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers;
 
     # Show dropdown
     .add-content( 'Select a container', $dropdown);
@@ -103,7 +103,7 @@ method do-category-add (
   }
 
   else {
-    my Str $category-container = self.get-dropdown-text($dropdown);
+    my Str $category-container = $!sidebar.get-dropdown-text($dropdown);
     $category-container = '' if $category-container eq '--';
 
     # Add category to list. Message gets defined if something is wrong.
@@ -157,7 +157,7 @@ method do-category-lock (
   my Bool $sts-ok = False;
 
   $!config.set-category-lockable(
-    self.get-dropdown-text($dropdown), $check-button.get-active.Bool
+    $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool
   );
 
   # Sidebar changes when a category is set lockable and table is locked
@@ -174,8 +174,8 @@ method category-rename ( N-Object $parameter ) {
 #  say 'category rename';
 
   my Gnome::Gtk4::Entry $entry .= new-entry;
-  my Gnome::Gtk4::DropDown $dropdown-cat = self.fill-categories(:skip-default);
-  my Gnome::Gtk4::DropDown $dropdown-cont = self.fill-containers;
+  my Gnome::Gtk4::DropDown $dropdown-cat = $!sidebar.fill-categories(:skip-default);
+  my Gnome::Gtk4::DropDown $dropdown-cont = $!sidebar.fill-containers;
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
@@ -201,7 +201,7 @@ method do-category-rename (
   Gnome::Gtk4::DropDown :$dropdown-cont,
 ) {
   my Bool $sts-ok = False;
-  my Str $old-category = self.get-dropdown-text($dropdown-cat);
+  my Str $old-category = $!sidebar.get-dropdown-text($dropdown-cat);
   my Str $new-category = $entry.get-text.tc;
 
   if ! $new-category {
@@ -218,7 +218,7 @@ method do-category-rename (
 
   else {
     # Move members to other category and container
-    my Str $container = self.get-dropdown-text($dropdown-cont);
+    my Str $container = $!sidebar.get-dropdown-text($dropdown-cont);
     $container = '' if $container eq '--';
     $!config.move-category(
       $old-category, $new-category.tc, :category-container($container)
@@ -245,6 +245,7 @@ method do-category-remove (
 }
 }}
 
+=finish
 #-------------------------------------------------------------------------------
 method fill-categories (
   Bool :$skip-default = False --> Gnome::Gtk4::DropDown

@@ -10,17 +10,17 @@ use v6.d;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
 
-use Gnome::Gtk4::Entry:api<2>;
-use Gnome::Gtk4::PasswordEntry:api<2>;
+#use Gnome::Gtk4::Entry:api<2>;
+#use Gnome::Gtk4::PasswordEntry:api<2>;
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
-use Gnome::Gtk4::CheckButton:api<2>;
+#use Gnome::Gtk4::CheckButton:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
-use Gnome::Gtk4::Box:api<2>;
+#use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::Expander:api<2>;
-use Gnome::Gtk4::ComboBoxText:api<2>;
+#use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::DropDown:api<2>;
@@ -275,4 +275,50 @@ method set-category ( Str $category ) {
   # Fill the sidebar in case there is a new entry
   self.fill-sidebar;
   self.select-category(:$category);
+}
+
+#-------------------------------------------------------------------------------
+method fill-categories (
+  Bool :$skip-default = False --> Gnome::Gtk4::DropDown
+) {
+  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
+  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
+
+  for $!config.get-categories -> $category {
+    next if $skip-default and $category eq 'Default';
+
+    if $category ~~ m/ '_EX_' $/ {
+      for $!config.get-categories(:category-container($category)) -> $subcat {
+        $category-list.append($subcat);
+      }
+    }
+
+    else {
+      $category-list.append($category);
+    }
+  }
+
+  $dropdown
+}
+
+#-------------------------------------------------------------------------------
+method fill-containers ( Bool :$no-enpty = False --> Gnome::Gtk4::DropDown ) {
+  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
+  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
+
+  # Add an entry to be able to select a category at toplevel
+  $category-list.append('--') unless $no-enpty;
+
+  # Add the container strings
+  for $!config.get-containers -> $container {
+    $category-list.append($container);
+  }
+
+  $dropdown
+}
+
+#-------------------------------------------------------------------------------
+method get-dropdown-text ( Gnome::Gtk4::DropDown $dropdown --> Str ) {
+  my Gnome::Gtk4::StringList() $string-list = $dropdown.get-model;
+  $string-list.get-string($dropdown.get-selected)
 }

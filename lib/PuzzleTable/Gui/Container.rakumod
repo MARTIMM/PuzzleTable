@@ -81,7 +81,10 @@ note "$?LINE delete container";
     :$!main, :dialog-header('Delete Container Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
-    my Gnome::Gtk4::DropDown() $dropdown = self.fill-containers(:no-enpty);
+    my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers(:no-enpty);
+
+    # Show entry for input
+    .add-content( 'Select container to delete', $dropdown);
 
     # Buttons to delete the container or cancel
     .add-button( self, 'do-container-delete', 'Delete', :$dropdown, :$dialog);
@@ -96,7 +99,7 @@ method do-container-delete (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::DropDown() :$dropdown
 ) {
   my Bool $sts-ok = False;
-  my Str $container = self.get-dropdown-text($dropdown);
+  my Str $container = $!sidebar.get-dropdown-text($dropdown);
   
   if not $!config.delete-container($container) {
     $dialog.set-status("Container $container not empty");
