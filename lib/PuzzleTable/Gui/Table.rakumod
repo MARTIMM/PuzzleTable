@@ -200,14 +200,15 @@ multi method add-puzzle-to-table ( Hash $puzzle ) {
   $!current-table-objects{$puzzle-id} = $puzzle;
   $!puzzle-objects.append($puzzle-id);
 
-  while $!main-context.pending {
-    $!main-context.iteration(False);
-  }
-
   $!main.statusbar.remove-message;
   $!main.statusbar.set-status(
     "Number of puzzles: " ~ $!puzzle-objects.get-n-items
   );
+
+note "$?LINE do iteration";
+  while $!main-context.pending {
+    $!main-context.iteration(False);
+  }
 }
 
 #-------------------------------------------------------------------------------

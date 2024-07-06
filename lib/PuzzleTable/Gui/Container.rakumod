@@ -11,18 +11,7 @@ use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::Entry:api<2>;
-#use Gnome::Gtk4::PasswordEntry:api<2>;
-#use Gnome::Gtk4::Picture:api<2>;
-#use Gnome::Gtk4::Tooltip:api<2>;
-#use Gnome::Gtk4::CheckButton:api<2>;
-#use Gnome::Gtk4::Button:api<2>;
-#use Gnome::Gtk4::Label:api<2>;
-#use Gnome::Gtk4::Grid:api<2>;
-use Gnome::Gtk4::Box:api<2>;
-#use Gnome::Gtk4::Expander:api<2>;
-#use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
-use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::DropDown:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
 
@@ -31,7 +20,6 @@ use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Container:auth<github:MARTIMM>;
-#also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has $!sidebar;
@@ -42,14 +30,13 @@ has PuzzleTable::Config $!config;
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
   $!sidebar = $!main.sidebar;
-
 }
 
 #-------------------------------------------------------------------------------
 method container-add ( N-Object $parameter ) {
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Add Category Dialog')
+    :$!main, :dialog-header('Add container Dialog')
   ) {
     # Show entry for input
     .add-content(
@@ -88,9 +75,10 @@ method do-container-add (
 
 #-------------------------------------------------------------------------------
 method container-delete ( N-Object $parameter ) {
+note "$?LINE delete container";
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Add Category Dialog')
+    :$!main, :dialog-header('Delete Container Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
     my Gnome::Gtk4::DropDown() $dropdown = self.fill-containers(:no-enpty);

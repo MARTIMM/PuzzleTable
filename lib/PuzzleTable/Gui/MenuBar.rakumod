@@ -74,12 +74,12 @@ method make-menu (
       );
     }
 
-    when 'Containers' {
+    when 'Container' {
       self.bind-action( $menu, $menu-name, $!cont, 'Add');
       self.bind-action( $menu, $menu-name, $!cont, 'Delete');
     }
 
-    when 'Categories' {
+    when 'Category' {
       self.bind-action(
         $menu, $menu-name, $!cat, 'Add',
         :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
@@ -146,7 +146,7 @@ method bind-action (
   $method ~~ s:g/ \s+ /-/;
 
   my Str $action-name = 'app.' ~ $method;
-#note "$?LINE $menu-name, '$entry-name', $method, $action-name";
+note "$?LINE $menu-name, '$entry-name', $method, $action-name";
 
   # Make a menu entry
   my Gnome::Gio::MenuItem $menu-item .= new-menuitem(

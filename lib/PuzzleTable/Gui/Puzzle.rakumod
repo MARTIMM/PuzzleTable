@@ -184,7 +184,7 @@ method do-remove-puzzles (
     $!config.archive-puzzles( $puzzle-ids, PUZZLE_TRASH);
 
     # Update puzzle table
-    $!main.category.select-category(:category($current-cat));
+    $!main.sidebar.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles
     $!main.statusbar.set-status(
