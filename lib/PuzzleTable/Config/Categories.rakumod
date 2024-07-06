@@ -387,7 +387,7 @@ method add-container ( Str $category-container is copy = '' --> Bool ) {
   }
 
   else {
-    $!categories-config<categories>{$category-container} = %();
+    $!categories-config<categories>{$category-container} = %(:categories(%()));
   }
   
   $add-ok
