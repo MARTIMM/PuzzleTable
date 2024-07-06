@@ -28,11 +28,12 @@ has PuzzleTable::Config::Categories $!categories handles( <
       is-category-lockable set-category-lockable is-locked lock unlock
       set-palapeli-preference get-palapeli-preference get-palapeli-image-size
       get-palapeli-collection run-palapeli
-      get-categories add-category move-category select-category find-container
+      get-categories add-category delete-category move-category
+      select-category find-container
       get-containers add-container delete-container
       save-categories-config get-current-category get-category-status
       add-puzzle move-puzzle update-puzzle get-puzzles get-puzzle
-      archive-puzzles get-puzzle-image restore-puzzles
+      archive-puzzles get-puzzle-image restore-puzzles has-puzzles
     >);
 
 #-------------------------------------------------------------------------------

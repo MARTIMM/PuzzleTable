@@ -114,6 +114,35 @@ method add-category (
 }
 
 #-------------------------------------------------------------------------------
+method delete-category ( Str $category, Str :$container is copy = '' ) {
+  my Str $message = '';
+
+  if self.has-puzzles( $category, :$container) {
+    $message = 'Category still has puzzles';
+  }
+
+  else {
+    my Hash $cats := $!categories-config<categories>;
+    my Str $container = self.find-container($category);
+
+    if ?$container {
+      # Remove the category from the container
+      $cats{$container}<categories>{$category}:delete;
+    }
+
+    else {
+      # Remove the category
+      $cats{$category}:delete;
+    }
+
+    # Remove the directory
+    "$!root-dir$category".IO.rmdir;
+  }
+
+  $message
+}
+
+#-------------------------------------------------------------------------------
 method move-category (
   Str $cat-from is copy, Str $cat-to is copy,
   Str :$category-container is copy = ''
@@ -400,7 +429,7 @@ method delete-container ( Str $category-container is copy = '' --> Bool ) {
     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
   if $!categories-config<categories>{$category-container}:exists
-     and $!categories-config<categories>{$category-container}.elems
+     and $!categories-config<categories>{$category-container}<categories>.elems
   {
     $delete-ok = False;
   }
@@ -635,6 +664,25 @@ method get-puzzles ( --> Seq ) {
   );
 
   $puzzles
+}
+
+#-------------------------------------------------------------------------------
+method has-puzzles ( Str:D $category, Str :$container = '' --> Bool ) {
+  my Bool $hp = False;
+
+  if $category eq $!current-category.category-name {
+    $hp = $!current-category.get-puzzle-ids.elems.Bool;
+  }
+
+  else {
+    my PuzzleTable::Config::Category $cat .= new(
+      :category-name($category), :category-container($container), :$!root-dir
+    );
+    
+    $hp = $cat.get-puzzle-ids.elems.Bool;
+  }
+
+  $hp
 }
 
 #-------------------------------------------------------------------------------

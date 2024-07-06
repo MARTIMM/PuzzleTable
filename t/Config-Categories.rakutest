@@ -231,6 +231,15 @@ subtest 'grouping', {
   }
 }
 
+subtest 'category continued', {
+  with $categories {
+    ok .has-puzzles('cat-2'), '.has-puzzles()';
+
+    $message = .delete-category('cat-2');
+    is $message, 'Category still has puzzles', '.delete-category()';
+  }
+}
+
 
 done-testing;
 exit;

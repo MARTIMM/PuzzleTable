@@ -232,14 +232,39 @@ method do-category-rename (
 
 #-------------------------------------------------------------------------------
 # Select from menu to remove a category
-method category-remove-category ( N-Object $parameter ) {
-  say 'category remove';
+method category-delete ( N-Object $parameter ) {
+  my Gnome::Gtk4::DropDown $dropdown = $!sidebar.fill-categories(:skip-default);
+
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('Rename Category dialog')
+  ) {
+    .add-content( 'Specify the category to delete', $dropdown);
+
+    .add-button(
+      self, 'do-category-delete', 'Delete', :$dropdown, :$dialog
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
+  }
 }
 
 #-------------------------------------------------------------------------------
-method do-category-remove (
-  PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::ComboBoxText :$combobox,
+method do-category-delete (
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::DropDown :$dropdown
 ) {
+  my Bool $sts-ok = False;
+  my Str $category = $!sidebar.get-dropdown-text($dropdown);
+  if $!config.has-puzzles($category) {
+    $dialog.set-status('Category still has puzzles');
+  }
+
+  else {
+    $!config.delete-category($category);
+    $!sidebar.fill-sidebar;
+    $sts-ok = True;
+  }
+
+  $dialog.destroy-dialog if $sts-ok;
 }
 

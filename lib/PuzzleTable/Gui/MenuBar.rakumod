@@ -91,7 +91,7 @@ method make-menu (
         :path(DATA_DIR ~ 'images/ren-cat.png'), :tooltip('Rename a category')
       );
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Remove Category',
+        $menu, $menu-name, $!cat, 'Delete',
 #        :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
       );
       self.bind-action(
