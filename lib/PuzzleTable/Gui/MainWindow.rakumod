@@ -39,7 +39,7 @@ has Bool $!table-is-displayed = False;
 
 has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
-has PuzzleTable::Gui::Sidebar $.category;
+has PuzzleTable::Gui::Sidebar $.sidebar;
 has PuzzleTable::Gui::Statusbar $.statusbar;
 
 #-------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ method remote-options (
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
   $!table .= new-scrolledwindow(:main(self)) unless ?$!table;
-  $!category .= new-scrolledwindow(:main(self)) unless $!category;
+  $!sidebar .= new-scrolledwindow(:main(self)) unless $!sidebar;
 
   my Int $exit-code = 0;
 #  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
@@ -152,7 +152,7 @@ method remote-options (
   }
 
 #TODO select category if registered
-  $!category.set-category($opt-category);
+  $!sidebar.set-category($opt-category);
   my Str $category-container = $!config.find-container($opt-category);
   if ?$category-container {
     $!config.select-category( $opt-category, :$category-container);
@@ -196,7 +196,7 @@ method remote-options (
   $command-line.clear-object;
 
   # Refill the sidebar unless there is no change
-  #$!category.fill-sidebar unless $!table-is-displayed;
+  #$!sidebar.fill-sidebar unless $!table-is-displayed;
 #note "$?LINE exit with code $exit-code";
   $exit-code
 }
@@ -227,7 +227,7 @@ method puzzle-table-display ( ) {
     .set-margin-end(10);
 
     .attach( $!toolbar, 0, 0, 1, 1);
-    .attach( $!category, 0, 1, 1, 2);
+    .attach( $!sidebar, 0, 1, 1, 2);
     .attach( $!table, 1, 2, 1, 1);
     .attach( $!statusbar, 1, 3, 1, 1);
   }
@@ -245,7 +245,7 @@ method puzzle-table-display ( ) {
     .set-visible(True);
   }
 
-  $!category.fill-sidebar;
+  $!sidebar.fill-sidebar;
   $!table-is-displayed = True;
 }
 

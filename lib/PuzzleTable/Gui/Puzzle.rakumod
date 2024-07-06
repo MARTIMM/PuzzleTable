@@ -20,7 +20,7 @@ use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::Gui::PuzzleHandling:auth<github:MARTIMM>;
+unit class PuzzleTable::Gui::Puzzle:auth<github:MARTIMM>;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
@@ -31,7 +31,7 @@ submethod BUILD ( :$!main ) {
 }
 
 #-------------------------------------------------------------------------------
-method puzzles-move-puzzles ( N-Object $parameter ) {
+method puzzles-move ( N-Object $parameter ) {
 #  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
   my Gnome::Gtk4::N-Bitset $bitset .=
     new(:native-object($!main.table.multi-select.get-selection));
@@ -122,7 +122,7 @@ method do-move-puzzles (
 }
 
 #-------------------------------------------------------------------------------
-method puzzles-remove-puzzles ( N-Object $parameter ) {
+method puzzles-remove ( N-Object $parameter ) {
 #note "remove";
 
 #  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;

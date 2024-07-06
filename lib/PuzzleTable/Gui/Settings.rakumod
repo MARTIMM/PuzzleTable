@@ -29,19 +29,19 @@ has $!main is required;
 has PuzzleTable::Config $!config;
 has PuzzleTable::Gui::Table $!table;
 #has PuzzleTable::Gui::Statusbar $!statusbar;
-has PuzzleTable::Gui::Sidebar $!category;
+has PuzzleTable::Gui::Sidebar $!sidebar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
   $!config = $!main.config;
   $!table = $!main.table;
-  $!category = $!main.category;
+  $!sidebar = $!main.sidebar;
 
   self.set-shortcut-keys;
 }
 
 #-------------------------------------------------------------------------------
-method  set-shortcut-keys ( ) {
+method set-shortcut-keys ( ) {
   my Gnome::Gtk4::ShortcutController $controller .= new-shortcutcontroller;
   $controller.set-scope(GTK_SHORTCUT_SCOPE_GLOBAL);
   $!main.application-window.add-controller($controller);
@@ -84,7 +84,7 @@ method settings-unlock-categories ( N-Object $parameter ) {
 
     else {
       $!config.unlock(Str);
-      $!category.fill-sidebar;
+      $!sidebar.fill-sidebar;
     }
   }
 }
@@ -93,7 +93,7 @@ method settings-unlock-categories ( N-Object $parameter ) {
 method settings-lock-categories ( N-Object $parameter ) {
 #  say 'lock';
   $!config.lock;
-  $!category.fill-sidebar;
+  $!sidebar.fill-sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ method do-password-unlock-check-button (
   else {
     $sts-ok = True;
     $!config.unlock($pw);
-    $!category.fill-sidebar;
+    $!sidebar.fill-sidebar;
   }
 
   $dialog.destroy-dialog if $sts-ok;

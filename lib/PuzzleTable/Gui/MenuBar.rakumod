@@ -5,8 +5,9 @@ use NativeCall;
 use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Container;
-use PuzzleTable::Gui::PuzzleHandling;
-use PuzzleTable::Gui::Sidebar;
+use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Puzzle;
+#use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Settings;
 use PuzzleTable::Gui::IconButton;
 use PuzzleTable::Gui::Help;
@@ -30,8 +31,8 @@ has $!application is required;
 has $!main is required;
 
 has Array $!menus;
-has PuzzleTable::Gui::PuzzleHandling $!phandling;
-has PuzzleTable::Gui::Sidebar $!cat;
+has PuzzleTable::Gui::Puzzle $!phandling;
+has PuzzleTable::Gui::Category $!cat;
 has PuzzleTable::Gui::Container $!cont;
 has PuzzleTable::Gui::Settings $!set;
 has PuzzleTable::Gui::Help $!help;
@@ -39,17 +40,17 @@ has PuzzleTable::Gui::Help $!help;
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
   $!application = $!main.application;
-  $!cat = $!main.category;
   $!phandling .= new(:$!main);
   $!set .= new(:$!main);
   $!help .= new(:$!main);
+  $!cat .= new(:$!main);
   $!cont .= new(:$!main);
 
   $!bar .= new-menu;
   $!menus = [
     self.make-menu(:menu-name<File>, :shortcut),
-    self.make-menu(:menu-name<Containers>),
-    self.make-menu(:menu-name<Categories>),
+    self.make-menu(:menu-name<Container>),
+    self.make-menu(:menu-name<Category>),
     self.make-menu(:menu-name<Puzzles>),
     self.make-menu(:menu-name<Settings>),
     self.make-menu(:menu-name<Help>),
@@ -68,80 +69,66 @@ method make-menu (
   with $menu-name {
     when 'File' {
       self.bind-action(
-        $menu, $menu-name, self, 'Quit', 'app.quit', :icon<application-exit>,
+        $menu, $menu-name, self, 'Quit', :icon<application-exit>,
         :tooltip('Quit application')
       );
     }
 
     when 'Containers' {
-      self.bind-action(
-        $menu, $menu-name, $!cont, 'Add', 'app.add-',
-      );
-      self.bind-action(
-        $menu, $menu-name, $!cont, 'Delete', 'app.delete',
-      );
+      self.bind-action( $menu, $menu-name, $!cont, 'Add');
+      self.bind-action( $menu, $menu-name, $!cont, 'Delete');
     }
 
     when 'Categories' {
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Add', 'app.add',
+        $menu, $menu-name, $!cat, 'Add',
         :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
       );
+      self.bind-action( $menu, $menu-name, $!cat, 'Delete');
+      self.bind-action( $menu, $menu-name, $!cat, 'Lock');
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Delete', 'app.delete-category',
-      );
-      self.bind-action(
-        $menu, $menu-name, $!cat, 'Lock Category', 'app.lock-category'
-      );
-      self.bind-action(
-        $menu, $menu-name, $!cat, 'Rename Category', 'app.rename-category',
+        $menu, $menu-name, $!cat, 'Rename',
         :path(DATA_DIR ~ 'images/ren-cat.png'), :tooltip('Rename a category')
       );
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Remove Category', 'app.remove-category',
+        $menu, $menu-name, $!cat, 'Remove Category',
 #        :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
       );
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Refresh Sidebar', 'app.refresh-sidebar',
+        $menu, $menu-name, $!cat, 'Refresh Sidebar',
         :icon<view-refresh>, :tooltip('Refresh sidebar')
       );
     }
 
     when 'Puzzles' {
       self.bind-action(
-        $menu, $menu-name, $!phandling, 'Move Puzzles', 'app.move-puzzles',
+        $menu, $menu-name, $!phandling, 'Move',
         :path(DATA_DIR ~ 'images/move-64.png'), :tooltip('Move puzzles')
       );
       self.bind-action(
-        $menu, $menu-name, $!phandling, 'Remove Puzzles', 'app.remove-puzzles',
+        $menu, $menu-name, $!phandling, 'Remove',
 #        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Remove puzzles')
       );
     }
 
     when 'Settings' {
+      self.bind-action( $menu, $menu-name, $!set, 'Set Password');
       self.bind-action(
-        $menu, $menu-name, $!set, 'Set Password', 'app.set-password'
-      );
-      self.bind-action(
-        $menu, $menu-name, $!set, 'Unlock Categories', 'app.unlock-categories', 
+        $menu, $menu-name, $!set, 'Unlock Categories',
         :shortcut
 #        :icon<changes-allow>, :tooltip('Unlock locked categories')
       );
       self.bind-action(
-        $menu, $menu-name, $!set, 'Lock Categories', 'app.lock-categories', 
+        $menu, $menu-name, $!set, 'Lock Categories',
         :shortcut
       );
     }
 
     when 'Help' {
-      self.bind-action( $menu, $menu-name, $!help, 'About', 'app.about',
+      self.bind-action( $menu, $menu-name, $!help, 'About',
         :icon<help-about>, :tooltip('About Info')
       );
-      self.bind-action(
-        $menu, $menu-name, $!help, 'Show Shortcuts Window',
-        'app.show-shortcuts-window'
-      );
-#      self.bind-action( $menu, $menu-name, $!help, '', '');
+      self.bind-action( $menu, $menu-name, $!help, 'Show Shortcuts Window');
     }
   }
 
@@ -150,22 +137,26 @@ method make-menu (
 
 #-------------------------------------------------------------------------------
 method bind-action (
-  Gnome::Gio::Menu $menu, Str $menu-name, Mu $object,
-  Str $name is copy, Str $action-name,
+  Gnome::Gio::Menu $menu, Str $menu-name, Mu $object, Str $entry-name,
   Str :$icon, Str :$path, Str :$tooltip, Bool :$shortcut = False
 ) {
+  # Make a method and action name
+  my Str $method = [~] $menu-name, ' ', $entry-name;
+  $method .= lc;
+  $method ~~ s:g/ \s+ /-/;
+
+  my Str $action-name = 'app.' ~ $method;
+#note "$?LINE $menu-name, '$entry-name', $method, $action-name";
+
+  # Make a menu entry
   my Gnome::Gio::MenuItem $menu-item .= new-menuitem(
-    $shortcut ?? "_$name" !! $name, $action-name
+    $shortcut ?? "_$entry-name" !! $entry-name, $action-name
   );
   $menu.append-item($menu-item);
 
-  # Replace all spaces
-  $name ~~ s:g/ \s+ /-/;
-  my Gnome::Gio::SimpleAction $action .= new-simpleaction( $name.lc, Pointer);
+  # Use the method name
+  my Gnome::Gio::SimpleAction $action .= new-simpleaction( $method, Pointer);
   $!application.add-action($action);
-
-  my Str $method = [~] $menu-name.lc, '-', $name.lc;
-note "$?LINE $method, $menu-name, $name, $action-name";
   $action.register-signal( $object, $method, 'activate');
 
   if ?$icon {
