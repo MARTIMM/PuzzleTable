@@ -236,7 +236,18 @@ subtest 'category continued', {
     ok .has-puzzles('cat-2'), '.has-puzzles()';
 
     $message = .delete-category('cat-2');
-    is $message, 'Category still has puzzles', '.delete-category()';
+    is $message, 'Category still has puzzles', '.delete-category(): not empty';
+
+    $message = .delete-category('opt 2');
+    ok !$message, '.delete-category(): empty -> deleted';
+
+    .add-category( 'set 25', :category-container<sets>, :!lockable);
+    .add-category( 'set 26', :category-container<sets>, :!lockable);
+    $message = .delete-category('set 25');
+    ok !$message, '.delete-category(): empty -> deleted from container';
+    $message = .delete-category('set 25');
+    is $message, 'Category does not exist',
+       '.delete-category(): category does not exist';
   }
 }
 

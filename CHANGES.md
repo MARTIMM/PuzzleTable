@@ -1,7 +1,7 @@
 
 ### TODO
-* [ ] container delete, only when empty
-* [ ] category delete, only when empty
+* [x] container delete, only when empty
+* [x] category delete, only when empty
 * [x] archive selected puzzles
 * [x] restore archived puzzles
 * [ ] move category without renaming the category
@@ -14,7 +14,7 @@
 * [ ] generating palapeli puzzles from commandline -> C++
 * [x] add `--restore=<name>` option to restore an archive.
 * [ ] add `--palapeli=<type>` option to select preferred program.
-* [ ] add `--puzzle-table-root=<path>` option to specify a preferred data location. The program will use and store data in the following locations using this path;
+* [ ] add `--puzzle-table-root=<path>` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path.
   * `<path>`: data such as css files.
   * `<path>/images`: images for buttons.
   * `<path/puzzle-table-data`: data for puzzles.
@@ -23,6 +23,8 @@
 * 2024-07-04 0.5.3
   * Archiving is done for multiple puzzles in one archive instead of one per archive. Also the name now holds the category and container where it came from.
   * Restoring an archive.
+  * Delete an empty container.
+  * Delete an empty category.
 
 * 2024-06-27 0.5.2
   * Bugfix; Assignment of Hash in `get-puzzle()` in **PuzzleTable::Config::Category** changed to make a clone. Changes made elsewhere to the puzzle data were visible in original caused by assigning a scalar (=container) Hash.

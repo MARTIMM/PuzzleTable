@@ -114,29 +114,43 @@ method add-category (
 }
 
 #-------------------------------------------------------------------------------
-method delete-category ( Str $category, Str :$container is copy = '' ) {
+method delete-category ( Str $category is copy --> Str ) {
   my Str $message = '';
 
-  if self.has-puzzles( $category, :$container) {
-    $message = 'Category still has puzzles';
+  $category .= tc;
+  my Str $container = self.find-container($category);
+#note "$?LINE $category, {$container.defined ?? $container !! 'undefined'}";
+  if ! $container.defined {
+    $message = 'Category does not exist';
   }
 
   else {
-    my Hash $cats := $!categories-config<categories>;
-    my Str $container = self.find-container($category);
+    $container ~= '_EX_' if ? $container;
 
-    if ?$container {
-      # Remove the category from the container
-      $cats{$container}<categories>{$category}:delete;
+    if self.has-puzzles( $category, :$container) {
+      $message = 'Category still has puzzles';
     }
 
     else {
-      # Remove the category
-      $cats{$category}:delete;
-    }
+      my Hash $cats := $!categories-config<categories>;
+      if ?$container {
+        # Remove the category from the container
+        $cats{$container}<categories>{$category}:delete;
+      }
 
-    # Remove the directory
-    "$!root-dir$category".IO.rmdir;
+      else {
+        # Remove the category
+        $cats{$category}:delete;
+      }
+
+      # Remove the files and directory
+      for dir("$!root-dir$category") -> $file {
+        $file.IO.unlink;
+      }
+      "$!root-dir$category".IO.rmdir;
+
+      self.save-categories-config;
+    }
   }
 
   $message
@@ -382,7 +396,7 @@ method update-category-status ( ) {
 #-------------------------------------------------------------------------------
 method find-container ( Str:D $category-name is copy --> Str ) {
   $category-name .= tc;
-
+ 
   my Hash $cats := $!categories-config<categories>;
   my Str $container;
   for $cats.keys -> $cat {

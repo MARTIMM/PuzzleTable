@@ -146,7 +146,7 @@ method bind-action (
   $method ~~ s:g/ \s+ /-/;
 
   my Str $action-name = 'app.' ~ $method;
-note "$?LINE $menu-name, '$entry-name', $method, $action-name";
+#note "$?LINE $menu-name, '$entry-name', $method, $action-name";
 
   # Make a menu entry
   my Gnome::Gio::MenuItem $menu-item .= new-menuitem(
