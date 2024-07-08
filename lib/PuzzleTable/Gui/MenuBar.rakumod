@@ -84,16 +84,12 @@ method make-menu (
         $menu, $menu-name, $!cat, 'Add',
         :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
       );
-      self.bind-action( $menu, $menu-name, $!cat, 'Delete');
-      self.bind-action( $menu, $menu-name, $!cat, 'Lock');
       self.bind-action(
         $menu, $menu-name, $!cat, 'Rename',
         :path(DATA_DIR ~ 'images/ren-cat.png'), :tooltip('Rename a category')
       );
-      self.bind-action(
-        $menu, $menu-name, $!cat, 'Delete',
-#        :path(DATA_DIR ~ 'images/rem-cat.png'), :tooltip('Remove a category')
-      );
+      self.bind-action( $menu, $menu-name, $!cat, 'Delete');
+      self.bind-action( $menu, $menu-name, $!cat, 'Lock');
       self.bind-action(
         $menu, $menu-name, $!cat, 'Refresh Sidebar',
         :icon<view-refresh>, :tooltip('Refresh sidebar')
