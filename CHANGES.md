@@ -10,7 +10,7 @@
 * [x] remember state of an opened container
 * [x] need to add key `<categories>` in containers to add other keys
 * [ ] add state info to containers to sum up states of contained categories
-* [ ] importing puzzles should be shown in table and counts updated
+* [x] importing puzzles should be shown in table and counts updated
 * [ ] generating palapeli puzzles from commandline -> C++
 * [x] add `--restore=<name>` option to restore an archive.
 * [ ] add `--palapeli=<type>` option to select preferred program.
@@ -26,6 +26,7 @@
   * Delete an empty container.
   * Delete an empty category.
   * State of an opened expander is saved as flag on the `containers` field.
+  * Showing imported puzzles while in process of importing works again.
 
 * 2024-06-27 0.5.2
   * Bugfix; Assignment of Hash in `get-puzzle()` in **PuzzleTable::Config::Category** changed to make a clone. Changes made elsewhere to the puzzle data were visible in original caused by assigning a scalar (=container) Hash.
