@@ -214,7 +214,12 @@ subtest 'grouping', {
     .move-puzzle( 'set 1', $puzzles[0]<PuzzleID>);
     $config = load-yaml("{CONFDATA}Set 1/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 1, '.move-puzzle() in container Sets';
+  }
+}
 
+
+subtest 'container', {
+  with $categories {
     my Str $container = .find-container('set 1');
     is $container, 'Sets', '.find-container(): found Set 1 in Sets';
     $container = .find-container('opt 1');
@@ -228,6 +233,14 @@ subtest 'grouping', {
 
     nok .delete-container('sets'), '.delete-container(): container not empty';
     ok .delete-container('abc'), '.delete-container(): container deleted';
+
+    $message = .set-expand( 'set-container', True);
+    is $message, 'Container does not exist', '.set-expand(): no container';
+    $message = .set-expand( 'sets', True);
+    ok !$message, '.set-expand(): ok';
+
+    ok .is-expanded('sets'), '.is-expanded(): True';
+    ok !.is-expanded('options'), '.is-expanded(): False - not set';
   }
 }
 

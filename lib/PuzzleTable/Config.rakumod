@@ -30,7 +30,7 @@ has PuzzleTable::Config::Categories $!categories handles( <
       get-palapeli-collection run-palapeli
       get-categories add-category delete-category move-category
       select-category find-container
-      get-containers add-container delete-container
+      get-containers add-container delete-container is-expanded set-expand
       save-categories-config get-current-category get-category-status
       add-puzzle move-puzzle update-puzzle get-puzzles get-puzzle
       archive-puzzles get-puzzle-image restore-puzzles has-puzzles

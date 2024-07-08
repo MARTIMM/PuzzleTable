@@ -95,7 +95,12 @@ method fill-sidebar ( Bool :$init = False ) {
           my Gnome::Gtk4::Expander $expander =
             self.sidebar-expander($category-container);
           $expander.set-child($subcat-grid);
+          $expander.set-expanded($!config.is-expanded($category-container));
           $cat-grid.attach( $expander, 0, $row-count, 5, 1);
+
+          $expander.register-signal( self, 'expand', 'activate',
+            :container($category-container)
+          );
         }
       }
 
@@ -124,6 +129,14 @@ method fill-sidebar ( Bool :$init = False ) {
 
   self.set-child($cat-grid);
   self.select-category(:category<Default>) if $init;
+}
+
+#-------------------------------------------------------------------------------
+method expand (
+  Gnome::Gtk4::Expander() :_native-object($expander), :$container
+) {
+  $!config.set-expand( $container, $expander.get-expanded ?? False !! True);
+note "$?LINE Expanded: ", $expander.get-expanded;
 }
 
 #-------------------------------------------------------------------------------

@@ -473,6 +473,38 @@ method get-containers ( --> Seq ) {
 }
 
 #-------------------------------------------------------------------------------
+method is-expanded ( Str $container is copy = '' --> Bool ) {
+  my Bool $expanded = False;
+  $container = $container.tc ~ '_EX_'
+     if ? $container and $container !~~ m/ '_EX_' $/;
+  
+  $expanded = $!categories-config<categories>{$container}<expanded> // False
+     if $!categories-config<categories>{$container}:exists;
+
+  $expanded
+}
+
+#-------------------------------------------------------------------------------
+method set-expand ( Str $container is copy, Bool $expanded --> Str ) {
+  my Str $message = '';
+
+  $container = '' unless ?$container;
+  $container = $container.tc ~ '_EX_'
+     if ? $container and $container !~~ m/ '_EX_' $/;
+  
+  if $!categories-config<categories>{$container}:exists {
+    $!categories-config<categories>{$container}<expanded> = $expanded;
+    self.save-categories-config;
+  }
+
+  else {
+    $message = 'Container does not exist';
+  }
+
+  $message
+}
+
+#-------------------------------------------------------------------------------
 # Method to check if container needs to be hidden
 method has-lockable-categories (
   Str $category-container is copy = '' --> Bool
