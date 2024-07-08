@@ -532,7 +532,7 @@ method import-collection ( Str:D $collection-path --> Str ) {
   if $collection-path.IO.d {
     $!current-category.import-collection($collection-path);
     self.update-category-status;
-    self.save-categories-config;
+#    self.save-categories-config;
   }
 
   else {
@@ -543,21 +543,15 @@ method import-collection ( Str:D $collection-path --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-#multi method add-puzzle ( Str:D $puzzle-path --> Str ) {
 method add-puzzle ( Str:D $puzzle-path --> Str ) {
-  my Str $message = '';
 
+  my Str $puzzle-id = '';
   if $puzzle-path.IO.r {
-    my Str $puzzle-id = $!current-category.add-puzzle($puzzle-path);
+    $puzzle-id = $!current-category.add-puzzle($puzzle-path);
     self.update-category-status;
-    self.save-categories-config;
   }
 
-  else {
-    $message = 'Puzzle does not exist or isn\'t a puzzle file';
-  }
-
-  $message
+  $puzzle-id
 }
 
 #-------------------------------------------------------------------------------
@@ -609,7 +603,7 @@ method archive-puzzles (
 
   else {
     self.update-category-status;
-    self.save-categories-config;
+#    self.save-categories-config;
   }
 
   ( $message, @ap[1])
@@ -839,7 +833,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
     # Update the category status
     self.update-category-status;
-    self.save-categories-config;
+#    self.save-categories-config;
   }
 
   $progress
