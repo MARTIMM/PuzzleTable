@@ -136,7 +136,6 @@ method expand (
   Gnome::Gtk4::Expander() :_native-object($expander), :$container
 ) {
   $!config.set-expand( $container, $expander.get-expanded ?? False !! True);
-note "$?LINE Expanded: ", $expander.get-expanded;
 }
 
 #-------------------------------------------------------------------------------
@@ -256,7 +255,7 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method select-category ( Str :$category, Str :$category-container = '' ) {
+method select-category ( Str :$category = '' ) {
 #  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
@@ -265,7 +264,8 @@ method select-category ( Str :$category, Str :$category-container = '' ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  $!config.select-category( $category, :$category-container);
+  my Str $container = $!config.find-container($category);
+  $!config.select-category( $category, :category-container($container));
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
