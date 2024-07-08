@@ -151,16 +151,9 @@ method remote-options (
     $!config.add-category( $opt-category, :$lockable);
   }
 
-#TODO select category if registered
-  $!sidebar.set-category($opt-category);
   my Str $category-container = $!config.find-container($opt-category);
-  if ?$category-container {
-    $!config.select-category( $opt-category, :$category-container);
-  }
-
-  else {
-    $!config.select-category($opt-category);
-  }
+  $!config.select-category( $opt-category, :$category-container);
+  $!sidebar.set-category($opt-category);
 
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
@@ -170,11 +163,8 @@ method remote-options (
         next;
       }
 
-      #my Str $puzzle-id = $!config.add-puzzle( $opt-category, $puzzle-path);
       my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
-
-      $!table.add-puzzle-to-table( $opt-category, $puzzle-id)
-        if ?$puzzle-id and $!table-is-displayed;
+      $!table.add-puzzle-to-table( $opt-category, $puzzle-id);
     }
   }
 
@@ -195,9 +185,6 @@ method remote-options (
   $command-line.done;
   $command-line.clear-object;
 
-  # Refill the sidebar unless there is no change
-  #$!sidebar.fill-sidebar unless $!table-is-displayed;
-#note "$?LINE exit with code $exit-code";
   $exit-code
 }
 

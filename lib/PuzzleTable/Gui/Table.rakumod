@@ -175,8 +175,9 @@ method add-puzzles-to-table ( Seq $puzzles ) {
 #-------------------------------------------------------------------------------
 # Add a puzzle to the table
 multi method add-puzzle-to-table ( Str $category, Str $puzzle-id ) {
-  #my Hash $puzzle = $!config.get-puzzle( $category, $puzzle-id);
+
   my Hash $puzzle = $!config.get-puzzle($puzzle-id);
+
   # Coming from MainWindow.remote-options() it needs some more fields
   if ?$puzzle {
     $puzzle<PuzzleID> = $puzzle-id;
@@ -205,7 +206,6 @@ multi method add-puzzle-to-table ( Hash $puzzle ) {
     "Number of puzzles: " ~ $!puzzle-objects.get-n-items
   );
 
-note "$?LINE do iteration";
   while $!main-context.pending {
     $!main-context.iteration(False);
   }
