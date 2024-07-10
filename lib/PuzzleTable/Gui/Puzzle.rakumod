@@ -108,7 +108,7 @@ method do-move-puzzles (
 #    $!config.save-categories-config;
 
     # Selecting the category again will redraw the puzzle table
-    $!main.category.select-category(:category($current-cat));
+    $!main.sidebar.select-category(:category($current-cat));
 
     # Update status bar to show number of puzzles
     $!main.statusbar.set-status(
