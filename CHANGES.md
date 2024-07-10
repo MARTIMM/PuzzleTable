@@ -6,12 +6,14 @@
 * [x] restore archived puzzles
 * [ ] move category without renaming the category
 * [x] rename and move archiving operations into one module
-* [ ] drag and drop. On wayland a lot is going wrong!
+* [ ] drag and drop.
 * [x] remember state of an opened container
 * [x] need to add key `<categories>` in containers to add other keys
 * [ ] add state info to containers to sum up states of contained categories
 * [x] importing puzzles should be shown in table and counts updated
-* [ ] generating palapeli puzzles from commandline -> C++
+* [ ] generating palapeli puzzles from commandline -> C++.
+* [ ] update dialog to work with focus and return chars in entries.
+* [ ] show nore space in a dialog.
 * [x] add `--restore=<name>` option to restore an archive.
 * [ ] add `--palapeli=<type>` option to select preferred program.
 * [ ] add `--puzzle-table-root=<path>` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path.
