@@ -1,26 +1,56 @@
 
+---
+
 ### TODO
-* [x] container delete, only when empty
-* [x] category delete, only when empty
-* [x] archive selected puzzles
-* [x] restore archived puzzles
-* [ ] move category without renaming the category
-* [x] rename and move archiving operations into one module
-* [ ] drag and drop.
-* [x] remember state of an opened container
-* [x] need to add key `<categories>` in containers to add other keys
-* [ ] add state info to containers to sum up states of contained categories
-* [x] importing puzzles should be shown in table and counts updated
-* [ ] generating palapeli puzzles from commandline -> C++.
-* [ ] update dialog to work with focus and return chars in entries.
-* [ ] show nore space in a dialog.
-* [x] add `--restore=<name>` option to restore an archive.
-* [ ] add `--palapeli=<type>` option to select preferred program.
-* [ ] add `--puzzle-table-root=<path>` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path.
-  * `<path>`: data such as css files.
-  * `<path>/images`: images for buttons.
-  * `<path/puzzle-table-data`: data for puzzles.
-  * `<path/puzzle-trash`: archiving of removed puzzles.
+* menu and toolbox for some menu entries
+  * file
+    * [ ] quit, add dialog in between
+    * [ ] refresh sidebar
+  * container
+    * [x] add
+    * [x] delete, only when empty
+  * category
+    * [x] add
+    * [x] rename
+    * [x] delete, only when empty
+    * [ ] move a category
+    * [x] lock
+  * puzzle
+    * [x] move selected puzzles
+    * [x] archive selected puzzles
+  * help
+    * [x] about
+    * [x] shortcut keys overview
+    * [ ] user defined shortcuts
+
+* command line
+  * [x] add `--restore=<name>` option to restore an archive.
+  * [ ] add `--palapeli=<type>` option to select preferred program.
+  * [ ] add `--puzzle-table-root=<path>` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path.
+    * `<path>`: data such as css files.
+    * `<path>/images`: images for buttons.
+    * `<path/puzzle-table-data`: data for puzzles.
+    * `<path/puzzle-trash`: archiving of removed puzzles.
+  * [ ] generating palapeli puzzles from commandline -> C++.
+
+* shortcut keys
+  * [x] `<CTRL>Q` to quit program
+
+* program methods
+  * [x] rename and move archiving operations into one module
+  * [ ] drag and drop.
+  * [x] remember state of an opened container
+  * [x] need to add key `<categories>` in containers to add other keys
+  * [ ] add state info to containers to sum up states of contained categories
+  * [x] importing puzzles should be shown in table and counts updated
+  * update dialogs
+    * [ ] work with focus and return chars in entries.
+    * [ ] show more space in a dialog. css font size.
+    * [ ] filled in values if possible on entry and drop down.
+  * [x] puzzle table display update
+  * [ ] fix needed; sometimes quit does not end program
+
+---
 
 * 2024-07-04 0.5.3
   * Archiving is done for multiple puzzles in one archive instead of one per archive. Also the name now holds the category and container where it came from.
