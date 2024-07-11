@@ -213,8 +213,8 @@ method puzzle-table-display ( ) {
     .set-margin-start(10);
     .set-margin-end(10);
 
-    .attach( $!toolbar, 0, 0, 1, 1);
-    .attach( $!sidebar, 0, 1, 1, 2);
+    .attach( $!toolbar, 0, 0, 2, 1);
+    .attach( $!sidebar, 0, 1, 1, 3);
     .attach( $!table, 1, 2, 1, 1);
     .attach( $!statusbar, 1, 3, 1, 1);
   }
