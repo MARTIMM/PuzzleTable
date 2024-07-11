@@ -31,7 +31,7 @@ submethod BUILD ( :$!main ) {
 }
 
 #-------------------------------------------------------------------------------
-method puzzles-move ( N-Object $parameter ) {
+method puzzle-move ( N-Object $parameter ) {
 #  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
   my Gnome::Gtk4::N-Bitset $bitset .=
     new(:native-object($!main.table.multi-select.get-selection));
@@ -122,7 +122,7 @@ method do-move-puzzles (
 }
 
 #-------------------------------------------------------------------------------
-method puzzles-remove ( N-Object $parameter ) {
+method puzzle-archive ( N-Object $parameter ) {
 #note "remove";
 
 #  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
@@ -149,7 +149,7 @@ method puzzles-remove ( N-Object $parameter ) {
     .add-content( 'Check to make sure you really want it', $check-button);
 
     .add-button(
-      self, 'do-remove-puzzles', 'Archive Puzzle in Trash',
+      self, 'do-archive-puzzles', 'Archive Puzzle in Trash',
       :$check-button, :$dialog, :$bitset
     );
 
@@ -159,7 +159,7 @@ method puzzles-remove ( N-Object $parameter ) {
 }
 
 #-------------------------------------------------------------------------------
-method do-remove-puzzles (
+method do-archive-puzzles (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
   Gnome::Gtk4::N-Bitset :$bitset
 ) {

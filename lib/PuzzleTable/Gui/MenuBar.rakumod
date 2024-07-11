@@ -51,7 +51,7 @@ submethod BUILD ( :$!main ) {
     self.make-menu(:menu-name<File>, :shortcut),
     self.make-menu(:menu-name<Container>),
     self.make-menu(:menu-name<Category>),
-    self.make-menu(:menu-name<Puzzles>),
+    self.make-menu(:menu-name<Puzzle>),
     self.make-menu(:menu-name<Settings>),
     self.make-menu(:menu-name<Help>),
   ];
@@ -69,8 +69,13 @@ method make-menu (
   with $menu-name {
     when 'File' {
       self.bind-action(
-        $menu, $menu-name, self, 'Quit', :icon<application-exit>,
-        :tooltip('Quit application')
+        $menu, $menu-name, $!cat, 'Refresh Sidebar',
+        :icon<view-refresh>, :tooltip('Refresh sidebar')
+      );
+      self.bind-action(
+        $menu, $menu-name, self, 'Quit'
+#        , :icon<application-exit>,
+#        :tooltip('Quit application')
       );
     }
 
@@ -90,20 +95,16 @@ method make-menu (
       );
       self.bind-action( $menu, $menu-name, $!cat, 'Delete');
       self.bind-action( $menu, $menu-name, $!cat, 'Lock');
-      self.bind-action(
-        $menu, $menu-name, $!cat, 'Refresh Sidebar',
-        :icon<view-refresh>, :tooltip('Refresh sidebar')
-      );
     }
 
-    when 'Puzzles' {
+    when 'Puzzle' {
       self.bind-action(
         $menu, $menu-name, $!phandling, 'Move',
         :path(DATA_DIR ~ 'images/move-64.png'), :tooltip('Move puzzles')
       );
       self.bind-action(
-        $menu, $menu-name, $!phandling, 'Remove',
-#        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Remove puzzles')
+        $menu, $menu-name, $!phandling, 'Archive',
+#        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Archive puzzles')
       );
     }
 
