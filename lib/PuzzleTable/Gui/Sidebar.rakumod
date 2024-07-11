@@ -58,9 +58,7 @@ method fill-sidebar ( Bool :$init = False ) {
     $cat-grid .= new-grid;
     $cat-grid.set-name('sidebar');
     $cat-grid.set-size-request( 200, 100);
-    $!config.set-css(
-      $cat-grid.get-style-context, :css-class<pt-sidebar>
-    );
+    $!config.set-css( $cat-grid.get-style-context, :css-class<pt-sidebar>);
 
     my Gnome::Gtk4::Label $l;
 

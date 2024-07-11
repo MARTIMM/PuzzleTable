@@ -39,19 +39,38 @@ submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
   $!main-loop .= new-mainloop( N-Object, True);
 
   $!content-count = 0;
-  $!content .= new-grid;
+  with $!content .= new-grid {
+    .set-margin-top(20);
+    .set-margin-bottom(20);
+    .set-margin-start(30);
+    .set-margin-end(30);
+    .set-row-spacing(10);
+    .set-column-spacing(10);
+  }
 
+  # Make a button box with horizontal layout
   $!button-row .= new-box( GTK_ORIENTATION_HORIZONTAL, 4);
+
+  # Make a label which wil push all buttons to the left. These are
+  # added using add-button()
   with my Gnome::Gtk4::Label $button-row-strut .= new-label {
     .set-text(' ');
     .set-halign(GTK_ALIGN_FILL);
     .set-hexpand(True);
     .set-wrap(False);
     .set-visible(True);
+    .set-margin-top(10);
+    .set-margin-bottom(10);
   }
   $!button-row.append($button-row-strut);
 
-  $!statusbar .= new-statusbar(:context<dialog>);
+  with $!statusbar .= new-statusbar(:context<dialog>) {
+    .set-margin-top(5);
+    .set-margin-bottom(5);
+    .set-margin-start(5);
+    .set-margin-end(5);
+    $!main.config.set-css(.get-style-context, :css-class<status-bar>);
+  }
 
   my Gnome::Gtk4::Label $header .= new-label;
   $header.set-text($dialog-header);

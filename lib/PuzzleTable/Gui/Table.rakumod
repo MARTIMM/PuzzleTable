@@ -257,6 +257,8 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .append($run-palapeli);
     .append($edit-palapeli);
     .append($pid);
+
+#    $!config.set-css( .get-style-context, :css-class<puzzle-grid-puzzle>);
   }
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
