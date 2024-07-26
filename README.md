@@ -60,7 +60,8 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
 
 * Palapeli
 * ImageMagick
-* Gtk4, Gio, GObject, Glib, Pango libraries
+* Gtk4 (having also Gdk4, Gsk4, Graphene,, Gio, GObject, Glib, Cairo, Pango libraries
+* Icon themes from Gnome, Breeze and Adwaita
 
 ### Raku modules
 

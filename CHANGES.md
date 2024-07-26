@@ -47,6 +47,7 @@
     * [ ] work with focus and return chars in entries.
     * [ ] show more space in a dialog. css font size.
     * [ ] filled in values if possible on entry and drop down.
+    * [x] 
   * [x] puzzle table display update
   * [ ] fix needed; sometimes quit does not end program
 
