@@ -46,15 +46,20 @@ method set-shortcut-keys ( ) {
   $controller.set-scope(GTK_SHORTCUT_SCOPE_GLOBAL);
   $!main.application-window.add-controller($controller);
 
-  # Create 
+  # Create a trigger
   my Gnome::Gtk4::KeyvalTrigger $trigger .=
     new-keyvaltrigger( GDK_KEY_Q, GDK_CONTROL_MASK);
+
+  # And an action which will stop the application
   my Gnome::Gtk4::CallbackAction $action .= new-callbackaction(
     sub ( N-Object $no-widget, N-Object $, gpointer $ ) {
       $!main.quit-application;
-    }
+    },
+    gpointer,
+    N-Object
   );
 
+  # Bind the trigger to the action
   my Gnome::Gtk4::Shortcut $shortcut .= new-shortcut( $trigger, $action);
 
   $controller.add-shortcut($shortcut);
