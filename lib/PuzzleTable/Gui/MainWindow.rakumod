@@ -141,6 +141,10 @@ method remote-options (
     $lockable = $o<lock>;
   }
 
+  if $o<unlock>:exists {
+    $!config.unlock($o<unlock>);
+  }
+
   # Process category option. It is set to 'Default' otherwise.
   my Str $opt-category = 'Default';
 

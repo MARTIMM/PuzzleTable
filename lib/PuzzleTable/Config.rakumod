@@ -17,10 +17,10 @@ unit class PuzzleTable::Config:auth<github:MARTIMM>;
 
 has Gnome::Gtk4::CssProvider $!css-provider;
 
-has Version $.version = v0.5.0;
+has Version $.version = v0.5.3;
 has Array $.options = [<
   category=s pala-collection=s puzzles lock h help version verbose
-  restore=s
+  restore=s unlock=s
 >];
 
 has PuzzleTable::Config::Categories $!categories handles( <
