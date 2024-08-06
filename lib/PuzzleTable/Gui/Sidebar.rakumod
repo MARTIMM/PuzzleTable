@@ -49,81 +49,82 @@ submethod BUILD ( :$!main ) {
 
 #-------------------------------------------------------------------------------
 method fill-sidebar ( Bool :$init = False ) {
+
+  # Get the child from the scrollbar which is a grid and clear it.
   my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
   $cat-grid.clear-object;
 
   # Create new sidebar
   my $row-count = 0;
-  #with $!cat-grid .= new-grid {
-    $cat-grid .= new-grid;
-    $cat-grid.set-name('sidebar');
-    $cat-grid.set-size-request( 200, 100);
-    $!config.set-css( $cat-grid.get-style-context, :css-class<pt-sidebar>);
 
-    my Gnome::Gtk4::Label $l;
+  $cat-grid .= new-grid;
+  $cat-grid.set-name('sidebar');
+  $cat-grid.set-size-request( 200, 100);
+  $!config.set-css( $cat-grid.get-style-context, :css-class<pt-sidebar>);
 
-    my Array $totals = [ 0, 0, 0, 0];
-    for $!config.get-categories -> $category {
+  my Gnome::Gtk4::Label $l;
 
-      # Check if $category is a container
-      if $category ~~ m/ '_EX_' $/ {
-        my Str $category-container = $category;
-        $category-container ~~ s/ '_EX_' $//;
+  my Array $totals = [ 0, 0, 0, 0];
+  for $!config.get-categories -> $category {
 
-        # Create a container grid for subcategories
-        my Int $subcat-row-count = 0;
-        my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
-        for $!config.get-categories(:$category-container) -> $sub-category {
-          my Gnome::Gtk4::Button $subcat-button =
-             self.sidebar-button( $sub-category, $category-container);
+    # Check if $category is a container
+    if $category ~~ m/ '_EX_' $/ {
+      my Str $category-container = $category;
+      $category-container ~~ s/ '_EX_' $//;
 
-          $subcat-grid.attach( $subcat-button, 0, $subcat-row-count, 1, 1);
+      # Create a container grid for subcategories
+      my Int $subcat-row-count = 0;
+      my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
+      for $!config.get-categories(:$category-container) -> $sub-category {
+        my Gnome::Gtk4::Button $subcat-button =
+            self.sidebar-button( $sub-category, $category-container);
 
-          # Get information of each subcategory
-          self.sidebar-status(
-            $sub-category, $subcat-grid, $subcat-row-count, $totals,
-            :$category-container
-          );
+        $subcat-grid.attach( $subcat-button, 0, $subcat-row-count, 1, 1);
 
-          $subcat-row-count++;
-        }
+        # Get information of each subcategory
+        self.sidebar-status(
+          $sub-category, $subcat-grid, $subcat-row-count, $totals,
+          :$category-container
+        );
 
-        # Only show container in an expander if there are any categories visible
-        if $subcat-row-count {
-          my Gnome::Gtk4::Expander $expander =
-            self.sidebar-expander($category-container);
-          $expander.set-child($subcat-grid);
-          $expander.set-expanded($!config.is-expanded($category-container));
-          $cat-grid.attach( $expander, 0, $row-count, 5, 1);
-
-          $expander.register-signal( self, 'expand', 'activate',
-            :container($category-container)
-          );
-        }
+        $subcat-row-count++;
       }
 
-      else {
-        my Gnome::Gtk4::Button $cat-button = self.sidebar-button($category);
-        $cat-grid.attach( $cat-button, 0, $row-count, 1, 1);
+      # Only show container in an expander if there are any categories visible
+      if $subcat-row-count {
+        my Gnome::Gtk4::Expander $expander =
+          self.sidebar-expander($category-container);
+        $expander.set-child($subcat-grid);
+        $expander.set-expanded($!config.is-expanded($category-container));
+        $cat-grid.attach( $expander, 0, $row-count, 5, 1);
 
-        # Get information of each category
-        self.sidebar-status( $category, $cat-grid, $row-count, $totals);
+        $expander.register-signal( self, 'expand', 'activate',
+          :container($category-container)
+        );
       }
-
-      $row-count++;
     }
 
-    # Display gathered information in a tooltip
-    $cat-grid.set-tooltip-text(Q:qq:to/EOTT/);
-      Number of puzzles
-      Untouched puzzles
-      Unfinished puzzles
-      Finished puzzles
+    else {
+      my Gnome::Gtk4::Button $cat-button = self.sidebar-button($category);
+      $cat-grid.attach( $cat-button, 0, $row-count, 1, 1);
 
-      Totals
-      [ $totals.join(', ') ]
-      EOTT
-  #}
+      # Get information of each category
+      self.sidebar-status( $category, $cat-grid, $row-count, $totals);
+    }
+
+    $row-count++;
+  }
+
+  # Display gathered information in a tooltip
+  $cat-grid.set-tooltip-text(Q:qq:to/EOTT/);
+    Number of puzzles
+    Untouched puzzles
+    Unfinished puzzles
+    Finished puzzles
+
+    Totals
+    [ $totals.join(', ') ]
+    EOTT
 
   self.set-child($cat-grid);
   self.select-category(:category<Default>) if $init;

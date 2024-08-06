@@ -23,20 +23,20 @@ And a small list of things to change in the puzzle table program;
 * The picture of the puzzle is small.
 * There is no information about the progress of a puzzle. The only way to get this info is by starting the puzzle.
 
-What the new program should do
+What the new program should do. See also the TODO list in the `CHANGES.md` document.
 
 * [x] Gather the previously created puzzles from the several Palapeli collection directories and copy them elsewhere.
-* [x] Use the Palapeli program of different install types, os standard, Snap or Flatpak.
+* [x] Use the Palapeli program of different install types; os standard, Snap or Flatpak.
 * [x] Be able to make categories. Selecting a category shows the puzzles in that category thus displaying a smaller table.
 * [x] Be able to rename categories.
 * [ ] Show a larger picture of the puzzle. Also make a more puzzle like display e.g. ![](doc/puzzle-example.jpg) At the moment its just a larger image.
 * [x] Show on the same picture how much is finished.
 * [x] Add newly created and exported puzzles.
-* [x] Remove a puzzle. It is stored in an archive.
-* [x] Restore a puzzle.
+* [x] Remove a puzzle and store it in an archive.
+* [x] Restore a puzzle from the archive.
 * [x] Move puzzles to other categories.
 * [x] Categories are shown in a sidebar
-* [ ] Grouping categories in an expandable widget to narrow a long list.
+* [x] Grouping categories in an expandable widget to narrow a long list.
 
 
 ## Description
