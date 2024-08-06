@@ -395,6 +395,7 @@ method run-palapeli (
   my Str $progress = $!config.run-palapeli($puzzle);
   $label-progress.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
+  $!main.sidebar.fill-sidebar;
 }
 
 #-------------------------------------------------------------------------------
