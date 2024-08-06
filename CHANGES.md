@@ -52,6 +52,8 @@
   * [ ] fix needed; sometimes quit does not end program
 
 ---
+* 2024-08-06 0.5.4
+  * After playing with palapeli the sidebar statistics must be updated.
 
 * 2024-07-04 0.5.3
   * Archiving is done for multiple puzzles in one archive instead of one per archive. Also the name now holds the category and container where it came from.
