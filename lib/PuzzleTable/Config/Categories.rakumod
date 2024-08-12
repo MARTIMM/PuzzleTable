@@ -160,7 +160,10 @@ method delete-category ( Str $category is copy --> Str ) {
 method move-category (
   Str $cat-from is copy, Str $cat-to is copy,
   Str :$category-container is copy = ''
+  --> Str
 ) {
+  my Str $message = '';
+
   $cat-from .= tc;
   $cat-to .= tc;
 
@@ -185,13 +188,22 @@ method move-category (
     $hto := $cats;
   }
 
-  $hto{$cat-to} = $hfrom{$cat-from}:delete;
+  # Check
+  if $cat-from eq $cat-to and $source-container eq $category-container {
+    $message = 'Source and destination are the same';
+  }
 
-  self.save-categories-config;
+  unless ?$message {
+    $hto{$cat-to} = $hfrom{$cat-from}:delete;
 
-  my Str $dir-from = $!root-dir ~ $cat-from;
-  my Str $dir-to = $!root-dir ~ $cat-to;
-  $dir-from.IO.rename( $dir-to, :createonly);
+    self.save-categories-config;
+
+    my Str $dir-from = $!root-dir ~ $cat-from;
+    my Str $dir-to = $!root-dir ~ $cat-to;
+    $dir-from.IO.rename( $dir-to, :createonly);
+  }
+  
+  $message
 }
 
 #-------------------------------------------------------------------------------

@@ -125,50 +125,6 @@ method do-category-add (
 }
 
 #-------------------------------------------------------------------------------
-# Select from menu to lock or unlock a category
-method category-lock ( N-Object $parameter ) {
-
-  with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('(Un)Lock Dialog')
-  ) {
-    my Gnome::Gtk4::CheckButton $check-button .=
-      new-with-label('Lock or unlock category');
-    $check-button.set-active(False);
-
-    my Gnome::Gtk4::DropDown $dropdown = self.fill-categories(:skip-default);
-
-    .add-content( 'Category to (un)lock', $dropdown);
-    .add-content( '', $check-button);
-
-    .add-button(
-      self, 'do-category-lock', 'Lock / Unlock', :$dropdown, :$dialog, :$check-button
-    );
-
-    .add-button( $dialog, 'destroy-dialog', 'Cancel');
-    .show-dialog;
-  }
-}
-
-#-------------------------------------------------------------------------------
-method do-category-lock (
-  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
-  Gnome::Gtk4::DropDown :$dropdown
-) {
-  my Bool $sts-ok = False;
-
-  $!config.set-category-lockable(
-    $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool
-  );
-
-  # Sidebar changes when a category is set lockable and table is locked
-  $!sidebar.fill-sidebar
-    if $check-button.get-active.Bool and $!config.is-locked;
-  $sts-ok = True;
-
-  $dialog.destroy-dialog if $sts-ok;
-}
-
-#-------------------------------------------------------------------------------
 # Select from menu to rename a category
 method category-rename ( N-Object $parameter ) {
 #  say 'category rename';
@@ -208,6 +164,8 @@ method do-category-rename (
   my Bool $sts-ok = False;
   my Str $old-category = $!sidebar.get-dropdown-text($dropdown-cat);
   my Str $new-category = $entry.get-text.tc;
+  my Str $container = $!sidebar.get-dropdown-text($dropdown-cont);
+  $container = '' if $container eq '--';
 
   if ! $new-category {
     $dialog.set-status('No category name specified');
@@ -223,13 +181,18 @@ method do-category-rename (
 
   else {
     # Move members to other category and container
-    my Str $container = $!sidebar.get-dropdown-text($dropdown-cont);
-    $container = '' if $container eq '--';
-    $!config.move-category(
+    my Str $message = $!config.move-category(
       $old-category, $new-category.tc, :category-container($container)
     );
-    $!sidebar.fill-sidebar;
-    $sts-ok = True;
+
+    if $message {
+      $dialog.set-status($message);
+    }
+
+    else {
+      $!sidebar.fill-sidebar;
+      $sts-ok = True;
+    }
   }
 
   $dialog.destroy-dialog if $sts-ok;
@@ -269,6 +232,50 @@ method do-category-delete (
     $!sidebar.fill-sidebar;
     $sts-ok = True;
   }
+
+  $dialog.destroy-dialog if $sts-ok;
+}
+
+#-------------------------------------------------------------------------------
+# Select from menu to lock or unlock a category
+method category-lock ( N-Object $parameter ) {
+
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :$!main, :dialog-header('(Un)Lock Dialog')
+  ) {
+    my Gnome::Gtk4::CheckButton $check-button .=
+      new-with-label('Lock or unlock category');
+    $check-button.set-active(False);
+
+    my Gnome::Gtk4::DropDown $dropdown = self.fill-categories(:skip-default);
+
+    .add-content( 'Category to (un)lock', $dropdown);
+    .add-content( '', $check-button);
+
+    .add-button(
+      self, 'do-category-lock', 'Lock / Unlock', :$dropdown, :$dialog, :$check-button
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+    .show-dialog;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method do-category-lock (
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
+  Gnome::Gtk4::DropDown :$dropdown
+) {
+  my Bool $sts-ok = False;
+
+  $!config.set-category-lockable(
+    $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool
+  );
+
+  # Sidebar changes when a category is set lockable and table is locked
+  $!sidebar.fill-sidebar
+    if $check-button.get-active.Bool and $!config.is-locked;
+  $sts-ok = True;
 
   $dialog.destroy-dialog if $sts-ok;
 }
