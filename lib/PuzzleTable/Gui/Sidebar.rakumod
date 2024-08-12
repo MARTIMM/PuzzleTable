@@ -282,41 +282,64 @@ method set-category ( Str $category ) {
 
 #-------------------------------------------------------------------------------
 method fill-categories (
-  Bool :$skip-default = False --> Gnome::Gtk4::DropDown
+  Bool :$skip-default = False, Str :$select-category = ''
+  --> Gnome::Gtk4::DropDown
 ) {
   my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
   my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
 
+  my Int $index = 0;
+  my Bool $index-found = False;
   for $!config.get-categories -> $category {
     next if $skip-default and $category eq 'Default';
 
     if $category ~~ m/ '_EX_' $/ {
       for $!config.get-categories(:category-container($category)) -> $subcat {
+        $index-found = True if $subcat eq $select-category;
+        $index++ unless $index-found;
         $category-list.append($subcat);
       }
     }
 
     else {
+      $index-found = True if $category eq $select-category;
+      $index++ unless $index-found;
       $category-list.append($category);
     }
   }
 
+  $index = 0 unless $index-found;
+
+  $dropdown.set-selected($index);
   $dropdown
 }
 
 #-------------------------------------------------------------------------------
-method fill-containers ( Bool :$no-enpty = False --> Gnome::Gtk4::DropDown ) {
-  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
-  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
+method fill-containers (
+  Bool :$no-empty = False, Str :$select-container = ''
+  --> Gnome::Gtk4::DropDown
+) {
+  my Gnome::Gtk4::StringList $container-list .= new-stringlist([]);
+  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-list);
+
+  my Int $index = 0;
+  my Bool $index-found = False;
 
   # Add an entry to be able to select a category at toplevel
-  $category-list.append('--') unless $no-enpty;
+  unless $no-empty {
+    $container-list.append('--');
+    $index-found = True unless ?$select-container;
+    $index++ unless $index-found;
+  }
 
   # Add the container strings
   for $!config.get-containers -> $container {
-    $category-list.append($container);
+    $container-list.append($container);
+    $index-found = True if $container eq $select-container;
+    $index++ unless $index-found;
   }
 
+  $dropdown.set-selected($index);
   $dropdown
 }
 

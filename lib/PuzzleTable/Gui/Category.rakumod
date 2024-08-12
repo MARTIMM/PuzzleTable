@@ -173,9 +173,14 @@ method do-category-lock (
 method category-rename ( N-Object $parameter ) {
 #  say 'category rename';
 
+  my Str $ccat = $!config.get-current-category;
   my Gnome::Gtk4::Entry $entry .= new-entry;
-  my Gnome::Gtk4::DropDown $dropdown-cat = $!sidebar.fill-categories(:skip-default);
-  my Gnome::Gtk4::DropDown $dropdown-cont = $!sidebar.fill-containers;
+  $entry.set-text($ccat);
+  my Gnome::Gtk4::DropDown $dropdown-cat =
+     $!sidebar.fill-categories( :skip-default, :select-category($ccat));
+  my Str $select-container = $!config.find-container($ccat);
+  my Gnome::Gtk4::DropDown $dropdown-cont =
+     $!sidebar.fill-containers(:$select-container);
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
@@ -212,9 +217,9 @@ method do-category-rename (
     $dialog.set-status('Category \'default\' cannot be renamed');
   }
 
-  elsif $new-category.tc eq $old-category {
-    $dialog.set-status('Category text same as selected');
-  }
+#  elsif $new-category.tc eq $old-category {
+#    $dialog.set-status('Category text same as selected');
+#  }
 
   else {
     # Move members to other category and container
