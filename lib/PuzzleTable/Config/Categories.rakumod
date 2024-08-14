@@ -474,6 +474,8 @@ method get-containers ( --> Seq ) {
   my @containers = ();
   my Bool $lockable = False;
   for $!categories-config<categories>.keys -> $cat {
+
+    # If extension _EX_ is added then it is a container
     if $cat ~~ m/ '_EX_' $/ {
       $lockable = self.has-lockable-categories($cat);
       (@containers.push: S/ '_EX_' $// with $cat) unless $lockable and $locked;
@@ -525,7 +527,7 @@ method has-lockable-categories (
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
-  for $!categories-config<categories>{$category-container}.keys
+  for $!categories-config<categories>{$category-container}<categories>.keys
       -> $category
   {
     if self.is-category-lockable( $category, $category-container) {
@@ -629,10 +631,12 @@ method restore-puzzles (
 
   my Str $category;
   my Str $container;
+note "$?LINE $archive-trashbin, $archive-name";
   ( $, $container, $category) = $archive-name.split(':');
   $container = $container.tc ~ '_EX_'
     if ? $container and $container !~~ m/ '_EX_' $/;
 
+note "$?LINE '$category', '$container'";
   $category ~~ s/ '.tbz2' $//;
 
   # Restoring puzzles can be for another category or in the current one
@@ -892,17 +896,21 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 method is-category-lockable (
   Str:D $category, Str $category-container is copy = '' --> Bool
 ) {
+  my Bool $lockable;
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
   my Hash $cats := $!categories-config<categories>;
   if ? $category-container {
-    $cats{$category-container}<categories>{$category}<lockable>.Bool
+    $lockable =
+      $cats{$category-container}<categories>{$category}<lockable>.Bool;
   }
 
   else {
-    $cats{$category}<lockable>.Bool
+    $lockable = $cats{$category}<lockable>.Bool;
   }
+
+  $lockable
 }
 
 #-------------------------------------------------------------------------------

@@ -50,19 +50,24 @@ submethod BUILD ( :$!main ) {
 # Select from menu to add a category
 method category-add ( N-Object $parameter ) {
 
+  my Str $ccat = $!config.get-current-category;
+  my Str $select-container = $!config.find-container($ccat);
+
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Add Category Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
-    my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers;
+    my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers(
+        :$select-container
+    );
 
     # Show dropdown
     .add-content( 'Select a container', $dropdown);
 
     # Show entry for input
-    .add-content(
-      'Specify a new category', my Gnome::Gtk4::Entry $entry .= new-entry
-    );
+    my Gnome::Gtk4::Entry $entry .= new-entry;
+    $entry.set-text($ccat);
+    .add-content( 'Specify a new category', $entry);
 
     # Show checkbutton to make the category locakbel
     .add-content(
