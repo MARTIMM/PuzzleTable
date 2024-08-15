@@ -914,10 +914,25 @@ method is-category-lockable (
 }
 
 #-------------------------------------------------------------------------------
-method set-category-lockable ( Str:D $category, Bool:D $lockable --> Bool ) {
+method set-category-lockable (
+  Str:D $category, Str $category-container is copy, Bool:D $lockable
+  --> Bool
+) {
   my Bool $is-set = False;
+  $category-container = $category-container.tc ~ '_EX_'
+     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+
   if $category ne 'Default' {
-    $!categories-config<categories>{$category}<lockable> = $lockable;
+    my Hash $cats := $!categories-config<categories>;
+    if ? $category-container {
+      $lockable =
+        $cats{$category-container}<categories>{$category}<lockable> = $lockable;
+    }
+
+    else {
+      $cats{$category}<lockable> = $lockable;
+    }
+
     self.save-categories-config;
     $is-set = True;
   }

@@ -244,15 +244,17 @@ method do-category-delete (
 #-------------------------------------------------------------------------------
 # Select from menu to lock or unlock a category
 method category-lock ( N-Object $parameter ) {
-
+note "$?LINE lock, ", self;
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('(Un)Lock Dialog')
   ) {
     my Gnome::Gtk4::CheckButton $check-button .=
-      new-with-label('Lock or unlock category');
+      new-with-label('Lock category');
     $check-button.set-active(False);
 
-    my Gnome::Gtk4::DropDown $dropdown = self.fill-categories(:skip-default);
+    my Gnome::Gtk4::DropDown $dropdown = $!sidebar.fill-categories(
+      :skip-default, :select-category($!config.get-current-category)
+    );
 
     .add-content( 'Category to (un)lock', $dropdown);
     .add-content( '', $check-button);
@@ -272,15 +274,18 @@ method do-category-lock (
   Gnome::Gtk4::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
+  my Str $category-name = $!sidebar.get-dropdown-text($dropdown);
 
   $!config.set-category-lockable(
-    $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool
+    $category-name, $!config.find-container($category-name),
+    $check-button.get-active.Bool
   );
 
   # Sidebar changes when a category is set lockable and table is locked
-  $!sidebar.fill-sidebar
-    if $check-button.get-active.Bool and $!config.is-locked;
+  $!sidebar.fill-sidebar if $!config.is-locked;
   $sts-ok = True;
+
+note "$?LINE $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool(), $!config.is-locked(), $sts-ok";
 
   $dialog.destroy-dialog if $sts-ok;
 }
