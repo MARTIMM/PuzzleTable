@@ -238,7 +238,10 @@ method select-category (
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( Str :$category-container is copy = '' --> Seq ) {
+method get-categories (
+  Str :$category-container is copy = '', Bool :$skip-containers = False
+  --> Seq
+) {
   my Bool $locked = self.is-locked;
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
@@ -251,7 +254,9 @@ method get-categories ( Str :$category-container is copy = '' --> Seq ) {
   }
 
   else {
+    # Get top level list but skip all containers
     @cat-key-list = $!categories-config<categories>.keys;
+    @cat-key-list .= grep(none / '_EX_' /) if $skip-containers;
   }
 
   my @cat = ();

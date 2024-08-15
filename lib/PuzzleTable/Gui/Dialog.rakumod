@@ -72,10 +72,13 @@ submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
     $!main.config.set-css(.get-style-context, :css-class<status-bar>);
   }
 
+#`{{
   my Gnome::Gtk4::Label $header .= new-label;
   $header.set-text($dialog-header);
+}}
+
   with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
-    .append($header);
+#    .append($header);
     .append($!content);
     .append($!button-row);
     .append($!statusbar);

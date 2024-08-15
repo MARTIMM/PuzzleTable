@@ -1,9 +1,14 @@
-#`{{
+=begin pod
+
+=head1 
+
 Combobox widget to display the categories of puzzles. The widget is shown on
 the main window. The actions to change the list are triggered from the
 'category' menu. All changes are directly visible in the combobox on the main
 page.
-}}
+
+=end pod
+
 
 use v6.d;
 
@@ -281,32 +286,51 @@ method set-category ( Str $category ) {
 }
 
 #-------------------------------------------------------------------------------
+=begin pod
+=head2 Fill a dropdown widget with a list of category names
+=end pod
+
 method fill-categories (
-  Bool :$skip-default = False, Str :$select-category = ''
+  Bool :$skip-default = False, Str :$select-container
   --> Gnome::Gtk4::DropDown
 ) {
+  # Initialize the dropdown object with an empty list
   my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
   my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
 
+  my Str $current-category = $!config.get-current-category;
+  my Str $category-container =
+     $select-container // $!config.find-container($current-category);
+ 
   my Int $index = 0;
   my Bool $index-found = False;
+  for $!config.get-categories(
+    :$category-container, :skip-containers) -> $subcat
+  {
+    $index-found = True if $subcat eq $current-category;  #$select-category;
+    $index++ unless $index-found;
+    $category-list.append($subcat);
+  }
+
+#`{{
   for $!config.get-categories -> $category {
     next if $skip-default and $category eq 'Default';
 
     if $category ~~ m/ '_EX_' $/ {
       for $!config.get-categories(:category-container($category)) -> $subcat {
-        $index-found = True if $subcat eq $select-category;
+        $index-found = True if $subcat eq $current-category;  #$select-category;
         $index++ unless $index-found;
         $category-list.append($subcat);
       }
     }
 
     else {
-      $index-found = True if $category eq $select-category;
+      $index-found = True if $category eq $current-category;  #$select-category;
       $index++ unless $index-found;
       $category-list.append($category);
     }
   }
+}}
 
   $index = 0 unless $index-found;
 
@@ -319,6 +343,7 @@ method fill-containers (
   Bool :$no-empty = False, Str :$select-container = ''
   --> Gnome::Gtk4::DropDown
 ) {
+  # Initialize the dropdown object with an empty list
   my Gnome::Gtk4::StringList $container-list .= new-stringlist([]);
   my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-list);
 

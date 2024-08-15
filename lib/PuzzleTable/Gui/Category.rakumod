@@ -142,12 +142,16 @@ method category-rename ( N-Object $parameter ) {
   my Str $select-container = $!config.find-container($ccat);
   my Gnome::Gtk4::DropDown $dropdown-cont =
      $!sidebar.fill-containers(:$select-container);
+  $dropdown-cont.register-signal(
+    self, 'select-categories', 'activate',
+    :categories($dropdown-cat), :skip-default
+  );
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Specify the category to rename', $dropdown-cat);
     .add-content( 'Select container', $dropdown-cont);
+    .add-content( 'Specify the category to rename', $dropdown-cat);
     .add-content( 'New category name', $entry);
 
     .add-button(
@@ -158,6 +162,19 @@ method category-rename ( N-Object $parameter ) {
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
     .show-dialog;
   }
+}
+
+#-------------------------------------------------------------------------------
+method select-categories (
+  Gnome::Gtk4::DropDown() :_native-object($containers),
+  Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
+) {
+note 
+  $categories.clear-object;
+  $categories = $!sidebar.fill-categories(
+    :$skip-default,
+    :select-container($!sidebar.get-dropdown-text($containers))
+  );
 }
 
 #-------------------------------------------------------------------------------
