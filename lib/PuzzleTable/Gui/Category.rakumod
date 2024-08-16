@@ -1,9 +1,9 @@
-#`{{
+=begin pod
 Combobox widget to display the categories of puzzles. The widget is shown on
 the main window. The actions to change the list are triggered from the
 'category' menu. All changes are directly visible in the combobox on the main
 page.
-}}
+=end pod
 
 use v6.d;
 
@@ -130,23 +130,45 @@ method do-category-add (
 }
 
 #-------------------------------------------------------------------------------
-# Select from menu to rename a category
+=begin pod
+=head2 category-rename
+
+Select from menu to rename a category. There are two drop down lists, one of a list of containers and the other to list categories. The category list is the list of categories found in a container and changes when another container is selected.
+
+  .category-rename ( N-Object $parameter )
+
+=item $parameter; Data given by the menu action. It is not set so it can be ignored
+
+=end pod
+
 method category-rename ( N-Object $parameter ) {
-#  say 'category rename';
 
   my Str $ccat = $!config.get-current-category;
+
+  # Prepare dialog entries.
+  # An entry to change the name of the selected category, prefilled with
+  # the current one.
   my Gnome::Gtk4::Entry $entry .= new-entry;
   $entry.set-text($ccat);
+
+  # A dropdown to list categories. The current category is preselected.
   my Gnome::Gtk4::DropDown $dropdown-cat =
      $!sidebar.fill-categories( :skip-default, :select-category($ccat));
+
+  # Find the container of the current category and use it in the container
+  # list to preselect it.
   my Str $select-container = $!config.find-container($ccat);
   my Gnome::Gtk4::DropDown $dropdown-cont =
      $!sidebar.fill-containers(:$select-container);
+
+  # Set a handler on the container list to change the category list
+  # when an item is selected.
   $dropdown-cont.register-signal(
-    self, 'select-categories', 'activate',
+    self, 'select-categories', 'notify',
     :categories($dropdown-cat), :skip-default
   );
 
+  # Build the dialog
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
   ) {
@@ -162,19 +184,6 @@ method category-rename ( N-Object $parameter ) {
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
     .show-dialog;
   }
-}
-
-#-------------------------------------------------------------------------------
-method select-categories (
-  Gnome::Gtk4::DropDown() :_native-object($containers),
-  Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
-) {
-note 
-  $categories.clear-object;
-  $categories = $!sidebar.fill-categories(
-    :$skip-default,
-    :select-container($!sidebar.get-dropdown-text($containers))
-  );
 }
 
 #-------------------------------------------------------------------------------
@@ -223,15 +232,36 @@ method do-category-rename (
 #-------------------------------------------------------------------------------
 # Select from menu to remove a category
 method category-delete ( N-Object $parameter ) {
-  my Gnome::Gtk4::DropDown $dropdown = $!sidebar.fill-categories(:skip-default);
+
+  my Str $ccat = $!config.get-current-category;
+
+  # Prepare dialog entries.
+  # A dropdown to list categories. The current category is preselected.
+  my Gnome::Gtk4::DropDown $dropdown-cat = $!sidebar.fill-categories(
+    :skip-default, :select-category($ccat)
+  );
+
+  # Find the container of the current category and use it in the container
+  # list to preselect it.
+  my Str $select-container = $!config.find-container($ccat);
+  my Gnome::Gtk4::DropDown $dropdown-cont =
+     $!sidebar.fill-containers(:$select-container);
+
+  # Set a handler on the container list to change the category list
+  # when an item is selected.
+  $dropdown-cont.register-signal(
+    self, 'select-categories', 'notify',
+    :categories($dropdown-cat), :skip-default
+  );
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Specify the category to delete', $dropdown);
+    .add-content( 'Select container', $dropdown-cont);
+    .add-content( 'Select category to delete', $dropdown-cat);
 
     .add-button(
-      self, 'do-category-delete', 'Delete', :$dropdown, :$dialog
+      self, 'do-category-delete', 'Delete', :$dropdown-cat, :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -305,5 +335,37 @@ method do-category-lock (
 note "$?LINE $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool(), $!config.is-locked(), $sts-ok";
 
   $dialog.destroy-dialog if $sts-ok;
+}
+
+#-------------------------------------------------------------------------------
+=begin pod
+=head2 select-categories
+
+Handler for the container dropdown list to change the category dropdown list after a selecteion is made.
+
+  method select-categories (
+    N-Object $, Gnome::Gtk4::DropDown() :_native-object($containers),
+    Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
+  )
+
+=item $ ; A ParamSpec object. It is ignored.
+=item $containers: The container list.
+=item $categories: The category list.
+=item $skip-default; Used to hide the 'Default' category from the list.
+
+=end pod
+
+method select-categories (
+  N-Object $, Gnome::Gtk4::DropDown() :_native-object($containers),
+  Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
+) {
+  my Gnome::Gtk4::StringList() $string-list .= new-stringlist([]);
+  $categories.set-model($string-list);
+
+  my Str $container = $!sidebar.get-dropdown-text($containers);
+  $container = '' if $container eq '--';
+  $!sidebar.fill-categories(
+    :$skip-default, :dropdown($categories), :select-container($container)
+  );
 }
 
