@@ -287,27 +287,41 @@ method set-category ( Str $category ) {
 
 #-------------------------------------------------------------------------------
 =begin pod
-=head2 Fill a dropdown widget with a list of category names
+=head2 fill-categories
+
+Fill a dropdown widget with a list of category names
+
+  method fill-categories ( )
+
 =end pod
 
 method fill-categories (
-  Bool :$skip-default = False, Str :$select-container
+  Bool :$skip-default = False, Str :$select-category, Str :$select-container,
+  Gnome::Gtk4::DropDown :$dropdown is copy
   --> Gnome::Gtk4::DropDown
 ) {
-  # Initialize the dropdown object with an empty list
-  my Gnome::Gtk4::StringList $category-list .= new-stringlist([]);
-  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($category-list);
+  my Gnome::Gtk4::StringList() $category-list;
+  if ? $dropdown {
+    $category-list = $dropdown.get-model;
+  }
 
-  my Str $current-category = $!config.get-current-category;
+  else {
+    # Initialize the dropdown object with an empty list
+    $category-list .= new-stringlist([]);
+    $dropdown .= new-dropdown($category-list);
+  }
+
+  my Str $category = $select-category // $!config.get-current-category;
   my Str $category-container =
-     $select-container // $!config.find-container($current-category);
- 
+     $select-container // $!config.find-container($category);
+
   my Int $index = 0;
   my Bool $index-found = False;
   for $!config.get-categories(
-    :$category-container, :skip-containers) -> $subcat
+      :$category-container, :skip-containers
+    ) -> $subcat
   {
-    $index-found = True if $subcat eq $current-category;  #$select-category;
+    $index-found = True if $subcat eq $category;  #$select-category;
     $index++ unless $index-found;
     $category-list.append($subcat);
   }
@@ -318,14 +332,14 @@ method fill-categories (
 
     if $category ~~ m/ '_EX_' $/ {
       for $!config.get-categories(:category-container($category)) -> $subcat {
-        $index-found = True if $subcat eq $current-category;  #$select-category;
+        $index-found = True if $subcat eq $category;  #$select-category;
         $index++ unless $index-found;
         $category-list.append($subcat);
       }
     }
 
     else {
-      $index-found = True if $category eq $current-category;  #$select-category;
+      $index-found = True if $category eq $category;  #$select-category;
       $index++ unless $index-found;
       $category-list.append($category);
     }
@@ -333,8 +347,8 @@ method fill-categories (
 }}
 
   $index = 0 unless $index-found;
-
   $dropdown.set-selected($index);
+
   $dropdown
 }
 

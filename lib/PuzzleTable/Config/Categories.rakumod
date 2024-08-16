@@ -261,8 +261,9 @@ method get-categories (
 
   my @cat = ();
   for @cat-key-list -> $category {
-    next if $locked and
-            self.is-category-lockable( $category, $category-container);
+    next if ( $locked and
+      self.is-category-lockable( $category, $category-container)
+    );
 
     @cat.push: $category;
   }
@@ -591,8 +592,6 @@ method move-puzzle ( Str $to-cat is copy, Str:D $puzzle-id ) {
   # Get path of puzzle where the puzzle must go
   my Str $puzzle-destination = $c-to.get-puzzle-destination($new-puzzle-id);
 
-#note "$?LINE rename $puzzle-source to $puzzle-destination";
-
   # Rename the file to the new location
   $puzzle-source.IO.rename( $puzzle-destination, :createonly);
 
@@ -636,12 +635,10 @@ method restore-puzzles (
 
   my Str $category;
   my Str $container;
-note "$?LINE $archive-trashbin, $archive-name";
   ( $, $container, $category) = $archive-name.split(':');
   $container = $container.tc ~ '_EX_'
     if ? $container and $container !~~ m/ '_EX_' $/;
 
-note "$?LINE '$category', '$container'";
   $category ~~ s/ '.tbz2' $//;
 
   # Restoring puzzles can be for another category or in the current one
@@ -797,8 +794,6 @@ method run-palapeli ( Hash $puzzle --> Str ) {
   # Get executable program
   my Str $exec = $!categories-config<palapeli>{$pref}<exec>;
 
-#note "\n$?LINE Error missing \$puzzle-id: Hash = $puzzle.gist()"
-#unless ? $puzzle<PuzzleID>;
   my Str $puzzle-id = $puzzle<PuzzleID>;
   my Str $puzzle-path = [~]
     $!current-category.get-puzzle-destination($puzzle-id),
@@ -854,7 +849,6 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
     # Update the category status
     self.update-category-status;
-#    self.save-categories-config;
   }
 
   $progress
