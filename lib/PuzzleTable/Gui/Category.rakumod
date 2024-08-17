@@ -292,22 +292,39 @@ method do-category-delete (
 # Select from menu to lock or unlock a category
 method category-lock ( N-Object $parameter ) {
 note "$?LINE lock, ", self;
+
+  my Str $ccat = $!config.get-current-category;
+
+  # A dropdown to list categories. The current category is preselected.
+  my Gnome::Gtk4::DropDown $dropdown-cat =
+     $!sidebar.fill-categories( :skip-default, :select-category($ccat));
+
+  # Find the container of the current category and use it in the container
+  # list to preselect it.
+  my Str $select-container = $!config.find-container($ccat);
+  my Gnome::Gtk4::DropDown $dropdown-cont =
+     $!sidebar.fill-containers(:$select-container);
+
+  # Set a handler on the container list to change the category list
+  # when an item is selected.
+  $dropdown-cont.register-signal(
+    self, 'select-categories', 'notify',
+    :categories($dropdown-cat), :skip-default
+  );
+
+  my Gnome::Gtk4::CheckButton $check-button .=
+    new-with-label('Lock category');
+  $check-button.set-active(False);
+
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('(Un)Lock Dialog')
   ) {
-    my Gnome::Gtk4::CheckButton $check-button .=
-      new-with-label('Lock category');
-    $check-button.set-active(False);
-
-    my Gnome::Gtk4::DropDown $dropdown = $!sidebar.fill-categories(
-      :skip-default, :select-category($!config.get-current-category)
-    );
-
-    .add-content( 'Category to (un)lock', $dropdown);
+    .add-content( 'Select container', $dropdown-cont);
+    .add-content( 'Category to (un)lock', $dropdown-cat);
     .add-content( '', $check-button);
 
     .add-button(
-      self, 'do-category-lock', 'Lock / Unlock', :$dropdown, :$dialog, :$check-button
+      self, 'do-category-lock', 'Lock / Unlock', :$dropdown-cat, :$dialog, :$check-button
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
