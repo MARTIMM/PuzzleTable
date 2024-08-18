@@ -39,7 +39,7 @@ has PuzzleTable::Config $!config;
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( :$!main ) {
-  $!config = $!main.config;
+  $!config .= instance;
 
   self.set-halign(GTK_ALIGN_FILL);
   self.set-valign(GTK_ALIGN_FILL);

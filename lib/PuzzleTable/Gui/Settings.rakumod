@@ -33,7 +33,7 @@ has PuzzleTable::Gui::Sidebar $!sidebar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
-  $!config = $!main.config;
+  $!config .= instance;
   $!table = $!main.table;
   $!sidebar = $!main.sidebar;
 

@@ -28,7 +28,7 @@ has PuzzleTable::Config $!config;
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( :$!main ) {
-  $!config = $!main.config;
+  $!config .= instance;
   $!sidebar = $!main.sidebar;
 }
 

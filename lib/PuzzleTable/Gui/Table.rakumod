@@ -75,7 +75,7 @@ submethod BUILD ( :$!main ) {
 #  $!semaphore .= new;
 #  $!semaphore.add-mutex-names('puzzles-playing');
 
-  $!config = $!main.config;
+  $!config .= instance;
 
   self.set-halign(GTK_ALIGN_FILL);
 #  self.set-hexpand(True);

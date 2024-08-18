@@ -67,6 +67,14 @@ submethod BUILD ( ) {
 }
 
 #-------------------------------------------------------------------------------
+my PuzzleTable::Config $instance;
+method instance ( --> PuzzleTable::Config ) {
+  $instance //= self.bless;
+
+  $instance
+}
+
+#-------------------------------------------------------------------------------
 method set-css ( N-Object $context, Str :$css-class = '' ) {
   return unless ?$css-class;
 
