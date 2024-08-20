@@ -99,7 +99,7 @@ method do-container-delete (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::DropDown() :$dropdown
 ) {
   my Bool $sts-ok = False;
-  my Str $container = $!sidebar.get-dropdown-text($dropdown);
+  my Str $container = $dropdown.get-dropdown-text;
   
   if not $!config.delete-container($container) {
     $dialog.set-status("Container $container not empty");

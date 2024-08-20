@@ -9,6 +9,7 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
+use PuzzleTable::Gui::DropDown;
 
 use Gnome::Gtk4::Entry:api<2>;
 #use Gnome::Gtk4::PasswordEntry:api<2>;
@@ -23,10 +24,10 @@ use Gnome::Gtk4::CheckButton:api<2>;
 #use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 #use Gnome::Gtk4::ScrolledWindow:api<2>;
-use Gnome::Gtk4::DropDown:api<2>;
-use Gnome::Gtk4::StringList:api<2>;
+#use Gnome::Gtk4::DropDown:api<2>;
+#use Gnome::Gtk4::StringList:api<2>;
 
-use Gnome::N::GlibToRakuTypes:api<2>;
+#use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
@@ -50,23 +51,23 @@ submethod BUILD ( :$!main ) {
 # Select from menu to add a category
 method category-add ( N-Object $parameter ) {
 
-  my Str $ccat = $!config.get-current-category;
-  my Str $select-container = $!config.find-container($ccat);
+  my Str $select-category = $!config.get-current-category;
+  my Str $select-container = $!config.find-container($select-category);
+
+  # Make a string list to be used in a combobox (dropdown)
+  my PuzzleTable::Gui::DropDown() $dropdown .= new;
+  $dropdown.fill-containers(:$select-container);
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Add Category Dialog')
   ) {
-    # Make a string list to be used in a combobox (dropdown)
-    my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers(
-        :$select-container
-    );
 
     # Show dropdown
     .add-content( 'Select a container', $dropdown);
 
     # Show entry for input
     my Gnome::Gtk4::Entry $entry .= new-entry;
-    $entry.set-text($ccat);
+    $entry.set-text($select-category);
     .add-content( 'Specify a new category', $entry);
 
     # Show checkbutton to make the category locakbel
@@ -92,7 +93,7 @@ method category-add ( N-Object $parameter ) {
 method do-category-add (
   PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button,
-  Gnome::Gtk4::DropDown :$dropdown
+  PuzzleTable::Gui::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
   my Str $cat-text = $entry.get-text.tc;
@@ -108,11 +109,11 @@ method do-category-add (
   }
 
   else {
-    my Str $category-container = $!sidebar.get-dropdown-text($dropdown);
+    my Str $category-container = $dropdown.get-dropdown-text;
     $category-container = '' if $category-container eq '--';
 
     # Add category to list. Message gets defined if something is wrong.
-    my Str $msg = $!main.config.add-category(
+    my Str $msg = $!config.add-category(
       $cat-text, :lockable($check-button.get-active), :$category-container
     );
 
@@ -143,30 +144,28 @@ Select from menu to rename a category. There are two drop down lists, one of a l
 
 method category-rename ( N-Object $parameter ) {
 
-  my Str $ccat = $!config.get-current-category;
+  my Str $select-category = $!config.get-current-category;
 
   # Prepare dialog entries.
   # An entry to change the name of the selected category, prefilled with
   # the current one.
   my Gnome::Gtk4::Entry $entry .= new-entry;
-  $entry.set-text($ccat);
+  $entry.set-text($select-category);
 
   # A dropdown to list categories. The current category is preselected.
-  my Gnome::Gtk4::DropDown $dropdown-cat =
-     $!sidebar.fill-categories( :skip-default, :select-category($ccat));
+  my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
+  $dropdown-cat.fill-categories( :skip-default, :$select-category);
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($ccat);
-  my Gnome::Gtk4::DropDown $dropdown-cont =
-     $!sidebar.fill-containers(:$select-container);
+  my Str $select-container = $!config.find-container($select-category);
+  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
+    .fill-containers(:$select-container);
 
-  # Set a handler on the container list to change the category list
-  # when an item is selected.
-  $dropdown-cont.register-signal(
-    self, 'select-categories', 'notify',
-    :categories($dropdown-cat), :skip-default
-  );
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    .trap-container-changes( $dropdown-cat, :skip-default);
+  }
 
   # Build the dialog
   with my PuzzleTable::Gui::Dialog $dialog .= new(
@@ -189,13 +188,13 @@ method category-rename ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-rename (
   PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::DropDown :$dropdown-cat,
-  Gnome::Gtk4::DropDown :$dropdown-cont,
+  Gnome::Gtk4::Entry :$entry, PuzzleTable::Gui::DropDown :$dropdown-cat,
+  PuzzleTable::Gui::DropDown :$dropdown-cont,
 ) {
   my Bool $sts-ok = False;
-  my Str $old-category = $!sidebar.get-dropdown-text($dropdown-cat);
+  my Str $old-category = $dropdown-cat.get-dropdown-text;
   my Str $new-category = $entry.get-text.tc;
-  my Str $container = $!sidebar.get-dropdown-text($dropdown-cont);
+  my Str $container = $dropdown-cont.get-dropdown-text;
   $container = '' if $container eq '--';
 
   if ! $new-category {
@@ -233,26 +232,23 @@ method do-category-rename (
 # Select from menu to remove a category
 method category-delete ( N-Object $parameter ) {
 
-  my Str $ccat = $!config.get-current-category;
+  my Str $select-category = $!config.get-current-category;
 
   # Prepare dialog entries.
   # A dropdown to list categories. The current category is preselected.
-  my Gnome::Gtk4::DropDown $dropdown-cat = $!sidebar.fill-categories(
-    :skip-default, :select-category($ccat)
-  );
+  my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
+  $dropdown-cat.fill-categories( :skip-default, :$select-category);
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($ccat);
-  my Gnome::Gtk4::DropDown $dropdown-cont =
-     $!sidebar.fill-containers(:$select-container);
+  my Str $select-container = $!config.find-container($select-category);
+  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
+    .fill-containers(:$select-container);
 
-  # Set a handler on the container list to change the category list
-  # when an item is selected.
-  $dropdown-cont.register-signal(
-    self, 'select-categories', 'notify',
-    :categories($dropdown-cat), :skip-default
-  );
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    .trap-container-changes( $dropdown-cat, :skip-default);
+  }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :$!main, :dialog-header('Rename Category dialog')
@@ -261,7 +257,7 @@ method category-delete ( N-Object $parameter ) {
     .add-content( 'Select category to delete', $dropdown-cat);
 
     .add-button(
-      self, 'do-category-delete', 'Delete', :$dropdown-cat, :$dialog
+      self, 'do-category-delete', 'Delete', :dropdown($dropdown-cat), :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -271,10 +267,10 @@ method category-delete ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-delete (
-  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::DropDown :$dropdown
+  PuzzleTable::Gui::Dialog :$dialog, PuzzleTable::Gui::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
-  my Str $category = $!sidebar.get-dropdown-text($dropdown);
+  my Str $category = $dropdown.get-dropdown-text;
   if $!config.has-puzzles($category) {
     $dialog.set-status('Category still has puzzles');
   }
@@ -293,24 +289,22 @@ method do-category-delete (
 method category-lock ( N-Object $parameter ) {
 note "$?LINE lock, ", self;
 
-  my Str $ccat = $!config.get-current-category;
+  my Str $select-category = $!config.get-current-category;
 
   # A dropdown to list categories. The current category is preselected.
-  my Gnome::Gtk4::DropDown $dropdown-cat =
-     $!sidebar.fill-categories( :skip-default, :select-category($ccat));
+  my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
+  $dropdown-cat.fill-categories( :skip-default, :$select-category);
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($ccat);
-  my Gnome::Gtk4::DropDown $dropdown-cont =
-     $!sidebar.fill-containers(:$select-container);
+  my Str $select-container = $!config.find-container($select-category);
+  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
+    .fill-containers(:$select-container);
 
-  # Set a handler on the container list to change the category list
-  # when an item is selected.
-  $dropdown-cont.register-signal(
-    self, 'select-categories', 'notify',
-    :categories($dropdown-cat), :skip-default
-  );
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    .trap-container-changes( $dropdown-cat, :skip-default);
+  }
 
   my Gnome::Gtk4::CheckButton $check-button .=
     new-with-label('Lock category');
@@ -335,10 +329,10 @@ note "$?LINE lock, ", self;
 #-------------------------------------------------------------------------------
 method do-category-lock (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
-  Gnome::Gtk4::DropDown :$dropdown
+  PuzzleTable::Gui::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
-  my Str $category-name = $!sidebar.get-dropdown-text($dropdown);
+  my Str $category-name = $dropdown.get-dropdown-text;
 
   $!config.set-category-lockable(
     $category-name, $!config.find-container($category-name),
@@ -349,11 +343,115 @@ method do-category-lock (
   $!sidebar.fill-sidebar if $!config.is-locked;
   $sts-ok = True;
 
-note "$?LINE $!sidebar.get-dropdown-text($dropdown), $check-button.get-active.Bool(), $!config.is-locked(), $sts-ok";
-
   $dialog.destroy-dialog if $sts-ok;
 }
 
+
+
+
+=finish
+#-------------------------------------------------------------------------------
+=begin pod
+=head2 fill-categories
+
+Fill a dropdown widget with a list of category names
+
+  method fill-categories ( )
+
+=end pod
+
+method fill-categories (
+  Bool :$skip-default = False, Str :$select-category, Str :$select-container,
+  Gnome::Gtk4::DropDown :$dropdown is copy
+  --> Gnome::Gtk4::DropDown
+) {
+  my Gnome::Gtk4::StringList() $category-list;
+  if ? $dropdown {
+    $category-list = $dropdown.get-model;
+  }
+
+  else {
+    # Initialize the dropdown object with an empty list
+    $category-list .= new-stringlist([]);
+    $dropdown .= new-dropdown($category-list);
+  }
+
+  my Str $category = $select-category // $!config.get-current-category;
+  my Str $category-container =
+     $select-container // $!config.find-container($category);
+
+  my Int $index = 0;
+  my Bool $index-found = False;
+  for $!config.get-categories(
+      :$category-container, :skip-containers
+    ) -> $subcat
+  {
+    $index-found = True if $subcat eq $category;  #$select-category;
+    $index++ unless $index-found;
+    $category-list.append($subcat);
+  }
+
+#`{{
+  for $!config.get-categories -> $category {
+    next if $skip-default and $category eq 'Default';
+
+    if $category ~~ m/ '_EX_' $/ {
+      for $!config.get-categories(:category-container($category)) -> $subcat {
+        $index-found = True if $subcat eq $category;  #$select-category;
+        $index++ unless $index-found;
+        $category-list.append($subcat);
+      }
+    }
+
+    else {
+      $index-found = True if $category eq $category;  #$select-category;
+      $index++ unless $index-found;
+      $category-list.append($category);
+    }
+  }
+}}
+
+  $index = 0 unless $index-found;
+  $dropdown.set-selected($index);
+
+  $dropdown
+}
+
+#-------------------------------------------------------------------------------
+method fill-containers (
+  Bool :$no-empty = False, Str :$select-container = ''
+  --> Gnome::Gtk4::DropDown
+) {
+  # Initialize the dropdown object with an empty list
+  my Gnome::Gtk4::StringList $container-list .= new-stringlist([]);
+  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-list);
+
+  my Int $index = 0;
+  my Bool $index-found = False;
+
+  # Add an entry to be able to select a category at toplevel
+  unless $no-empty {
+    $container-list.append('--');
+    $index-found = True unless ?$select-container;
+    $index++ unless $index-found;
+  }
+
+  # Add the container strings
+  for $!config.get-containers -> $container {
+    $container-list.append($container);
+    $index-found = True if $container eq $select-container;
+    $index++ unless $index-found;
+  }
+
+  $dropdown.set-selected($index);
+  $dropdown
+}
+
+#-------------------------------------------------------------------------------
+method get-dropdown-text ( Gnome::Gtk4::DropDown $dropdown --> Str ) {
+  my Gnome::Gtk4::StringList() $string-list = $dropdown.get-model;
+  $string-list.get-string($dropdown.get-selected)
+}
 #-------------------------------------------------------------------------------
 =begin pod
 =head2 select-categories
