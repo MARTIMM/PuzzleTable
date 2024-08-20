@@ -37,7 +37,6 @@ has Gnome::Gtk4::Grid $!top-grid;
 has Gnome::Gtk4::Box $.toolbar;
 has Bool $!table-is-displayed = False;
 
-has PuzzleTable::Config $.config;
 has PuzzleTable::Gui::Table $.table;
 has PuzzleTable::Gui::Sidebar $.sidebar;
 has PuzzleTable::Gui::Statusbar $.statusbar;
@@ -83,9 +82,9 @@ method app-startup ( ) {
 method local-options ( N-Object $n-variant-dict --> Int ) {
 #say 'local opts';
 
-  # Management and admin
-  $!config .= new;
+  my PuzzleTable::Config $config .= instance;
 
+  # Management and admin
   my Int $exit-code = -1;
 
   # All faulty and wrong arguments thrown by Getopt::Long are caught here.
@@ -99,11 +98,11 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
     }
   }
 
-  my Capture $o = get-options(|$!config.options);
+  my Capture $o = get-options(|$config.options);
 
   # Handle the simple options here which do not require the primary instance
   if $o<version> {
-    note "Version of puzzle table; $!config.version()";
+    note "Version of puzzle table; $config.version()";
     $exit-code = 0;
   }
 
@@ -121,6 +120,8 @@ method remote-options (
 ) {
 #say 'remote opts';
 
+  my PuzzleTable::Config $config .= instance;
+
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
   $!table .= new-scrolledwindow(:main(self)) unless ?$!table;
@@ -132,7 +133,7 @@ method remote-options (
 #  );
 
   my Capture $o = get-options-from(
-    $command-line.get-arguments(Pointer), |$!config.options
+    $command-line.get-arguments(Pointer), | $config.options
   );
   my @args = $o.list;
 
@@ -142,7 +143,7 @@ method remote-options (
   }
 
   if $o<unlock>:exists {
-    $!config.unlock($o<unlock>);
+    $config.unlock($o<unlock>);
   }
 
   # Process category option. It is set to 'Default' otherwise.
@@ -152,11 +153,11 @@ method remote-options (
     $opt-category = $o<category>.tc;
     # Create category if does not exist. Keep lockable property of the category
     # True when it is set to True
-    $!config.add-category( $opt-category, :$lockable);
+    $config.add-category( $opt-category, :$lockable);
   }
 
-  my Str $category-container = $!config.find-container($opt-category);
-  $!config.select-category( $opt-category, :$category-container);
+  my Str $category-container = $config.find-container($opt-category);
+  $config.select-category( $opt-category, :$category-container);
   $!sidebar.set-category($opt-category);
 
   if $o<puzzles>:exists {
@@ -167,7 +168,7 @@ method remote-options (
         next;
       }
 
-      my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
+      my Str $puzzle-id = $config.add-puzzle($puzzle-path);
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id);
     }
   }
@@ -179,7 +180,7 @@ method remote-options (
   if $o<restore>:exists {
     my Str $archive-dir = $o<restore>.IO.parent.Str ~ '/';
     my Str $archive-name = $o<restore>.IO.basename.Str;
-    my Str $message = $!config.restore-puzzles( $archive-dir, $archive-name);
+    my Str $message = $config.restore-puzzles( $archive-dir, $archive-name);
     note "Error: $message" if ?$message;
   }
 
@@ -201,16 +202,18 @@ say 'open a file';
 
 #-------------------------------------------------------------------------------
 method app-shutdown ( ) {
-  $!config.save-categories-config;
+  my PuzzleTable::Config $config .= instance;
+  $config.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
 
+  my PuzzleTable::Config $config .= instance;
   $!toolbar .= new-box( GTK_ORIENTATION_HORIZONTAL, 2);
 
   with $!top-grid .= new-grid {
-    $!config.set-css( .get-style-context, :css-class<main-view>);
+    $config.set-css( .get-style-context, :css-class<main-view>);
 
     .set-margin-top(10);
     .set-margin-bottom(10);
@@ -226,7 +229,7 @@ method puzzle-table-display ( ) {
   with $!application-window .= new-applicationwindow($!application) {
     my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
     $!application.set-menubar($menu-bar.bar);
-    $!config.set-css( .get-style-context, :css-class<main-puzzle-table>);
+    $config.set-css( .get-style-context, :css-class<main-puzzle-table>);
 
     .register-signal( self, 'quit-application', 'destroy');
     .set-show-menubar(True);
@@ -258,7 +261,8 @@ method go-ahead ( ) {
 
 #-------------------------------------------------------------------------------
 method quit-application ( ) {
-  $!config.save-categories-config;
+  my PuzzleTable::Config $config .= instance;
+  $config.save-categories-config;
   $!application.quit;
 }
 

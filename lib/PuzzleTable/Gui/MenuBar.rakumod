@@ -137,6 +137,8 @@ method bind-action (
   Gnome::Gio::Menu $menu, Str $menu-name, Mu $object, Str $entry-name,
   Str :$icon, Str :$path, Str :$tooltip, Bool :$shortcut = False
 ) {
+  my PuzzleTable::Config $config .= instance;
+
   # Make a method and action name
   my Str $method = [~] $menu-name, ' ', $entry-name;
   $method .= lc;
@@ -158,7 +160,7 @@ method bind-action (
 
   if ?$icon {
     my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
-      :$icon, :$action-name, :config($!main.config)
+      :$icon, :$action-name
     );
 
     $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
@@ -168,7 +170,7 @@ method bind-action (
 
   elsif ?$path {
     my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
-      :$path, :$action-name, :config($!main.config)
+      :$path, :$action-name
     );
 
     $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
