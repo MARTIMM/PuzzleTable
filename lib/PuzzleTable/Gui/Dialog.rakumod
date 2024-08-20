@@ -35,7 +35,10 @@ method new ( |c ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
+submethod BUILD (
+  :$!main, Str :$dialog-header = '', Bool :$no-statusbar = False
+) {
+  my PuzzleTable::Config $config .= instance;
   $!main-loop .= new-mainloop( N-Object, True);
 
   $!content-count = 0;
@@ -64,12 +67,14 @@ submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
   }
   $!button-row.append($button-row-strut);
 
-  with $!statusbar .= new-statusbar(:context<dialog>) {
-    .set-margin-top(5);
-    .set-margin-bottom(5);
-    .set-margin-start(5);
-    .set-margin-end(5);
-    $!main.config.set-css(.get-style-context, :css-class<status-bar>);
+  unless $no-statusbar {
+    with $!statusbar .= new-statusbar(:context<dialog>) {
+      .set-margin-top(5);
+      .set-margin-bottom(5);
+      .set-margin-start(5);
+      .set-margin-end(5);
+      $config.set-css(.get-style-context, :css-class<status-bar>);
+    }
   }
 
 #`{{
@@ -81,12 +86,12 @@ submethod BUILD ( :$!main, Str :$dialog-header = '' ) {
 #    .append($header);
     .append($!content);
     .append($!button-row);
-    .append($!statusbar);
+    .append($!statusbar) unless $no-statusbar;
     .set-visible(True);
   }
 
   with self {
-    $!main.config.set-css( .get-style-context, :css-class<puzzle-dialog>);
+    $config.set-css( .get-style-context, :css-class<puzzle-dialog>);
     .set-transient-for($!main.application-window);
     .set-destroy-with-parent(True);
     .set-modal(True);
