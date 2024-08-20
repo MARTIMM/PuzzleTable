@@ -249,7 +249,7 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     );
   }
 
-  my Gnome::Gtk4::Label $pid .= new-label();
+  my Gnome::Gtk4::Label $pid .= new-label;
 
   with my Gnome::Gtk4::Box $button-box .= new-box(
     GTK_ORIENTATION_VERTICAL, 2
@@ -279,11 +279,11 @@ method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
     .set-valign(GTK_ALIGN_FILL);
   }
 
-  my TableItemLabel $label-comment .= new( :!align, :css<comment>, :$!config);
-  my TableItemLabel $label-size .= new(:$!config);
-  my TableItemLabel $label-npieces .= new(:$!config);
-  my TableItemLabel $label-source .= new(:$!config);
-  my TableItemLabel $label-progress .= new(:$!config);
+  my TableItemLabel $label-comment .= new-label( :!align, :css<comment>);
+  my TableItemLabel $label-size .= new-label;
+  my TableItemLabel $label-npieces .= new-label;
+  my TableItemLabel $label-source .= new-label;
+  my TableItemLabel $label-progress .= new-label;
 
   with my Gnome::Gtk4::Grid $grid .= new-grid {
     .attach( $image, 0, 0, 1, 1);
@@ -453,7 +453,7 @@ method do-update-puzzle (
   Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source,
   Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
 ) {
-  $!main.config.update-puzzle(
+  $!config.update-puzzle(
     %(
       :PuzzleID($puzzle<PuzzleID>),
       :Comment($comment.get-text),

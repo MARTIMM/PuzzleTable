@@ -1,5 +1,7 @@
 use v6.d;
 
+use PuzzleTable::Config;
+
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 
@@ -10,17 +12,19 @@ also is Gnome::Gtk4::Label;
 constant \TableItemLabel is export = PuzzleTable::Gui::TableItemLabel;
 
 #-------------------------------------------------------------------------------
-method new ( |c ) {
-  self.new-label( Str, |c);
-}
+#method new ( |c ) {
+#  self.new-label( Str, |c);
+#}
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Bool :$align = True, Str :$css, :$config ) {
+submethod BUILD ( Bool :$align = True, Str :$css-class ) {
+  my PuzzleTable::Config $config .= instance;
+
   self.set-hexpand(True);
   self.set-halign(GTK_ALIGN_START) if $align;
-  if ?$css {
-#    self.set-name('table-item-' ~ $css);
-    $config.set-css( self.get-style-context, :css-class('table-item-' ~ $css));
+  if ?$css-class {
+#    self.set-name('table-item-' ~ $css-class);
+    $config.set-css( self.get-style-context, :css-class('table-item-' ~ $css-class));
   }
 
   else {
