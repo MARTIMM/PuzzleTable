@@ -1,7 +1,8 @@
 #!/usr/bin/env -S rakudo -Ilib
 
 use v6.d;
-use lib "/home/marcel/Languages/Raku/Projects/gnome-source-skim-tool/gnome-api2/gnome-native/lib";
+
+#use lib "/home/marcel/Languages/Raku/Projects/gnome-api2/gnome-api2/gnome-native/lib";
 
 use PuzzleTable::Gui::MainWindow;
 
