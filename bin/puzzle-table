@@ -17,36 +17,3 @@ my PuzzleTable::Gui::MainWindow $puzzles .= new;
 $puzzles.go-ahead;
 
 
-
-
-
-
-=finish
-use YAMLish;
-
-use PuzzleTable::Types;
-use PuzzleTable::Gui::MainWindow;
-
-#-------------------------------------------------------------------------------
-# Load puzzle data in global Hash
-my Hash $*puzzle-data = %();
-$*puzzle-data = load-yaml(PUZZLE_DATA.IO.slurp) if PUZZLE_DATA.IO.r;
-
-# Create categories
-$*puzzle-data<categories> = %() unless $*puzzle-data<categories>:exists;
-
-# Check for the Default category and set lockable to False
-$*puzzle-data<categories><Default> = %(members => %())
-  unless $*puzzle-data<categories><Default>:exists;
-$*puzzle-data<categories><Default><lockable> = False;
-
-# Create settings
-$*puzzle-data<settings> = %() unless $*puzzle-data<settings>:exists;
-
-# Force lockable categories locked at the start of the program
-$*puzzle-data<settings><locked> = True;
-
-#-------------------------------------------------------------------------------
-# Show puzzle table. return only when finished
-my PuzzleTable::Gui::MainWindow $puzzles .= new;
-$puzzles.go-ahead;

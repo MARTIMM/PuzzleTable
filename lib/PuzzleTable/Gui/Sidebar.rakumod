@@ -23,8 +23,6 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Expander:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
-use Gnome::Gtk4::DropDown:api<2>;
-use Gnome::Gtk4::StringList:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -283,107 +281,4 @@ method set-category ( Str $category ) {
   # Fill the sidebar in case there is a new entry
   self.fill-sidebar;
   self.select-category(:$category);
-}
-
-#-------------------------------------------------------------------------------
-=begin pod
-=head2 fill-categories
-
-Fill a dropdown widget with a list of category names
-
-  method fill-categories ( )
-
-=end pod
-
-method fill-categories (
-  Bool :$skip-default = False, Str :$select-category, Str :$select-container,
-  Gnome::Gtk4::DropDown :$dropdown is copy
-  --> Gnome::Gtk4::DropDown
-) {
-  my Gnome::Gtk4::StringList() $category-list;
-  if ? $dropdown {
-    $category-list = $dropdown.get-model;
-  }
-
-  else {
-    # Initialize the dropdown object with an empty list
-    $category-list .= new-stringlist([]);
-    $dropdown .= new-dropdown($category-list);
-  }
-
-  my Str $category = $select-category // $!config.get-current-category;
-  my Str $category-container =
-     $select-container // $!config.find-container($category);
-
-  my Int $index = 0;
-  my Bool $index-found = False;
-  for $!config.get-categories(
-      :$category-container, :skip-containers
-    ) -> $subcat
-  {
-    $index-found = True if $subcat eq $category;  #$select-category;
-    $index++ unless $index-found;
-    $category-list.append($subcat);
-  }
-
-#`{{
-  for $!config.get-categories -> $category {
-    next if $skip-default and $category eq 'Default';
-
-    if $category ~~ m/ '_EX_' $/ {
-      for $!config.get-categories(:category-container($category)) -> $subcat {
-        $index-found = True if $subcat eq $category;  #$select-category;
-        $index++ unless $index-found;
-        $category-list.append($subcat);
-      }
-    }
-
-    else {
-      $index-found = True if $category eq $category;  #$select-category;
-      $index++ unless $index-found;
-      $category-list.append($category);
-    }
-  }
-}}
-
-  $index = 0 unless $index-found;
-  $dropdown.set-selected($index);
-
-  $dropdown
-}
-
-#-------------------------------------------------------------------------------
-method fill-containers (
-  Bool :$no-empty = False, Str :$select-container = ''
-  --> Gnome::Gtk4::DropDown
-) {
-  # Initialize the dropdown object with an empty list
-  my Gnome::Gtk4::StringList $container-list .= new-stringlist([]);
-  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-list);
-
-  my Int $index = 0;
-  my Bool $index-found = False;
-
-  # Add an entry to be able to select a category at toplevel
-  unless $no-empty {
-    $container-list.append('--');
-    $index-found = True unless ?$select-container;
-    $index++ unless $index-found;
-  }
-
-  # Add the container strings
-  for $!config.get-containers -> $container {
-    $container-list.append($container);
-    $index-found = True if $container eq $select-container;
-    $index++ unless $index-found;
-  }
-
-  $dropdown.set-selected($index);
-  $dropdown
-}
-
-#-------------------------------------------------------------------------------
-method get-dropdown-text ( Gnome::Gtk4::DropDown $dropdown --> Str ) {
-  my Gnome::Gtk4::StringList() $string-list = $dropdown.get-model;
-  $string-list.get-string($dropdown.get-selected)
 }
