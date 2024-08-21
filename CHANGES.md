@@ -52,6 +52,9 @@
   * [ ] fix needed; sometimes quit does not end program
 
 ---
+* 2024-08-20 0.6.0
+  * DropDown widget and manipulations moved to **PuzzleTable::Gui::DropDown**.
+
 * 2024-08-06 0.5.4
   * After playing with palapeli the sidebar statistics must be updated.
 
