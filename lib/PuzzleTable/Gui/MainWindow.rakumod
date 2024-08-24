@@ -7,6 +7,7 @@ use PuzzleTable::Gui::MenuBar;
 use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
+use PuzzleTable::Gui::Shortcut;
 
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-ioenums:api<2>;
@@ -227,6 +228,9 @@ method puzzle-table-display ( ) {
   }
 
   with $!application-window .= new-applicationwindow($!application) {
+    my PuzzleTable::Gui::Shortcut $shortcut .= new(:main(self));
+    $shortcut.set-shortcut-keys;
+
     my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
     $!application.set-menubar($menu-bar.bar);
     $config.set-css( .get-style-context, :css-class<main-puzzle-table>);

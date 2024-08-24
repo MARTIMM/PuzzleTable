@@ -7,14 +7,7 @@ use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::PasswordEntry:api<2>;
-use Gnome::Gtk4::T-enums:api<2>;
-use Gnome::Gtk4::ShortcutController:api<2>;
-use Gnome::Gtk4::Shortcut:api<2>;
-use Gnome::Gtk4::KeyvalTrigger:api<2>;
-use Gnome::Gtk4::CallbackAction:api<2>;
-
-use Gnome::Gdk4::T-enums:api<2>;
-use Gnome::Gdk4::T-keysyms:api<2>;
+#use Gnome::Gtk4::T-enums:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -36,33 +29,6 @@ submethod BUILD ( :$!main ) {
   $!config .= instance;
   $!table = $!main.table;
   $!sidebar = $!main.sidebar;
-
-  self.set-shortcut-keys;
-}
-
-#-------------------------------------------------------------------------------
-method set-shortcut-keys ( ) {
-  my Gnome::Gtk4::ShortcutController $controller .= new-shortcutcontroller;
-  $controller.set-scope(GTK_SHORTCUT_SCOPE_GLOBAL);
-  $!main.application-window.add-controller($controller);
-
-  # Create a trigger
-  my Gnome::Gtk4::KeyvalTrigger $trigger .=
-    new-keyvaltrigger( GDK_KEY_Q, GDK_CONTROL_MASK);
-
-  # And an action which will stop the application
-  my Gnome::Gtk4::CallbackAction $action .= new-callbackaction(
-    sub ( N-Object $no-widget, N-Object $, gpointer $ ) {
-      $!main.quit-application;
-    },
-    gpointer,
-    N-Object
-  );
-
-  # Bind the trigger to the action
-  my Gnome::Gtk4::Shortcut $shortcut .= new-shortcut( $trigger, $action);
-
-  $controller.add-shortcut($shortcut);
 }
 
 #-------------------------------------------------------------------------------
