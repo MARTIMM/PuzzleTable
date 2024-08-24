@@ -84,4 +84,3 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
   );
   $style-context.add-class($css-class);
 }
-
