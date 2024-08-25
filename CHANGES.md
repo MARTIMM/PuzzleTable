@@ -52,6 +52,9 @@
   * [ ] fix needed; sometimes quit does not end program
 
 ---
+* 2024-08-25 0.7.0
+  * Moved code from **PuzzleTable::Gui::Table** to **PuzzleTable::Gui::TableItem**.
+
 * 2024-08-20 0.6.0
   * DropDown widget and manipulations moved to **PuzzleTable::Gui::DropDown**.
 
