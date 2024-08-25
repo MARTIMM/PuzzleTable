@@ -3,24 +3,15 @@ use NativeCall;
 
 use PuzzleTable::Types;
 use PuzzleTable::Config;
-use PuzzleTable::Gui::TableItemLabel;
-use PuzzleTable::Gui::Dialog;
+use PuzzleTable::Gui::TableItem;
 
 use Gnome::Gtk4::GridView:api<2>;
 use Gnome::Gtk4::MultiSelection:api<2>;
 use Gnome::Gtk4::SignalListItemFactory:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
-use Gnome::Gtk4::Label:api<2>;
-use Gnome::Gtk4::Entry:api<2>;
-use Gnome::Gtk4::Picture:api<2>;
-use Gnome::Gtk4::Button:api<2>;
-use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
-use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::N-Bitset:api<2>;
-use Gnome::Gtk4::ProgressBar:api<2>;
-use Gnome::Gtk4::Adjustment:api<2>;
 use Gnome::Gtk4::StringList:api<2>;
 use Gnome::Gtk4::ListItem:api<2>;
 use Gnome::Gtk4::StringObject:api<2>;
@@ -33,25 +24,26 @@ use Gnome::N::N-Object:api<2>;
 use Gnome::N::X:api<2>;
 #Gnome::N::debug(:on);
 
-#use Semaphore::ReadersWriters;
+#-------------------------------------------------------------------------------
+=begin pod
+=head1
 
-#`{{
 A note from https://developer-old.gnome.org/gtk4/stable/ListContainers.html;
 
 Another important requirement for views is that they need to know which items are not visible so they can be recycled. Views achieve that by implementing the GtkScrollable interface and expecting to be placed directly into a GtkScrolledWindow. 
-}}
 
-#-------------------------------------------------------------------------------
+=end pod
+
 unit class PuzzleTable::Gui::Table:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ScrolledWindow;
 
+
+
 has $!main is required;
 has PuzzleTable::Config $!config;
-#has PuzzleTable::Gui::Statusbar $!statusbar;
 
 has Gnome::Gtk4::StringList $.puzzle-objects;
 has Gnome::Gtk4::MultiSelection $.multi-select;
-#has Gnome::Gtk4::SingleSelection $!single-select;
 has Gnome::Gtk4::SignalListItemFactory $!signal-factory;
 has Gnome::Gtk4::GridView $!puzzle-grid;
 
@@ -59,27 +51,20 @@ has Gnome::Gtk4::GridView $!puzzle-grid;
 has Hash $!current-table-objects;
 has Gnome::Glib::N-MainContext $!main-context;
 
-#has Semaphore::ReadersWriters $!semaphore;
 has Hash $!puzzles-playing = %();
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( :$!main ) {
-#Gnome::N::debug(:on);
+
   $!main-context .= new-maincontext(
     :native-object(
       Gnome::Glib::N-MainLoop.new-mainloop( N-Object, True).get-context()
     )
   );
-#Gnome::N::debug(:off);
-
-#  $!semaphore .= new;
-#  $!semaphore.add-mutex-names('puzzles-playing');
 
   $!config .= instance;
 
   self.set-halign(GTK_ALIGN_FILL);
-#  self.set-hexpand(True);
-#  self.set-hexpand-set(True);
   self.set-vexpand(True);
   self.set-propagate-natural-width(True);
 
@@ -130,27 +115,15 @@ method get-pala-puzzles (
   for $pala-collection-path.IO.dir -> $collection-file {
     next if $collection-file.d;
 
-    # The puzzle is started from outside the Palapeli. This is only a saved file
-    # to keep track of progress of puzzle. Ends always in '.save'. Must be
-    # checked when --puzzles option is used.
-    #next if $collection-file.Str ~~ m/^ __FSC_ /;
-
-    # *.save files are matched later using a *.puzzle file
-    #next if $collection-file.Str ~~ m/ \. save $/;
-
     # Skip any other file
     next if $collection-file.Str !~~ m/ \. puzzle $/;
 
     my Str $puzzle-id = $!config.add-puzzle(
       $category, $collection-file.Str, :from-collection, :$filter
     );
-#    my Hash $puzzle = $*puzzle-data<categories>{$category}<members>{$puzzle-id};
+
     self.add-puzzle-to-table( $category, $puzzle-id);
-
-#last;
   }
-
-#  $!config.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -162,11 +135,9 @@ method add-puzzles-to-table ( Seq $puzzles ) {
     my Str $category = $puzzle<Category>;
     my Str $puzzle-id = $puzzle<PuzzleID>;
 
-#    $!semaphore.writer( 'puzzles-playing', {
-      $!puzzles-playing{$category} = %()
-        unless $!puzzles-playing{$category}:exists;
-      $!puzzles-playing{$category}{$puzzle-id} //= False;
-#    });
+    $!puzzles-playing{$category} = %()
+      unless $!puzzles-playing{$category}:exists;
+    $!puzzles-playing{$category}{$puzzle-id} //= False;
 
     self.add-puzzle-to-table($puzzle);
   }
@@ -190,8 +161,6 @@ multi method add-puzzle-to-table ( Str $category, Str $puzzle-id ) {
 #-------------------------------------------------------------------------------
 # Add a puzzle to the table
 multi method add-puzzle-to-table ( Hash $puzzle ) {
-#  my @puzzles = $puzzle,;
-#  self.add-puzzles-to-table(@puzzles);
 
   # Save the index and drop some other fields to save memory
   my Str $puzzle-id = $puzzle<PuzzleID>;
@@ -213,198 +182,34 @@ multi method add-puzzle-to-table ( Hash $puzzle ) {
 
 #-------------------------------------------------------------------------------
 method setup-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#say 'setup-object';
-
-  my Str $png-file = DATA_DIR ~ 'images/start-puzzle-64.png';
-  with my Gnome::Gtk4::Button $run-palapeli .= new-button {
-    my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename($png-file);
-    .set-child($p);
-
-    .set-valign(GTK_ALIGN_START);
-    .set-size-request( 64, 64);
-
-    .set-has-tooltip(True);
-    .register-signal(
-      self, 'show-tooltip', 'query-tooltip',
-      :tip(
-        'Run the ' ~ $!config.get-palapeli-preference ~ ' version of palapeli'
-      )
-    );
-  }
-
-  $png-file = DATA_DIR ~ 'images/edit-puzzle-64.png';
-  with my Gnome::Gtk4::Button $edit-palapeli .= new-button {
-    my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename($png-file);
-    .set-child($p);
-
-    .set-valign(GTK_ALIGN_START);
-    .set-size-request( 64, 64);
-
-    .set-has-tooltip(True);
-    .register-signal(
-      self, 'show-tooltip', 'query-tooltip',
-      :tip('Edit some texts of this puzzle')
-    );
-  }
-
-  my Gnome::Gtk4::Label $pid .= new-label;
-
-  with my Gnome::Gtk4::Box $button-box .= new-box(
-    GTK_ORIENTATION_VERTICAL, 2
-  ) {
-    .append($run-palapeli);
-    .append($edit-palapeli);
-    .append($pid);
-
-#    $!config.set-css( .get-style-context, :css-class<puzzle-grid-puzzle>);
-  }
-
-  with my Gnome::Gtk4::Picture $image .= new-picture {
-    .set-size-request(| $!config.get-palapeli-image-size);
-    .set-name('puzzle-image');
-    .set-margin-top(3);
-    .set-margin-bottom(3);
-    .set-margin-start(3);
-    .set-margin-end(3);
-    .set-hexpand(True);
-  }
-
-  with my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar {
-    $!config.set-css( .get-style-context, :css-class<puzzle-progress>);
-    .set-size-request( 1, 10);
-#    .set-show-text(True);
-    .set-vexpand(True);
-    .set-valign(GTK_ALIGN_FILL);
-  }
-
-  my TableItemLabel $label-comment .= new-label( :!align, :css<comment>);
-  my TableItemLabel $label-size .= new-label;
-  my TableItemLabel $label-npieces .= new-label;
-  my TableItemLabel $label-source .= new-label;
-  my TableItemLabel $label-progress .= new-label;
-
-  with my Gnome::Gtk4::Grid $grid .= new-grid {
-    .attach( $image, 0, 0, 1, 1);
-    .attach( $label-comment, 0, 1, 2, 1);
-    .attach( $label-size, 0, 2, 2, 1);
-    .attach( $label-npieces, 0, 3, 2, 1);
-    .attach( $label-source, 0, 4, 2, 1);
-    .attach( $progress-bar, 0, 5, 2, 1);
-    .attach( $label-progress, 0, 6, 2, 1);
-    .attach( $button-box, 1, 0, 1, 1);
-
-    $!config.set-css( .get-style-context, :css-class<puzzle-object>);
-  }
-
-  $list-item.set-child($grid);
+  my PuzzleTable::Gui::TableItem $table-item .= new;
+  $list-item.set-child($table-item.create-grid);
 }
 
 #-------------------------------------------------------------------------------
 method bind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#say 'bind-object';
   my Gnome::Gtk4::StringObject $string-object .= 
     new(:native-object($list-item.get-item));
 
   my Hash $puzzle = $!current-table-objects{$string-object.get-string};
-
-  with my Gnome::Gtk4::Grid() $grid = $list-item.get-child {
-    my Gnome::Gtk4::Box() $button-box = .get-child-at( 1, 0);
-
-    my Gnome::Gtk4::Picture() $image = .get-child-at( 0, 0);
-    my Gnome::Gtk4::Label() $label-comment = .get-child-at( 0, 1);
-    my Gnome::Gtk4::Label() $label-size = .get-child-at( 0, 2);
-    my Gnome::Gtk4::Label() $label-npieces = .get-child-at( 0, 3);
-    my Gnome::Gtk4::Label() $label-source = .get-child-at( 0, 4);
-    my Gnome::Gtk4::ProgressBar() $progress-bar = .get-child-at( 0, 5);
-    my Gnome::Gtk4::Label() $label-progress = .get-child-at( 0, 6);
-
-    my Gnome::Gtk4::Button() $run-palapeli = $button-box.get-first-child;
-    $run-palapeli.register-signal(
-      self, 'run-palapeli', 'clicked', :$puzzle, :$label-progress,
-      :$progress-bar
-      #, :$label-comment
-    );
-
-    my Gnome::Gtk4::Button() $edit-palapeli = $run-palapeli.get-next-sibling;
-    $edit-palapeli.register-signal(
-      self, 'edit-palapeli', 'clicked', :$puzzle,
-      :$label-comment, :$label-source
-    );
-
-    my Gnome::Gtk4::Label() $pid = $edit-palapeli.get-next-sibling;
-    $pid.set-text($puzzle<PuzzleID>);
-
-    $image.set-filename($puzzle<Image>);
-    $label-comment.set-text($puzzle<Comment>);
-    $label-size.set-text('Picture size: ' ~ $puzzle<ImageSize>);
-    $label-npieces.set-text(
-      'Nbr pieces: ' ~ $puzzle<PieceCount> ~ ($puzzle<SlicerMode>//'')
-    );
-    $label-source.set-text('Source: ' ~ $puzzle<Source>);
-
-    # Init if the values aren't there
-#    my Str $preference = $!config.get-palapeli-preference;
-#    $puzzle<Progress> = %() unless $puzzle<Progress>:exists;
-    $puzzle<Progress> //= '0';
-    
-    # Test for old version data
-    my Str $progress;
-    if $puzzle<Progress> ~~ Hash {
-      $progress = $puzzle<Progress>{$puzzle<Progress>.keys[0]}.Str;
-    }
-
-    else {
-      $progress = $puzzle<Progress>.Str;
-    }
-
-    $label-progress.set-text("Progress: $progress \%");
-    $progress-bar.set-text("Progress: $progress \%");
-    $progress-bar.set-fraction($progress.Num / 100e0);
-
-    .show;
-  }
-
+  my PuzzleTable::Gui::TableItem $table-item .= new;
+  my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
+  $table-item.set-table-item( $grid, $puzzle);
   $string-object.clear-object;
 }
 
 #-------------------------------------------------------------------------------
 method unbind-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#say 'unbind-object';
+  my PuzzleTable::Gui::TableItem $table-item .= new;
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
-  my Gnome::Gtk4::Box() $button-box = $grid.get-child-at( 1, 0);
-  my Gnome::Gtk4::Button() $button = $button-box.get-first-child;
-
-  $button.clear-object;
-  $button-box.clear-object;
+  $table-item.unset-table-item($grid);
 }
 
 #-------------------------------------------------------------------------------
 method destroy-object ( Gnome::Gtk4::ListItem() $list-item ) {
-#say 'destroy-object';
+  my PuzzleTable::Gui::TableItem $table-item .= new;
   my Gnome::Gtk4::Grid() $grid = $list-item.get-child;
-  $grid.clear-object;
-}
-
-#-------------------------------------------------------------------------------
-method run-palapeli (
-  Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
-  Gnome::Gtk4::ProgressBar :$progress-bar
-) {
-  my Str $progress = $!config.run-palapeli($puzzle);
-  $label-progress.set-text("Progress: $progress \%");
-  $progress-bar.set-fraction($progress.Num / 100e0);
-  $!main.sidebar.fill-sidebar;
-}
-
-#-------------------------------------------------------------------------------
-method show-tooltip (
-  Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip, Str :$tip
-  --> gboolean
-) {
-  $tooltip.set-markup($tip);
-  True
+  $table-item.clear-table-item($grid);
 }
 
 #-------------------------------------------------------------------------------
@@ -421,46 +226,4 @@ method selection-changed ( guint $position, guint $n-items ) {
 
   $!main.statusbar.remove-message;
   $!main.statusbar.set-status($msg);
-}
-
-#-------------------------------------------------------------------------------
-method edit-palapeli (
-  Hash :$puzzle,
-  Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
-) {
-  with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Edit Puzzle Info Dialog')
-  ) {
-    .add-content( 'Title', my Gnome::Gtk4::Entry $comment .= new-entry);
-    $comment.set-text($puzzle<Comment>);
-    .add-content( 'Source', my Gnome::Gtk4::Entry $source .= new-entry);
-    $source.set-text($puzzle<Source>);
-
-    .add-button(
-      self, 'do-update-puzzle', 'Change Text',
-      :$comment, :$source, :$dialog, :$puzzle,
-      :$label-comment, :$label-source
-    );
-    .add-button( $dialog, 'destroy-dialog', 'Cancel');
-
-    .show-dialog;
-  }
-}
-
-#-------------------------------------------------------------------------------
-method do-update-puzzle (
-  PuzzleTable::Gui::Dialog :$dialog, Hash :$puzzle,
-  Gnome::Gtk4::Entry :$comment, Gnome::Gtk4::Entry :$source,
-  Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
-) {
-  $!config.update-puzzle(
-    %(
-      :PuzzleID($puzzle<PuzzleID>),
-      :Comment($comment.get-text),
-      :Source($source.get-text),
-    )
-  );
-  $label-comment.set-text($comment.get-text);
-  $label-source.set-text('Source: ' ~ $source.get-text);
-  $dialog.destroy-dialog;
 }
