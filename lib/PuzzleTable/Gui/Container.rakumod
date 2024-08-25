@@ -36,7 +36,7 @@ submethod BUILD ( :$!main ) {
 method container-add ( N-Object $parameter ) {
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Add container Dialog')
+   :dialog-header('Add container Dialog')
   ) {
     # Show entry for input
     .add-content(
@@ -78,7 +78,7 @@ method container-delete ( N-Object $parameter ) {
 note "$?LINE delete container";
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Delete Container Dialog')
+    :dialog-header('Delete Container Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
     my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers(:no-enpty);

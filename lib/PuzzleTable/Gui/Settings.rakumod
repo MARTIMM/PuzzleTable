@@ -70,7 +70,7 @@ method settings-lock-categories ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method show-dialog-with-old-entry ( ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Password Change Dialog')
+    :dialog-header('Password Change Dialog')
   ) {
     .add-content(
       'Type old password',
@@ -130,7 +130,7 @@ method do-password-check-with-old (
 method show-dialog-first-entry ( ) {
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Password Change Dialog')
+    :dialog-header('Password Change Dialog')
   ) {
     .add-content(
       'Type password',
@@ -179,7 +179,7 @@ method do-password-check (
 #-------------------------------------------------------------------------------
 method show-dialog-password ( ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Password Change Dialog')
+    :dialog-header('Password Change Dialog')
   ) {
     my Gnome::Gtk4::PasswordEntry $entry-pw .= new-passwordentry;
     $entry-pw.register-signal(

@@ -59,7 +59,7 @@ method category-add ( N-Object $parameter ) {
   $dropdown.fill-containers(:$select-container);
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Add Category Dialog')
+    :dialog-header('Add Category Dialog')
   ) {
 
     # Show dropdown
@@ -169,7 +169,7 @@ method category-rename ( N-Object $parameter ) {
 
   # Build the dialog
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Rename Category dialog')
+    :dialog-header('Rename Category dialog')
   ) {
     .add-content( 'Select container', $dropdown-cont);
     .add-content( 'Specify the category to rename', $dropdown-cat);
@@ -251,7 +251,7 @@ method category-delete ( N-Object $parameter ) {
   }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Rename Category dialog')
+    :dialog-header('Rename Category dialog')
   ) {
     .add-content( 'Select container', $dropdown-cont);
     .add-content( 'Select category to delete', $dropdown-cat);
@@ -311,7 +311,7 @@ note "$?LINE lock, ", self;
   $check-button.set-active(False);
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('(Un)Lock Dialog')
+    :dialog-header('(Un)Lock Dialog')
   ) {
     .add-content( 'Select container', $dropdown-cont);
     .add-content( 'Category to (un)lock', $dropdown-cat);

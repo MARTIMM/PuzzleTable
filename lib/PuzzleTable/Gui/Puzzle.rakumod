@@ -41,7 +41,7 @@ method puzzle-move ( N-Object $parameter ) {
   my Int $n = $bitset.get-size;
   unless ?$n {
     my PuzzleTable::Gui::MessageDialog $message .= new(
-      :$!main, :message("There are no puzzles selected"), :no-statusbar
+      :message("There are no puzzles selected"), :no-statusbar
     );
 
     return
@@ -64,7 +64,7 @@ method puzzle-move ( N-Object $parameter ) {
   }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Move Puzzles Dialog')
+    :dialog-header('Move Puzzles Dialog')
   ) {
     .add-content( 'Select container', $dropdown-cont);
     .add-content( 'Specify the category to move to', $dropdown-cat);
@@ -127,7 +127,7 @@ method puzzle-archive ( N-Object $parameter ) {
   my Int $n = $bitset.get-size;
   unless ?$n {
     my PuzzleTable::Gui::MessageDialog $message .= new(
-      :$!main, :message("There are no puzzles selected"), :no-statusbar
+      :message("There are no puzzles selected"), :no-statusbar
     );
 
     return
@@ -137,7 +137,7 @@ method puzzle-archive ( N-Object $parameter ) {
     'Check to make sure you really want it'
   );
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Remove Puzzle Dialog')
+    :dialog-header('Remove Puzzle Dialog')
   ) {
     .add-content( '', $check-button);
 

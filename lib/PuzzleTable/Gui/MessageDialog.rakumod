@@ -9,10 +9,10 @@ use Gnome::Gtk4::Label:api<2>;
 unit class PuzzleTable::Gui::MessageDialog:auth<github:MARTIMM>;
 also is PuzzleTable::Gui::Dialog;
 
-has $!main is required;
+has $!main;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str :$message, :$!main ) {
+submethod BUILD ( Str :$message ) {
   self.add-content( $message, Gnome::Gtk4::Label.new-label);
   self.set-title('Message Dialog');
 
