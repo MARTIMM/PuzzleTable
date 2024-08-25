@@ -15,6 +15,9 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config:auth<github:MARTIMM>;
 
+# PuzzleTable::Gui::MainWindow
+has $!main-window;
+
 has Gnome::Gtk4::CssProvider $!css-provider;
 
 has Version $.version = v0.5.3;
@@ -64,6 +67,18 @@ submethod BUILD ( ) {
       exit 0;
     }
   );
+}
+
+#-------------------------------------------------------------------------------
+method store-main-window ( $main ) {
+  note "$?LINE $!main-window.gist()";
+  $!main-window = $main;
+}
+
+#-------------------------------------------------------------------------------
+method get-main-window ( --> Mu ) {
+  note "$?LINE $!main-window.gist()";
+  $!main-window
 }
 
 #-------------------------------------------------------------------------------
