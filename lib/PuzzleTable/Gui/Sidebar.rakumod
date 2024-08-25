@@ -13,7 +13,6 @@ page.
 use v6.d;
 
 use PuzzleTable::Config;
-use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;

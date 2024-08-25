@@ -209,8 +209,11 @@ method app-shutdown ( ) {
 
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
+#say 'puzzle start';
 
   my PuzzleTable::Config $config .= instance;
+  $config.store-main-window(self);
+
   $!toolbar .= new-box( GTK_ORIENTATION_HORIZONTAL, 2);
 
   with $!top-grid .= new-grid {
@@ -245,6 +248,7 @@ method puzzle-table-display ( ) {
 
   $!sidebar.fill-sidebar;
   $!table-is-displayed = True;
+#  Gnome::N::debug(:on);
 }
 
 #-------------------------------------------------------------------------------

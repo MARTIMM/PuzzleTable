@@ -5,12 +5,12 @@ use v6.d;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Statusbar;
 
+use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::Window:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Button:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::Label:api<2>;
-use Gnome::Gtk4::T-enums:api<2>;
 
 use Gnome::Glib::N-MainLoop:api<2>;
 
@@ -20,7 +20,6 @@ use Gnome::N::N-Object:api<2>;
 unit class PuzzleTable::Gui::Dialog:auth<github:MARTIMM>;
 also is Gnome::Gtk4::Window;
 
-has $!main is required;
 has Gnome::Gtk4::Grid $!content;
 has Int $!content-count;
 
@@ -35,9 +34,7 @@ method new ( |c ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD (
-  :$!main, Str :$dialog-header = '', Bool :$no-statusbar = False
-) {
+submethod BUILD ( Str :$dialog-header = '', Bool :$no-statusbar = False ) {
   my PuzzleTable::Config $config .= instance;
   $!main-loop .= new-mainloop( N-Object, True);
 
@@ -92,7 +89,7 @@ submethod BUILD (
 
   with self {
     $config.set-css( .get-style-context, :css-class<puzzle-dialog>);
-    .set-transient-for($!main.application-window);
+    .set-transient-for($config.get-main-window.application-window);
     .set-destroy-with-parent(True);
     .set-modal(True);
     .set-size-request( 400, 100);
