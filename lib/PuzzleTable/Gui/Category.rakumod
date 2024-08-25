@@ -287,7 +287,6 @@ method do-category-delete (
 #-------------------------------------------------------------------------------
 # Select from menu to lock or unlock a category
 method category-lock ( N-Object $parameter ) {
-note "$?LINE lock, ", self;
 
   my Str $select-category = $!config.get-current-category;
 

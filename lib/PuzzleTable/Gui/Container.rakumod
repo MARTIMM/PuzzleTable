@@ -75,7 +75,6 @@ method do-container-add (
 
 #-------------------------------------------------------------------------------
 method container-delete ( N-Object $parameter ) {
-note "$?LINE delete container";
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Delete Container Dialog')

@@ -150,7 +150,6 @@ method select-categories (
 ) {
 
   my Str $select-container = $containers.get-dropdown-text;
-note "$?LINE $containers.get-selected(), $select-container";
   $select-container = '' if $select-container eq '--';
 
   $categories.fill-categories(
