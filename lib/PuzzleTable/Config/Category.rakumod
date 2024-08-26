@@ -197,7 +197,6 @@ method restore-puzzles (
 
   for $puzzles.keys -> $puzzle {
     my Str $puzzle-id = $puzzles{$puzzle}<puzzle-id>;
-note "$?LINE $puzzle-id";
     my Hash $puzzle-data = $puzzles{$puzzle}<puzzle-data>;
     $!category-config<members>{$puzzle-id} = $puzzle-data;
   }
