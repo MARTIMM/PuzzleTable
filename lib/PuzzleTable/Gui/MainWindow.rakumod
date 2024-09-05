@@ -172,6 +172,8 @@ method remote-options (
       my Str $puzzle-id = $config.add-puzzle($puzzle-path);
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id);
     }
+
+    $!sidebar.fill-sidebar;
   }
 
   if $o<pala-collection>:exists {
