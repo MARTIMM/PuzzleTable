@@ -924,8 +924,7 @@ method set-category-lockable (
   if $category ne 'Default' {
     my Hash $cats := $!categories-config<categories>;
     if ? $category-container {
-      $lockable =
-        $cats{$category-container}<categories>{$category}<lockable> = $lockable;
+      $cats{$category-container}<categories>{$category}<lockable> = $lockable;
     }
 
     else {

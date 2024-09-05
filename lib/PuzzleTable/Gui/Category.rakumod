@@ -317,7 +317,8 @@ method category-lock ( N-Object $parameter ) {
     .add-content( '', $check-button);
 
     .add-button(
-      self, 'do-category-lock', 'Lock / Unlock', :$dropdown-cat, :$dialog, :$check-button
+      self, 'do-category-lock', 'Lock / Unlock',
+      :$dropdown-cat, :$dropdown-cont, :$dialog, :$check-button
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -328,13 +329,14 @@ method category-lock ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-lock (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
-  PuzzleTable::Gui::DropDown :$dropdown
+  PuzzleTable::Gui::DropDown :$dropdown-cat,
+  PuzzleTable::Gui::DropDown :$dropdown-cont
 ) {
   my Bool $sts-ok = False;
-  my Str $category-name = $dropdown.get-dropdown-text;
 
   $!config.set-category-lockable(
-    $category-name, $!config.find-container($category-name),
+    $dropdown-cat.get-dropdown-text,
+    $dropdown-cont.get-dropdown-text,
     $check-button.get-active.Bool
   );
 
