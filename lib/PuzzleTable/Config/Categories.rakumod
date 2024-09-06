@@ -16,11 +16,6 @@ has Hash $.categories-config;
 has PuzzleTable::Config::Category $!current-category;
 
 #-------------------------------------------------------------------------------
-method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
-  $!current-category.get-puzzle( $puzzle-id, :$delete)
-}
-
-#-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$!root-dir ) {
 
   $!config-path = "$!root-dir/categories.yaml";
@@ -29,7 +24,7 @@ submethod BUILD ( Str:D :$!root-dir ) {
   }
 
   else {
-    $!categories-config<categories><Default> = %(:!lockable);
+    $!categories-config<containers><Default_EX_><categories><Default> = %(:!lockable);
 
     $!categories-config<password> = '';
 
@@ -68,7 +63,10 @@ submethod BUILD ( Str:D :$!root-dir ) {
   $!categories-config<locked> = True;
 
   # Always select the default category
-  $!current-category .= new( :category-name('Default'), :$!root-dir);
+  $!current-category .= new(
+    :category-name('Default'), :container(''), :$!root-dir
+  );
+  self.update-category-status;
 }
 
 #-------------------------------------------------------------------------------
@@ -85,72 +83,52 @@ method save-categories-config ( ) {
 }
 
 #-------------------------------------------------------------------------------
+# $category-container can be one of '', '--', '...' or '..._EX_'
+#
 method add-category (
-  Str:D $category-name is copy, Str :$category-container is copy = '',
-  :$lockable = False --> Str
+  Str:D $category-name is copy, Str:D $container is copy, 
+  :$lockable is copy = False
+  --> Str
 ) {
   my Str $message = '';
   $category-name .= tc;
-  $category-container = $category-container.tc ~ '_EX_'
-      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+  $container = $!current-category.set-container-name($container);
 
-  my Hash $cats := $!categories-config<categories>;
-
-  if self.find-container($category-name).defined {
+  my Hash $cats := $!categories-config<containers>;
+  if $cats{$container}<categories>{$category-name}:exists {
     $message = "Category $category-name already exists";
   }
 
-  elsif ? $category-container {
-    $cats{$category-container}<categories>{$category-name}<lockable> = $lockable;
-  }
-
   else {
-    $cats{$category-name}<lockable> = $lockable;
+    $lockable = False if $container eq 'Default_EX_';
+    $cats{$container}<categories>{$category-name}<lockable> = $lockable;
+    mkdir "$!root-dir$container/$category-name", 0o700;
+
+    my PuzzleTable::Config::Category $category .= new(
+      :$category-name, :$container, :$!root-dir
+    );
+    self.update-category-status(:$category);
     self.save-categories-config;
-    mkdir $!root-dir ~ $category-name, 0o700;
   }
 
   $message
 }
 
 #-------------------------------------------------------------------------------
-method delete-category ( Str $category is copy --> Str ) {
+method select-category (
+  Str:D $category-name is copy, Str:D $container is copy --> Str
+) {
   my Str $message = '';
+  $category-name .= tc;
+  $container = $!current-category.set-container-name($container);
 
-  $category .= tc;
-  my Str $container = self.find-container($category);
-#note "$?LINE $category, {$container.defined ?? $container !! 'undefined'}";
-  if ! $container.defined {
-    $message = 'Category does not exist';
+  my Hash $cats := $!categories-config<containers>;
+  if $cats{$container}<categories>{$category-name}:exists {
+    $!current-category .= new( :$category-name, :$container, :$!root-dir);
   }
 
   else {
-    $container ~= '_EX_' if ? $container;
-
-    if self.has-puzzles( $category, :$container) {
-      $message = 'Category still has puzzles';
-    }
-
-    else {
-      my Hash $cats := $!categories-config<categories>;
-      if ?$container {
-        # Remove the category from the container
-        $cats{$container}<categories>{$category}:delete;
-      }
-
-      else {
-        # Remove the category
-        $cats{$category}:delete;
-      }
-
-      # Remove the files and directory
-      for dir("$!root-dir$category") -> $file {
-        $file.IO.unlink;
-      }
-      "$!root-dir$category".IO.rmdir;
-
-      self.save-categories-config;
-    }
+    $message = "Category $category-name does not exist";
   }
 
   $message
@@ -158,16 +136,47 @@ method delete-category ( Str $category is copy --> Str ) {
 
 #-------------------------------------------------------------------------------
 method move-category (
-  Str $cat-from is copy, Str $cat-to is copy,
-  Str :$category-container is copy = ''
+  Str $cat-from is copy, Str:D $cont-from is copy,
+  Str $cat-to is copy, Str:D $cont-to is copy
   --> Str
 ) {
   my Str $message = '';
 
   $cat-from .= tc;
   $cat-to .= tc;
+  $cont-from = $!current-category.set-container-name($cont-from);
+  $cont-to = $!current-category.set-container-name($cont-to);
 
-  my Hash $cats := $!categories-config<categories>;
+  my Hash $cats := $!categories-config<containers>;
+  
+  if $cats{$cont-from}<categories>{$cat-from}:exists and 
+     $cats{$cont-to}<categories>{$cat-to}:!exists
+  {
+    $cats{$cont-to}<categories>{$cat-to} =
+      $cats{$cont-from}<categories>{$cat-from}:delete;
+
+    self.save-categories-config;
+
+    my Str $dir-from = "$!root-dir$cont-from/$cat-from";
+    my Str $dir-to = "$!root-dir$cont-to/$cat-to";
+    mkdir "$!root-dir$cont-to", 0o700 unless "$!root-dir$cont-to".IO.e;
+    $dir-from.IO.rename( $dir-to, :createonly);
+  }
+
+  elsif $cats{$cont-to}<categories>{$cat-to}:exists {
+    $message = 'Destination already exists';
+  }
+
+  elsif $cats{$cont-from}<categories>{$cat-from}:!exists {
+    $message = 'Source does not exist';
+  }
+
+
+
+
+
+
+#`{{
 
   my Str $source-container = self.find-container($cat-from);
   my Hash $hfrom;
@@ -202,36 +211,52 @@ method move-category (
     my Str $dir-to = $!root-dir ~ $cat-to;
     $dir-from.IO.rename( $dir-to, :createonly);
   }
-  
+}}
+
   $message
 }
 
 #-------------------------------------------------------------------------------
-method select-category (
-  Str:D $cat-name, Str :$category-container is copy = '' --> Str
+method delete-category (
+  Str $category is copy, Str:D :$container is copy --> Str
 ) {
   my Str $message = '';
-  my Str $category-name = $cat-name.tc;
-  $category-container = $category-container.tc ~ '_EX_'
-      if ? $category-container;
 
-  my Hash $cats := $!categories-config<categories>;
-
-  if ? $category-container and
-     $cats{$category-container}<categories>{$category-name}:exists
-  {
-    $!current-category .= new(
-      :$category-name, :$category-container, :$!root-dir
-    );
-  }
-
-  elsif $cats{$category-name}:exists {
-    # Set to new category
-    $!current-category .= new( :$category-name, :$!root-dir);
+  $container = $!current-category.set-container-name($container);
+  $category .= tc;
+#  my Str $container = self.find-container($category);
+#note "$?LINE $category, {$container.defined ?? $container !! 'undefined'}";
+  if ! $container.defined {
+    $message = 'Category does not exist';
   }
 
   else {
-    $message = "Category $category-name does not exist";
+    $container ~= '_EX_' if ? $container;
+
+    if self.has-puzzles( $category, :$container) {
+      $message = 'Category still has puzzles';
+    }
+
+    else {
+      my Hash $cats := $!categories-config<containers>;
+      if ?$container {
+        # Remove the category from the container
+        $cats{$container}<categories>{$category}:delete;
+      }
+
+      else {
+        # Remove the category
+        $cats{$category}:delete;
+      }
+
+      # Remove the files and directory
+      for dir("$!root-dir$category") -> $file {
+        $file.IO.unlink;
+      }
+      "$!root-dir$container/$category".IO.rmdir;
+
+      self.save-categories-config;
+    }
   }
 
   $message
@@ -239,31 +264,17 @@ method select-category (
 
 #-------------------------------------------------------------------------------
 method get-categories (
-  Str :$category-container is copy = '', Bool :$skip-containers = False
-  --> Seq
+  Str:D $container is copy, Bool :$skip-containers = False --> Seq
 ) {
   my Bool $locked = self.is-locked;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+  $container = $!current-category.set-container-name($container);
 
   my @cat-key-list;
-  if ? $category-container {
-    @cat-key-list = $!categories-config<categories>{
-      $category-container
-    }<categories>.keys;
-  }
-
-  else {
-    # Get top level list but skip all containers
-    @cat-key-list = $!categories-config<categories>.keys;
-    @cat-key-list .= grep(none / '_EX_' /) if $skip-containers;
-  }
+  @cat-key-list = $!categories-config<containers>{$container}<categories>.keys;
 
   my @cat = ();
   for @cat-key-list -> $category {
-    next if ( $locked and
-      self.is-category-lockable( $category, $category-container)
-    );
+    next if ( $locked and self.is-category-lockable( $category, $container));
 
     @cat.push: $category;
   }
@@ -271,6 +282,7 @@ method get-categories (
   @cat.sort
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method group-in-subcategory (
   Str:D $category-container is copy, Str:D $category-name is copy
@@ -281,7 +293,7 @@ method group-in-subcategory (
 
   # Only move category when name is not in the subcategory
   #TODO when cats are unique everywhere then test is not needed
-  my Hash $categories := $!categories-config<categories>;
+  my Hash $categories := $!categories-config<containers>;
   if $categories{$category-name}:exists
      and $categories{$category-container}{$category-name}:!exists
   {
@@ -302,7 +314,7 @@ method ungroup-from-subcategory (
 
   # Only move back when name in subcat is not in cat
   #TODO when cats are unique everywhere then test is not needed
-  my Hash $categories := $!categories-config<categories>;
+  my Hash $categories := $!categories-config<containers>;
   if $categories{$category-container}<categories>{$category-name}:exists
      and $categories{$category-name}:!exists
   {
@@ -313,6 +325,7 @@ method ungroup-from-subcategory (
     self.save-categories-config;
   }
 }
+}}
 
 #-------------------------------------------------------------------------------
 method get-current-category ( --> Str ) {
@@ -320,22 +333,20 @@ method get-current-category ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-current-container ( --> Str ) {
+  S/ '_EX_' $// with $!current-category.container
+}
+
+#-------------------------------------------------------------------------------
 method get-category-status (
-  Str $category-name is copy , Str :$category-container is copy = '' --> Array
+  Str $category-name is copy, Str:D $container is copy --> Array
 ) {
   $category-name .= tc;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ?$category-container;
+  $container = $!current-category.set-container-name($container);
   my Array $cat-status = [ 0, 0, 0, 0];
 
-  my Hash $categories;
-  if ? $category-container {
-     $categories := $!categories-config<categories>{$category-container}<categories>;
-  }
-
-  else {
-    $categories := $!categories-config<categories>;
-  }
+  my Hash $categories :=
+     $!categories-config<containers>{$container}<categories>;
 
   if $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
@@ -343,7 +354,7 @@ method get-category-status (
 
   else {
     my PuzzleTable::Config::Category $category .= new(
-      :$category-name, :$!root-dir
+      :$category-name, :$container, :$!root-dir
     );
 
     for $category.get-puzzle-ids -> $puzzle-id {
@@ -360,10 +371,10 @@ method get-category-status (
         $progress = $puzzle-config<Progress> // 0e0;
       }
 
-      $cat-status[0]++;
-      $cat-status[1]++ if $progress == 0e0;
-      $cat-status[2]++ if 0e0 < $progress < 1e2;
-      $cat-status[3]++ if $progress == 1e2;
+      $cat-status[0]++;                           # total nbr puzzles
+      $cat-status[1]++ if $progress == 0e0;       # puzzles not started
+      $cat-status[2]++ if 0e0 < $progress < 1e2;  # puzzles started not finished
+      $cat-status[3]++ if $progress == 1e2;       # puzzles finished
     }
 
     $categories{$category-name}<status> = $cat-status;
@@ -374,11 +385,12 @@ method get-category-status (
 }
 
 #-------------------------------------------------------------------------------
-method update-category-status ( ) {
+method update-category-status (
+  PuzzleTable::Config::Category :$category = $!current-category ) {
   my Array $cat-status = [ 0, 0, 0, 0];
 
-  for $!current-category.get-puzzle-ids -> $puzzle-id {
-    my Hash $puzzle-config = $!current-category.get-puzzle($puzzle-id);
+  for $category.get-puzzle-ids -> $puzzle-id {
+    my Hash $puzzle-config = $category.get-puzzle($puzzle-id);
 
     # Test for old version data
     my Num() $progress;
@@ -397,25 +409,30 @@ method update-category-status ( ) {
     $cat-status[3]++ if $progress == 1e2;
   }
 
-  my Str $category-name = $!current-category.category-name;
-  my Str $container-name = $!current-category.category-container;
+  my Str $category-name = $category.category-name;
+  my Str $container-name = $category.container;
 
   if ? $container-name {
-    $!categories-config<categories>{$container-name}<categories>{$category-name}<status> = $cat-status;
+    $!categories-config<containers>{$container-name}<categories>{$category-name}<status> = $cat-status;
   }
 
   else {
-    $!categories-config<categories>{$category-name}<status> = $cat-status;
+    $!categories-config<containers>{$category-name}<status> = $cat-status;
   }
 
   self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
+method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
+  $!current-category.get-puzzle( $puzzle-id, :$delete)
+}
+
+#-------------------------------------------------------------------------------
 method find-container ( Str:D $category-name is copy --> Str ) {
   $category-name .= tc;
- 
-  my Hash $cats := $!categories-config<categories>;
+
+  my Hash $cats := $!categories-config<containers>;
   my Str $container;
   for $cats.keys -> $cat {
     if $cat ~~ m/ '_EX_' $/ {
@@ -428,7 +445,7 @@ method find-container ( Str:D $category-name is copy --> Str ) {
     }
 
     elsif $category-name eq $cat {
-      $container = '';
+      $container = $!current-category.container;
       last;
     }
   }
@@ -438,36 +455,34 @@ method find-container ( Str:D $category-name is copy --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method add-container ( Str $category-container is copy = '' --> Bool ) {
+method add-container ( Str $container is copy = '' --> Bool ) {
   my Bool $add-ok = True;
-  $category-container = $category-container.tc ~ '_EX_'
-    if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+  $container = $!current-category.set-container-name($container);
 
-  if $!categories-config<categories>{$category-container}:exists {
+  if $!categories-config<containers>{$container}:exists {
     $add-ok = False;
   }
 
   else {
-    $!categories-config<categories>{$category-container} = %(:categories(%()));
+    $!categories-config<containers>{$container} = %(:categories(%()));
+
   }
   
   $add-ok
 }
 
 #-------------------------------------------------------------------------------
-method delete-container ( Str $category-container is copy = '' --> Bool ) {
-  my Bool $delete-ok = True;
-  $category-container = $category-container.tc ~ '_EX_'
-    if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+method delete-container ( Str $container is copy = '' --> Bool ) {
+  my Bool $delete-ok = False;
+  $container = $!current-category.set-container-name($container);
 
-  if $!categories-config<categories>{$category-container}:exists
-     and $!categories-config<categories>{$category-container}<categories>.elems
+  if $!categories-config<containers>{$container}:exists and
+     $!categories-config<containers>{$container}<categories>.elems == 0
   {
-    $delete-ok = False;
-  }
-
-  else {
-    $!categories-config<categories>{$category-container}:delete;
+    $!categories-config<containers>{$container}:delete;
+    self.save-categories-config;
+    rmdir "$!root-dir$container";
+    $delete-ok = True;
   }
 
   $delete-ok
@@ -479,7 +494,7 @@ method get-containers ( --> Seq ) {
   my Bool $locked = self.is-locked;
   my @containers = ();
   my Bool $lockable = False;
-  for $!categories-config<categories>.keys -> $cat {
+  for $!categories-config<containers>.keys -> $cat {
 
     # If extension _EX_ is added then it is a container
     if $cat ~~ m/ '_EX_' $/ {
@@ -498,8 +513,8 @@ method is-expanded ( Str $container is copy = '' --> Bool ) {
   $container = $container.tc ~ '_EX_'
      if ? $container and $container !~~ m/ '_EX_' $/;
   
-  $expanded = $!categories-config<categories>{$container}<expanded> // False
-     if $!categories-config<categories>{$container}:exists;
+  $expanded = $!categories-config<containers>{$container}<expanded> // False
+     if $!categories-config<containers>{$container}:exists;
 
   $expanded
 }
@@ -512,8 +527,8 @@ method set-expand ( Str $container is copy, Bool $expanded --> Str ) {
   $container = $container.tc ~ '_EX_'
      if ? $container and $container !~~ m/ '_EX_' $/;
   
-  if $!categories-config<categories>{$container}:exists {
-    $!categories-config<categories>{$container}<expanded> = $expanded;
+  if $!categories-config<containers>{$container}:exists {
+    $!categories-config<containers>{$container}<expanded> = $expanded;
     self.save-categories-config;
   }
 
@@ -533,7 +548,7 @@ method has-lockable-categories (
   $category-container = $category-container.tc ~ '_EX_'
      if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
-  for $!categories-config<categories>{$category-container}<categories>.keys
+  for $!categories-config<containers>{$category-container}<categories>.keys
       -> $category
   {
     if self.is-category-lockable( $category, $category-container) {
@@ -575,20 +590,21 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method move-puzzle ( Str $to-cat is copy, Str:D $puzzle-id ) {
+method move-puzzle ( Str $to-cat is copy, Str:D $to-cont is copy, Str:D $puzzle-id ) {
   $to-cat .= tc;
 
   # Init the categories initialized
   my PuzzleTable::Config::Category $c-from = $!current-category;
-
-  my PuzzleTable::Config::Category $c-to .=
-     new( :category-name($to-cat), :$!root-dir);
+  my PuzzleTable::Config::Category $c-to .= new(
+    :category-name($to-cat), :container($to-cont), :$!root-dir
+  );
 
   # Get path of puzzle where the puzzle is now
   my Str $puzzle-source = $c-from.get-puzzle-destination($puzzle-id);
 
   # Get a new id for the puzzle in the destination category
   my Str $new-puzzle-id = $c-to.new-puzzle-id;
+
   # Get path of puzzle where the puzzle must go
   my Str $puzzle-destination = $c-to.get-puzzle-destination($new-puzzle-id);
 
@@ -603,8 +619,9 @@ method move-puzzle ( Str $to-cat is copy, Str:D $puzzle-id ) {
 
   # Update overall status info
   self.update-category-status;
+  self.update-category-status(:category($c-to));
 
-  # Save and categories
+  # Save categories
   $c-from.save-category-config;
   $c-to.save-category-config;
 }
@@ -651,7 +668,7 @@ method restore-puzzles (
 
   else {
     my PuzzleTable::Config::Category $cat .= new(
-      :category-name($category), :category-container($container), :$!root-dir
+      :category-name($category), :$container, :$!root-dir
     );
 
     $message = 'Archive not found or does not have the proper contents'
@@ -701,8 +718,7 @@ method get-puzzles ( --> Seq ) {
     # Add extra info so it can be used to modify the data later, e.g. progress.
     $puzzle-config<PuzzleID> = $puzzle-id;
     $puzzle-config<Category> = $!current-category.category-name;
-    $puzzle-config<Category-Container> =
-      $!current-category.category-container;
+    $puzzle-config<Category-Container> = $!current-category.container;
     $puzzle-config<Image> = 
       $!current-category.get-puzzle-destination($puzzle-id) ~ '/image400.jpg';
 
@@ -734,7 +750,7 @@ method has-puzzles ( Str:D $category, Str :$container = '' --> Bool ) {
 
   else {
     my PuzzleTable::Config::Category $cat .= new(
-      :category-name($category), :category-container($container), :$!root-dir
+      :category-name($category), :$container, :$!root-dir
     );
     
     $hp = $cat.get-puzzle-ids.elems.Bool;
@@ -891,44 +907,39 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-# Get the category lockable state
+# Get the category lockable state. Returns undefined when container/category
+# is not found.
 method is-category-lockable (
-  Str:D $category, Str $category-container is copy = '' --> Bool
+  Str:D $category is copy, Str:D $container is copy --> Bool
 ) {
   my Bool $lockable;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
 
-  my Hash $cats := $!categories-config<categories>;
-  if ? $category-container {
-    $lockable =
-      $cats{$category-container}<categories>{$category}<lockable>.Bool;
-  }
+  $category .= tc;
+  $container = $!current-category.set-container-name($container);
 
-  else {
-    $lockable = $cats{$category}<lockable>.Bool;
+  my Hash $cats := $!categories-config<containers>;
+  if $cats{$container}<categories>{$category}:exists {
+    $lockable = $cats{$container}<categories>{$category}<lockable>.Bool;
   }
 
   $lockable
 }
 
 #-------------------------------------------------------------------------------
+# Set the category lockable state. Returns undefined when container/category
+# is not found.
 method set-category-lockable (
-  Str:D $category, Str $category-container is copy, Bool:D $lockable
+  Str:D $category, Str:D $container is copy, Bool:D $lockable
   --> Bool
 ) {
   my Bool $is-set = False;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+  $container = $!current-category.set-container-name($container);
 
-  if $category ne 'Default' {
-    my Hash $cats := $!categories-config<categories>;
-    if ? $category-container {
-      $cats{$category-container}<categories>{$category}<lockable> = $lockable;
-    }
-
-    else {
-      $cats{$category}<lockable> = $lockable;
+  # Never any category in the Default container
+  if $container ne 'Default_EX_' {
+    my Hash $cats := $!categories-config<containers>;
+    if $cats{$container}<categories>{$category}:exists {
+      $cats{$container}<categories>{$category}<lockable> = $lockable;
     }
 
     self.save-categories-config;

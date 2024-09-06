@@ -109,12 +109,12 @@ method do-category-add (
   }
 
   else {
-    my Str $category-container = $dropdown.get-dropdown-text;
-    $category-container = '' if $category-container eq '--';
+    my Str $container = $dropdown.get-dropdown-text;
+    $container = '' if $container eq '--';
 
     # Add category to list. Message gets defined if something is wrong.
     my Str $msg = $!config.add-category(
-      $cat-text, :lockable($check-button.get-active), :$category-container
+      $cat-text, $container, :lockable($check-button.get-active)
     );
 
     if ?$msg {
@@ -212,7 +212,7 @@ method do-category-rename (
   else {
     # Move members to other category and container
     my Str $message = $!config.move-category(
-      $old-category, $new-category.tc, :category-container($container)
+      $old-category, $new-category.tc, :$container
     );
 
     if $message {
@@ -345,143 +345,5 @@ method do-category-lock (
   $sts-ok = True;
 
   $dialog.destroy-dialog if $sts-ok;
-}
-
-
-
-
-=finish
-#-------------------------------------------------------------------------------
-=begin pod
-=head2 fill-categories
-
-Fill a dropdown widget with a list of category names
-
-  method fill-categories ( )
-
-=end pod
-
-method fill-categories (
-  Bool :$skip-default = False, Str :$select-category, Str :$select-container,
-  Gnome::Gtk4::DropDown :$dropdown is copy
-  --> Gnome::Gtk4::DropDown
-) {
-  my Gnome::Gtk4::StringList() $category-list;
-  if ? $dropdown {
-    $category-list = $dropdown.get-model;
-  }
-
-  else {
-    # Initialize the dropdown object with an empty list
-    $category-list .= new-stringlist([]);
-    $dropdown .= new-dropdown($category-list);
-  }
-
-  my Str $category = $select-category // $!config.get-current-category;
-  my Str $category-container =
-     $select-container // $!config.find-container($category);
-
-  my Int $index = 0;
-  my Bool $index-found = False;
-  for $!config.get-categories(
-      :$category-container, :skip-containers
-    ) -> $subcat
-  {
-    $index-found = True if $subcat eq $category;  #$select-category;
-    $index++ unless $index-found;
-    $category-list.append($subcat);
-  }
-
-#`{{
-  for $!config.get-categories -> $category {
-    next if $skip-default and $category eq 'Default';
-
-    if $category ~~ m/ '_EX_' $/ {
-      for $!config.get-categories(:category-container($category)) -> $subcat {
-        $index-found = True if $subcat eq $category;  #$select-category;
-        $index++ unless $index-found;
-        $category-list.append($subcat);
-      }
-    }
-
-    else {
-      $index-found = True if $category eq $category;  #$select-category;
-      $index++ unless $index-found;
-      $category-list.append($category);
-    }
-  }
-}}
-
-  $index = 0 unless $index-found;
-  $dropdown.set-selected($index);
-
-  $dropdown
-}
-
-#-------------------------------------------------------------------------------
-method fill-containers (
-  Bool :$no-empty = False, Str :$select-container = ''
-  --> Gnome::Gtk4::DropDown
-) {
-  # Initialize the dropdown object with an empty list
-  my Gnome::Gtk4::StringList $container-list .= new-stringlist([]);
-  my Gnome::Gtk4::DropDown $dropdown .= new-dropdown($container-list);
-
-  my Int $index = 0;
-  my Bool $index-found = False;
-
-  # Add an entry to be able to select a category at toplevel
-  unless $no-empty {
-    $container-list.append('--');
-    $index-found = True unless ?$select-container;
-    $index++ unless $index-found;
-  }
-
-  # Add the container strings
-  for $!config.get-containers -> $container {
-    $container-list.append($container);
-    $index-found = True if $container eq $select-container;
-    $index++ unless $index-found;
-  }
-
-  $dropdown.set-selected($index);
-  $dropdown
-}
-
-#-------------------------------------------------------------------------------
-method get-dropdown-text ( Gnome::Gtk4::DropDown $dropdown --> Str ) {
-  my Gnome::Gtk4::StringList() $string-list = $dropdown.get-model;
-  $string-list.get-string($dropdown.get-selected)
-}
-#-------------------------------------------------------------------------------
-=begin pod
-=head2 select-categories
-
-Handler for the container dropdown list to change the category dropdown list after a selecteion is made.
-
-  method select-categories (
-    N-Object $, Gnome::Gtk4::DropDown() :_native-object($containers),
-    Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
-  )
-
-=item $ ; A ParamSpec object. It is ignored.
-=item $containers: The container list.
-=item $categories: The category list.
-=item $skip-default; Used to hide the 'Default' category from the list.
-
-=end pod
-
-method select-categories (
-  N-Object $, Gnome::Gtk4::DropDown() :_native-object($containers),
-  Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
-) {
-  my Gnome::Gtk4::StringList() $string-list .= new-stringlist([]);
-  $categories.set-model($string-list);
-
-  my Str $container = $!sidebar.get-dropdown-text($containers);
-  $container = '' if $container eq '--';
-  $!sidebar.fill-categories(
-    :$skip-default, :dropdown($categories), :select-container($container)
-  );
 }
 

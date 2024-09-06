@@ -10,19 +10,19 @@ use PuzzleTable::Archive;
 unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
 
 has Str $.category-name;
-has Str $.category-container;
+has Str $.container;
 has Str $!config-dir;
 has Hash $!category-config;
 has Str $!config-path;
 
 #-------------------------------------------------------------------------------
 submethod BUILD (
-  Str:D :$!category-name, Str :$!category-container = '', Str:D :$root-dir
+  Str:D :$!category-name, Str:D :$!container, Str:D :$root-dir
 ) {
   $!category-name .= tc;
-  $!category-container .= tc;
+  $!container = self.set-container-name($!container);
 
-  $!config-dir = "$root-dir/$!category-name";
+  $!config-dir = "$root-dir$!container/$!category-name";
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
 
   $!config-path = "$!config-dir/puzzles.yaml";
@@ -36,6 +36,30 @@ submethod BUILD (
       :name($!category-name),
     );
   }
+}
+
+#-------------------------------------------------------------------------------
+method set-container-name ( Str:D $name --> Str ) {
+  my Str $container-name;
+  if ? $name {
+    if $name eq '--' {
+      $container-name = 'Default_EX_';
+    }
+
+    elsif $name !~~ m/ '_EX_' $/ {
+      $container-name = $name.tc ~ '_EX_';
+    }
+
+    else {
+      $container-name = $name.tc;
+    }
+  }
+
+  else {
+    $container-name = 'Default_EX_';
+  }
+
+  $container-name
 }
 
 #-------------------------------------------------------------------------------
@@ -159,8 +183,8 @@ method archive-puzzles (
   # First check all puzzles before changing the config
   for @$puzzle-ids -> $puzzle-id {
     return ( False, '') unless
-      $!category-config<members>{$puzzle-id}:exists
-      and "$!config-dir/$puzzle-id".IO.d;
+      $!category-config<members>{$puzzle-id}:exists and
+      "$!config-dir/$puzzle-id".IO.d;
   }
 
   # Create the archive info
@@ -174,8 +198,7 @@ method archive-puzzles (
   # And archive the puzzles
   my PuzzleTable::Archive $archive .= new;
   my Str $archive-name = $archive.archive-puzzles(
-    $archive-trashbin, $!category-name, $puzzles,
-    :container($!category-container)
+    $archive-trashbin, $!category-name, $!container, $puzzles,
   );
 
   # Save all changes

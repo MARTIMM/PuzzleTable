@@ -266,7 +266,7 @@ method select-category ( Str :$category = '' ) {
 
   # Get the puzzles and send them to the table
   my Str $container = $!config.find-container($category);
-  $!config.select-category( $category, :category-container($container));
+  $!config.select-category( $category, :$container));
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles

@@ -18,19 +18,23 @@ cleanup-puzzle-table-data(CONFDATA);
 
 my PuzzleTable::Config::Category $category;
 
-with $category .= new( :category-name<cat-1>, :root-dir(CONFDATA)) {
+with $category .= new(
+  :category-name<cat-1>, :container(''), :root-dir(CONFDATA)
+) {
   .save-category-config;
   $category = Nil;
 
-  ok (CONFDATA ~ 'Cat-1/puzzles.yaml').IO.r, '.new()';
+  ok (CONFDATA ~ 'Default_EX_/Cat-1/puzzles.yaml').IO.r, '.new()';
 }
 
-with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
+with $category .= new(
+  :category-name<cat-2>, :container(''), :root-dir(CONFDATA)
+) {
   .import-collection(COLLDATA);
-  ok (CONFDATA ~ 'Cat-2/puzzles.yaml').IO.r, '.save-category-config()';
+  ok (CONFDATA ~ 'Default_EX_/Cat-2/puzzles.yaml').IO.r, '.save-category-config()';
 
   # Check that two puzzles are imported
-  my Hash $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  my Hash $config = load-yaml("{CONFDATA}Default_EX_/Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 2, '.import-collection()';
 
 #`{{
@@ -45,11 +49,11 @@ with $category .= new( :category-name<cat-2>, :root-dir(CONFDATA)) {
 }}
 
   .add-puzzle(EXPDATA ~ 'e1.puzzle');
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  $config = load-yaml("{CONFDATA}Default_EX_/Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 3, '.add-puzzle()';
 
   .archive-puzzles( ['p000', 'p002'], ARCHDATA);
-  $config = load-yaml("{CONFDATA}Cat-2/puzzles.yaml".IO.slurp);
+  $config = load-yaml("{CONFDATA}Default_EX_/Cat-2/puzzles.yaml".IO.slurp);
   is $config<members>.elems, 1, '.archive-puzzles()';
 }
 

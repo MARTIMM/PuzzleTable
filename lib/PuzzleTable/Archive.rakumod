@@ -117,8 +117,9 @@ method palapeli-info( Str:D $store-path --> Hash ) {
 
 #-------------------------------------------------------------------------------
 method archive-puzzles (
-  Str:D $archive-trashbin, Str:D $category, Hash:D $puzzles,
-  Str :$container is copy = ''
+  Str:D $archive-trashbin, Str:D $category, Str:D $container is copy,
+  Hash:D $puzzles
+
   --> Str
 ) {
   # Drop the container marker if any
@@ -147,20 +148,20 @@ method archive-puzzles (
   );
 
   for $puzzles.keys -> $puzzle-id {
-    my Str $puzzle-path = $puzzles{$puzzle-id}<puzzle-path>;
-    my Hash $puzzle-data = $puzzles{$puzzle-id}<puzzle-data>;
 
     # Rename the puzzle path into the archive path, effectively removing the
-    # puzzle data from the other puzzles.
+    # puzzle data from the other puzzles. Use $cwd to make path absolute. The
+    # puzzle path is created in reference to the root of the table data.
+    # But don't do it when path is absolute!
+    my Str $puzzle-path = $puzzles{$puzzle-id}<puzzle-path>;
+    $puzzle-path = "$cwd/$puzzle-path" unless $puzzle-path ~~ m/^ \/ /;
     $puzzle-path.IO.rename("./$puzzle-id");
 
     # Save config into a yaml file in the archive dir
+    my Hash $puzzle-data = $puzzles{$puzzle-id}<puzzle-data>;
     "$puzzle-id/puzzle-data.yaml".IO.spurt(save-yaml($puzzle-data));
 
     # Store each file in this path into the archive
-    #$archive.write-header(
-    #  $puzzle-id, #:filetype(AE_IFDIR)
-    #);
     for dir($puzzle-id) -> $file {
       $archive.write-header($file.Str);
       $archive.write-data($file.Str);

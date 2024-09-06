@@ -154,7 +154,7 @@ method remote-options (
     $opt-category = $o<category>.tc;
     # Create category if does not exist. Keep lockable property of the category
     # True when it is set to True
-    $config.add-category( $opt-category, :$lockable);
+    $config.add-category( $opt-category, '', :$lockable);
   }
 
   my Str $category-container = $config.find-container($opt-category);
