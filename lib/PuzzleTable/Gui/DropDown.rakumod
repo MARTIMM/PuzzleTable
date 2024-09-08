@@ -46,22 +46,18 @@ Fill a dropdown widget with a list of category names
 =end pod
 
 method fill-categories (
-  Bool :$skip-default = False, Str :$select-category, Str :$select-container
+  Str:D $category, Str:D $container, Bool :$skip-default = False
 ) {
 #  my Gnome::Gtk4::StringList() $category-list;
   my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
   self.set-model($stringlist);
 
-  my Str $category = $select-category // $!config.get-current-category;
-  my Str $category-container =
-     $select-container // $!config.find-container($category);
+  #my Str $category = $select-category;  # // $!config.get-current-category;
+  #my Str $container = $select-container # // $!config.find-container($category);
 
   my Int $index = 0;
   my Bool $index-found = False;
-  for $!config.get-categories(
-      :$category-container, :skip-containers
-    ) -> $subcat
-  {
+  for $!config.get-categories( $container, :skip-containers) -> $subcat {
     $index-found = True if $subcat eq $category;  #$select-category;
     $index++ unless $index-found;
     $stringlist.append($subcat);

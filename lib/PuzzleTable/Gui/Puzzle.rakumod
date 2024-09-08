@@ -49,14 +49,17 @@ method puzzle-move ( N-Object $parameter ) {
 
   # A dropdown to list categories. The current category is preselected.
   my Str $select-category = $!config.get-current-category;
+  my Str $select-container = $!config.get-current-container;
+
   my PuzzleTable::Gui::DropDown $dropdown-cat .= new-dropdown;
-  $dropdown-cat.fill-categories( :!skip-default, :$select-category);
+  $dropdown-cat.fill-categories(
+    $select-category, $select-container, :!skip-default
+  );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($select-category);
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new-dropdown {
-    .fill-containers(:$select-container);
+    .fill-containers(:select-container($!config.get-current-container));
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -66,12 +69,12 @@ method puzzle-move ( N-Object $parameter ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Move Puzzles Dialog')
   ) {
-    .add-content( 'Select container', $dropdown-cont);
-    .add-content( 'Specify the category to move to', $dropdown-cat);
+    .add-content( 'Specify the container to move to', $dropdown-cont);
+    .add-content( 'Specify the category to move puzzles to', $dropdown-cat);
 
     .add-button(
       self, 'do-move-puzzles', 'Move',
-      :categories($dropdown-cat), :$bitset, :$dialog
+      :categories($dropdown-cat), :containers($dropdown-cont), :$bitset, :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -83,6 +86,7 @@ method puzzle-move ( N-Object $parameter ) {
 method do-move-puzzles ( 
   PuzzleTable::Gui::Dialog :$dialog,
   PuzzleTable::Gui::DropDown :$categories,
+  PuzzleTable::Gui::DropDown :$containers,
   Gnome::Gtk4::N-Bitset :$bitset
 ) {
 #  note "do move";
@@ -90,8 +94,14 @@ method do-move-puzzles (
 
   my Str $current-cat = $!config.get-current-category;
   my Str $dest-cat = $categories.get-dropdown-text;
-  if $current-cat eq $dest-cat {
-    $dialog.set-status('Selected category is same as current');
+  my Str $dest-cont = $containers.get-dropdown-text;
+
+  if $current-cat eq $dest-cat and
+     $!config.get-current-container eq $dest-cont
+  {
+    $dialog.set-status(
+      'Selected container and category is same as current one'
+    );
   }
 
   else {
@@ -100,7 +110,7 @@ method do-move-puzzles (
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
       $!config.move-puzzle(
-        $dest-cat, $!main.table.puzzle-objects.get-string($item-pos)
+        $dest-cat, $dest-cont, $!main.table.puzzle-objects.get-string($item-pos)
       );
     }
 
@@ -160,7 +170,7 @@ method do-archive-puzzles (
 
   if $check-button.get-active.Bool {
     my Str $current-cat = $!config.get-current-category;
-    $!config.select-category($current-cat);
+    $!config.select-category( $current-cat, $!config.get-current-container);
 
     # Get the selected puzzles from the bitset and move them
     my Array $puzzle-ids = [];

@@ -171,48 +171,6 @@ method move-category (
     $message = 'Source does not exist';
   }
 
-
-
-
-
-
-#`{{
-
-  my Str $source-container = self.find-container($cat-from);
-  my Hash $hfrom;
-  if ? $source-container {
-    $hfrom := $cats{$source-container ~ '_EX_'}<categories>;
-  }
-
-  else {
-    $hfrom := $cats;
-  }
-
-  my Hash $hto;
-  if ? $category-container {
-    $hto := $cats{$category-container ~ '_EX_'}<categories>;
-  }
-
-  else {
-    $hto := $cats;
-  }
-
-  # Check
-  if $cat-from eq $cat-to and $source-container eq $category-container {
-    $message = 'Source and destination are the same';
-  }
-
-  unless ?$message {
-    $hto{$cat-to} = $hfrom{$cat-from}:delete;
-
-    self.save-categories-config;
-
-    my Str $dir-from = $!root-dir ~ $cat-from;
-    my Str $dir-to = $!root-dir ~ $cat-to;
-    $dir-from.IO.rename( $dir-to, :createonly);
-  }
-}}
-
   $message
 }
 
@@ -257,9 +215,7 @@ method delete-category (
 }
 
 #-------------------------------------------------------------------------------
-method get-categories (
-  Str:D $container is copy, Bool :$skip-containers = False --> Seq
-) {
+method get-categories ( Str:D $container is copy --> Seq ) {
   my Bool $locked = self.is-locked;
   $container = $!current-category.set-container-name($container);
 
@@ -422,6 +378,7 @@ method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
   $!current-category.get-puzzle( $puzzle-id, :$delete)
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method find-container ( Str:D $category-name is copy --> Str ) {
   $category-name .= tc;
@@ -447,6 +404,7 @@ method find-container ( Str:D $category-name is copy --> Str ) {
   # If undefined, the $category-name is not found
   $container
 }
+}}
 
 #-------------------------------------------------------------------------------
 method add-container ( Str $container is copy = '' --> Bool ) {
@@ -667,17 +625,17 @@ method restore-puzzles (
 }
 
 #-------------------------------------------------------------------------------
-method get-puzzle-image ( Str $category-name --> Str ) {
+method get-puzzle-image ( Str $category, Str $container --> Str ) {
 
-  my PuzzleTable::Config::Category $category .= new(
-    :$category-name, :$!root-dir
+  my PuzzleTable::Config::Category $cat .= new(
+    :category-name($category), :$container, :$!root-dir
   );
 
-  my Str $puzzle-id = $category.get-puzzle-ids.roll;
+  my Str $puzzle-id = $cat.get-puzzle-ids.roll;
   return Str unless ?$puzzle-id;
 
   # Return path to image
-  $!root-dir ~ "$category-name/$puzzle-id/image400.jpg"
+  $!root-dir ~ "$category/$puzzle-id/image400.jpg"
 }
 
 #-------------------------------------------------------------------------------

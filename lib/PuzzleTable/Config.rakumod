@@ -22,7 +22,7 @@ has Gnome::Gtk4::CssProvider $!css-provider;
 
 has Version $.version = v0.5.3;
 has Array $.options = [<
-  category=s pala-collection=s puzzles lock h help version verbose
+  category=s container=s pala-collection=s puzzles lock h help version verbose
   restore=s unlock=s
 >];
 

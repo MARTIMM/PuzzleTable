@@ -52,11 +52,10 @@ submethod BUILD ( :$!main ) {
 method category-add ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
-  my Str $select-container = $!config.find-container($select-category);
 
   # Make a string list to be used in a combobox (dropdown)
   my PuzzleTable::Gui::DropDown() $dropdown .= new;
-  $dropdown.fill-containers(:$select-container);
+  $dropdown.fill-containers(:select-container($!config.get-current-container));
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Add Category Dialog')
@@ -96,13 +95,13 @@ method do-category-add (
   PuzzleTable::Gui::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
-  my Str $cat-text = $entry.get-text.tc;
+  my Str $category = $entry.get-text.tc;
 
-  if !$cat-text {
+  if !$category {
     $dialog.set-status('No category name specified');
   }
 
-  elsif $cat-text.lc eq 'default' {
+  elsif $category.lc eq 'default' {
     $dialog.set-status(
       'Category \'default\' is fixed in any form of text-case'
     );
@@ -114,7 +113,7 @@ method do-category-add (
 
     # Add category to list. Message gets defined if something is wrong.
     my Str $msg = $!config.add-category(
-      $cat-text, $container, :lockable($check-button.get-active)
+      $category, $container, :lockable($check-button.get-active)
     );
 
     if ?$msg {
@@ -145,6 +144,7 @@ Select from menu to rename a category. There are two drop down lists, one of a l
 method category-rename ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
+  my Str $select-container = $!config.get-current-container;
 
   # Prepare dialog entries.
   # An entry to change the name of the selected category, prefilled with
@@ -154,11 +154,12 @@ method category-rename ( N-Object $parameter ) {
 
   # A dropdown to list categories. The current category is preselected.
   my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
-  $dropdown-cat.fill-categories( :skip-default, :$select-category);
+  $dropdown-cat.fill-categories(
+    $select-category, $select-container, :skip-default
+  );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($select-category);
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
     .fill-containers(:$select-container);
 
@@ -192,10 +193,7 @@ method do-category-rename (
   PuzzleTable::Gui::DropDown :$dropdown-cont,
 ) {
   my Bool $sts-ok = False;
-  my Str $old-category = $dropdown-cat.get-dropdown-text;
-  my Str $new-category = $entry.get-text.tc;
-  my Str $container = $dropdown-cont.get-dropdown-text;
-  $container = '' if $container eq '--';
+   my Str $new-category = $entry.get-text;
 
   if ! $new-category {
     $dialog.set-status('No category name specified');
@@ -212,7 +210,8 @@ method do-category-rename (
   else {
     # Move members to other category and container
     my Str $message = $!config.move-category(
-      $old-category, $new-category.tc, :$container
+      $dropdown-cat.get-dropdown-text, $!config.get-current-container,
+      $new-category, $dropdown-cont.get-dropdown-text
     );
 
     if $message {
@@ -233,17 +232,19 @@ method do-category-rename (
 method category-delete ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
+  my Str $select-container = $!config.get-current-container;
 
   # Prepare dialog entries.
   # A dropdown to list categories. The current category is preselected.
   my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
-  $dropdown-cat.fill-categories( :skip-default, :$select-category);
+  $dropdown-cat.fill-categories(
+    $select-category, $select-container, :skip-default
+  );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($select-category);
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
-    .fill-containers(:$select-container);
+    .fill-containers(:select-container($!config.get-current-container));
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -289,16 +290,18 @@ method do-category-delete (
 method category-lock ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
+  my Str $select-container = $!config.get-current-container;
 
   # A dropdown to list categories. The current category is preselected.
   my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
-  $dropdown-cat.fill-categories( :skip-default, :$select-category);
+  $dropdown-cat.fill-categories(
+    $select-category, $select-container, :skip-default
+  );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  my Str $select-container = $!config.find-container($select-category);
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
-    .fill-containers(:$select-container);
+    .fill-containers(:select-container($!config.get-current-container));
 
     # Set a handler on the container list to change the category list
     # when an item is selected.

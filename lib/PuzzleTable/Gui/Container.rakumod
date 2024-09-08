@@ -56,12 +56,12 @@ method do-container-add (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::Entry :$entry
 ) {
   my Bool $sts-ok = False;
-  my Str $container-text = $entry.get-text.tc;
-  if ! $container-text {
+  my Str $container = $entry.get-text.tc;
+  if ! $container {
     $dialog.set-status('No category name specified');
   }
 
-  elsif not $!config.add-container($container-text) {
+  elsif not $!config.add-container($container) {
     $dialog.set-status('Container already exists');
   }
 

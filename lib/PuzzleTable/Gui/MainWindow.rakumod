@@ -149,16 +149,21 @@ method remote-options (
 
   # Process category option. It is set to 'Default' otherwise.
   my Str $opt-category = 'Default';
+  my Str $opt-container = 'Default';
 
-  if $o<category>:exists {
-    $opt-category = $o<category>.tc;
-    # Create category if does not exist. Keep lockable property of the category
-    # True when it is set to True
-    $config.add-category( $opt-category, '', :$lockable);
+  if $o<container>:exists {
+    $opt-container = $o<category>;
+    $config.add-container($opt-container);
   }
 
-  my Str $category-container = $config.find-container($opt-category);
-  $config.select-category( $opt-category, :$category-container);
+  if $o<category>:exists {
+    $opt-category = $o<category>;
+    # Create category if does not exist. Keep lockable property of the category
+    # True when it is set to True
+    $config.add-category( $opt-category, $opt-container, :$lockable);
+  }
+
+  $config.select-category( $opt-category, $config.get-current-container);
   $!sidebar.set-category($opt-category);
 
   if $o<puzzles>:exists {
@@ -285,20 +290,24 @@ method usage ( ) {
   Usage:
     puzzle-table --version
     puzzle-table --help
-    puzzle-table --puzzles [--category=<name>] [--lock] <puzzle-path> …
+    puzzle-table --puzzles [--container=<name>] [--category=<name>] [--lock] <puzzle-path> …
     puzzle-table --pala-collection=<collection-path>
     puzzle-table --restore=<archive>
 
   Options:
+    --container <name>
+      By default `Default`. Select the container to work
+      with. The container is created if not available.
+
     --category <name>
       By default `Default`. Select the category to work
-      with. The category is created if not available. When `--import` or
-      `--puzzle` is used, the imported puzzles are placed in that category.
+      with. The category is created if not available. When 
+      `--puzzle` is used, 
 
     -h --help
       Show this information. This is also shown, with an error, when there are
       faulty arguments or options.
-    
+
     --lock
       Set the category lockable.
 
@@ -310,8 +319,9 @@ method usage ( ) {
 
     --puzzles.
       Import one or more puzzles. The paths to the puzzles are given as the
-      arguments.
-    
+      arguments. The imported puzzles are placed in the selected category in
+      the container.
+
     --restore <archive>
       Restore a previously archived set of puzzles in original category
       and container. When container and category are deleted, these will be

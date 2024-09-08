@@ -67,51 +67,34 @@ method fill-sidebar ( Bool :$init = False ) {
   my Gnome::Gtk4::Label $l;
 
   my Array $totals = [ 0, 0, 0, 0];
-  for $!config.get-categories -> $category {
+  for $!config.get-containers -> $container {
+note "$?LINE $container";
+    my Int $cat-row-count = 0;
+    my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
-    # Check if $category is a container
-    if $category ~~ m/ '_EX_' $/ {
-      my Str $category-container = $category;
-      $category-container ~~ s/ '_EX_' $//;
+    for $!config.get-categories($container) -> $category {
+note "$?LINE $category";
 
-      # Create a container grid for subcategories
-      my Int $subcat-row-count = 0;
-      my Gnome::Gtk4::Grid $subcat-grid .= new-grid;
-      for $!config.get-categories(:$category-container) -> $sub-category {
-        my Gnome::Gtk4::Button $subcat-button =
-            self.sidebar-button( $sub-category, $category-container);
+      my Gnome::Gtk4::Button $subcat-button =
+          self.sidebar-button( $category, $container);
 
-        $subcat-grid.attach( $subcat-button, 0, $subcat-row-count, 1, 1);
+      $category-grid.attach( $subcat-button, 0, $cat-row-count, 1, 1);
 
-        # Get information of each subcategory
-        self.sidebar-status(
-          $sub-category, $subcat-grid, $subcat-row-count, $totals,
-          :$category-container
-        );
+      # Get information of each subcategory
+      self.sidebar-status(
+        $category, $category-grid, $cat-row-count, $totals, :$container
+      );
 
-        $subcat-row-count++;
-      }
+      $cat-row-count++;
 
-      # Only show container in an expander if there are any categories visible
-      if $subcat-row-count {
-        my Gnome::Gtk4::Expander $expander =
-          self.sidebar-expander($category-container);
-        $expander.set-child($subcat-grid);
-        $expander.set-expanded($!config.is-expanded($category-container));
-        $cat-grid.attach( $expander, 0, $row-count, 5, 1);
+      my Gnome::Gtk4::Expander $expander = self.sidebar-expander($container);
+      $expander.set-child($category-grid);
+      $expander.set-expanded($!config.is-expanded($container));
+      $cat-grid.attach( $expander, 0, $row-count, 5, 1);
 
-        $expander.register-signal( self, 'expand', 'activate',
-          :container($category-container)
-        );
-      }
-    }
-
-    else {
-      my Gnome::Gtk4::Button $cat-button = self.sidebar-button($category);
-      $cat-grid.attach( $cat-button, 0, $row-count, 1, 1);
-
-      # Get information of each category
-      self.sidebar-status( $category, $cat-grid, $row-count, $totals);
+      $expander.register-signal(
+        self, 'expand', 'activate', :container($container)
+      );
     }
 
     $row-count++;
@@ -141,30 +124,25 @@ method expand (
 
 #-------------------------------------------------------------------------------
 method sidebar-button (
-  Str $category, Str $category-container = '' --> Gnome::Gtk4::Button
+  Str $category, Str $container = '' --> Gnome::Gtk4::Button
 ) {
   with my Gnome::Gtk4::Button $cat-button .= new-button {
     $!config.set-css(
       .get-style-context,
-      :css-class( ? $category-container
-                  ?? 'pt-sidebar-container-button'
-                  !! 'pt-sidebar-category-button'
-                )
+      :css-class('pt-sidebar-container-button')
     );
-
-    my Str $catname = ?$category-container ?? $category-container !! $category;
 
     given my Gnome::Gtk4::Label $l .= new-label {
       .set-text($category);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
-#      .set-max-width-chars(? $category-container ?? 23 !! 25 );
+#      .set-max-width-chars(? $container ?? 23 !! 25 );
 #      .set-ellipsize(True);
 
       $!config.set-css(
         .get-style-context,
         :css-class(
-          ? $category-container
+          ? $container
             ?? 'pt-sidebar-container-label'
             !! 'pt-sidebar-category-label'
         )
@@ -177,10 +155,10 @@ method sidebar-button (
     .set-has-tooltip(True);
 
     .register-signal(
-      self, 'show-tooltip', 'query-tooltip', :$category
+      self, 'show-tooltip', 'query-tooltip', :$category, :$container
     );
     .register-signal(
-      self, 'select-category', 'clicked', :$category, :$category-container
+      self, 'select-category', 'clicked', :$category, :$container
     );
   }
   
@@ -218,7 +196,7 @@ method sidebar-status (
   my Gnome::Gtk4::Label $l;
 
   my Array $cat-status =
-     $!config.get-category-status( $category, :$category-container);
+     $!config.get-category-status( $category, $category-container);
 
   $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
@@ -241,10 +219,10 @@ method sidebar-status (
 #-------------------------------------------------------------------------------
 method show-tooltip (
   Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip,
-  Str :$category
+  Str :$category, Str :$container
   --> gboolean
 ) {
-  my Str $puzzle-image-name = $!config.get-puzzle-image($category);
+  my Str $puzzle-image-name = $!config.get-puzzle-image( $category, $container);
   if ?$puzzle-image-name {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($puzzle-image-name);
@@ -256,7 +234,7 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method select-category ( Str :$category = '' ) {
+method select-category ( Str :$category, Str :$container ) {
 #  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
@@ -265,8 +243,9 @@ method select-category ( Str :$category = '' ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  my Str $container = $!config.find-container($category);
-  $!config.select-category( $category, :$container));
+  $!config.select-category(
+    $category, $container // $!config.get-current-container
+  );
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
