@@ -218,45 +218,39 @@ method move-category (
 
 #-------------------------------------------------------------------------------
 method delete-category (
-  Str $category is copy, Str:D :$container is copy --> Str
+  Str:D $category is copy, Str:D $container is copy --> Str
 ) {
   my Str $message = '';
 
-  $container = $!current-category.set-container-name($container);
   $category .= tc;
-#  my Str $container = self.find-container($category);
-#note "$?LINE $category, {$container.defined ?? $container !! 'undefined'}";
-  if ! $container.defined {
-    $message = 'Category does not exist';
-  }
+  $container = $!current-category.set-container-name($container);
 
-  else {
-    $container ~= '_EX_' if ? $container;
-
-    if self.has-puzzles( $category, :$container) {
-      $message = 'Category still has puzzles';
-    }
-
-    else {
-      my Hash $cats := $!categories-config<containers>;
-      if ?$container {
-        # Remove the category from the container
-        $cats{$container}<categories>{$category}:delete;
+  my Hash $conts := $!categories-config<containers>;
+  if $conts{$container}:exists {
+    if $conts{$container}<categories>{$category}:exists {
+      if self.has-puzzles( $category, $container) {
+        $message = 'Category still has puzzles';
       }
 
       else {
-        # Remove the category
-        $cats{$category}:delete;
-      }
+        # Remove the category from the container
+        $conts{$container}<categories>{$category}:delete;
 
-      # Remove the files and directory
-      for dir("$!root-dir$category") -> $file {
-        $file.IO.unlink;
-      }
-      "$!root-dir$container/$category".IO.rmdir;
+        # Remove the files and directory, should be empty
+        .unlink for dir("$!root-dir$container/$category");
+        "$!root-dir$container/$category".IO.rmdir;
 
-      self.save-categories-config;
+        self.save-categories-config;
+      }
     }
+
+    else {
+      $message = 'Category does not exist';
+    }
+  }
+
+  else {
+    $message = 'Container does not exist';
   }
 
   $message
@@ -508,11 +502,9 @@ method get-containers ( --> Seq ) {
 }
 
 #-------------------------------------------------------------------------------
-method is-expanded ( Str $container is copy = '' --> Bool ) {
+method is-expanded ( Str:D $container is copy --> Bool ) {
   my Bool $expanded = False;
-  $container = $container.tc ~ '_EX_'
-     if ? $container and $container !~~ m/ '_EX_' $/;
-  
+  $container = $!current-category.set-container-name($container);
   $expanded = $!categories-config<containers>{$container}<expanded> // False
      if $!categories-config<containers>{$container}:exists;
 
@@ -520,12 +512,10 @@ method is-expanded ( Str $container is copy = '' --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-expand ( Str $container is copy, Bool $expanded --> Str ) {
+method set-expand ( Str:D $container is copy, Bool $expanded --> Str ) {
   my Str $message = '';
 
-  $container = '' unless ?$container;
-  $container = $container.tc ~ '_EX_'
-     if ? $container and $container !~~ m/ '_EX_' $/;
+  $container = $!current-category.set-container-name($container);
   
   if $!categories-config<containers>{$container}:exists {
     $!categories-config<containers>{$container}<expanded> = $expanded;
@@ -541,17 +531,13 @@ method set-expand ( Str $container is copy, Bool $expanded --> Str ) {
 
 #-------------------------------------------------------------------------------
 # Method to check if container needs to be hidden
-method has-lockable-categories (
-  Str $category-container is copy = '' --> Bool
-) {
+method has-lockable-categories ( Str $container is copy = '' --> Bool ) {
   my Bool $lockable-categeries = False;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
+  $container = $!current-category.set-container-name($container);
 
-  for $!categories-config<containers>{$category-container}<categories>.keys
-      -> $category
+  for $!categories-config<containers>{$container}<categories>.keys -> $category
   {
-    if self.is-category-lockable( $category, $category-container) {
+    if self.is-category-lockable( $category, $container) {
       $lockable-categeries = True;
       last
     }
@@ -590,7 +576,9 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method move-puzzle ( Str $to-cat is copy, Str:D $to-cont is copy, Str:D $puzzle-id ) {
+method move-puzzle (
+  Str $to-cat is copy, Str:D $to-cont is copy, Str:D $puzzle-id
+) {
   $to-cat .= tc;
 
   # Init the categories initialized
@@ -741,9 +729,13 @@ method get-puzzles ( --> Seq ) {
 }
 
 #-------------------------------------------------------------------------------
-method has-puzzles ( Str:D $category, Str :$container = '' --> Bool ) {
+method has-puzzles (
+  Str:D $category is copy, Str:D $container is copy --> Bool
+) {
   my Bool $hp = False;
-
+  
+  $category .= tc;
+  $container = $!current-category.set-container-name($container);
   if $category eq $!current-category.category-name {
     $hp = $!current-category.get-puzzle-ids.elems.Bool;
   }

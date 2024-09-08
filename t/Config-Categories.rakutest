@@ -201,27 +201,26 @@ subtest 'containers', {
        '.move-category() subcat empty';
     ok .delete-container('options'), '.delete-container() deleted' ;
 
-exit;
 
-    $message =
-      .add-category( 'set 1', :container<sets>, :!lockable);
-    $message =
-      .add-category( 'set 2', :container<sets>, :!lockable);
-    $cats = .get-categories(:container<sets>);
+#    $message =
+      .add-category( 'set 1', 'sets', :!lockable);
+#    $message =
+      .add-category( 'set 2', 'sets', :!lockable);
+    $cats = .get-categories('sets');
     is-deeply $cats, ( 'Set 1', 'Set 2' ), '.add-category() add in container';
     $message =
-      .add-category( 'set 2', :container<sets>, :!lockable);
+      .add-category( 'set 2', 'sets', :!lockable);
     is $message, "Category Set 2 already exists",
        '.add-category(): ' ~ $message;
 
-    .select-category( 'set 2', :container<sets>);
+    .select-category( 'set 2', 'sets');
     .add-puzzle(EXPDATA ~ 'e2.puzzle');
-    $config = load-yaml("{CONFDATA}Set 2/puzzles.yaml".IO.slurp);
+    $config = load-yaml("{CONFDATA}Sets_EX_/Set 2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 1, '.add-puzzle() in container Sets';
 
     my Array $puzzles = [|.get-puzzles()];
-    .move-puzzle( 'set 1', $puzzles[0]<PuzzleID>);
-    $config = load-yaml("{CONFDATA}Set 1/puzzles.yaml".IO.slurp);
+    .move-puzzle( 'set 1', 'Sets', $puzzles[0]<PuzzleID>);
+    $config = load-yaml("{CONFDATA}Sets_EX_/Set 1/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 1, '.move-puzzle() in container Sets';
   }
 }
@@ -229,16 +228,16 @@ exit;
 
 subtest 'container', {
   with $categories {
-    my Str $container = .find-container('set 1');
-    is $container, 'Sets', '.find-container(): found Set 1 in Sets';
-    $container = .find-container('opt 1');
-    is $container, '', '.find-container(): found Opt 1';
-    $container = .find-container('opt 1001');
-    ok !$container.defined, '.find-container(): Did not find Opt 1001';
+#    my Str $container = .find-container('set 1');
+#    is $container, 'Sets', '.find-container(): found Set 1 in Sets';
+#    $container = .find-container('opt 1');
+#    is $container, '', '.find-container(): found Opt 1';
+#    $container = .find-container('opt 1001');
+#    ok !$container.defined, '.find-container(): Did not find Opt 1001';
 
     ok .add-container('abc'), '.add-container()';
     nok .add-container('abc'), '.add-container() duplicate';
-    is-deeply .get-containers, ( 'Abc', 'Options', 'Sets'), '.get-containers()';
+    is-deeply .get-containers, ( 'Abc', 'Default', 'Sets', "Sub options"), '.get-containers()';
 
     nok .delete-container('sets'), '.delete-container(): container not empty';
     ok .delete-container('abc'), '.delete-container(): container deleted';
@@ -255,19 +254,26 @@ subtest 'container', {
 
 subtest 'category continued', {
   with $categories {
-    ok .has-puzzles('cat-2'), '.has-puzzles()';
+    ok .has-puzzles( 'cat-2', ''), '.has-puzzles()';
 
-    $message = .delete-category('cat-2');
+    $message = .delete-category( 'cat-2', '');
     is $message, 'Category still has puzzles', '.delete-category(): not empty';
 
-    $message = .delete-category('opt 2');
+    $message = .delete-category( 'opt 2', 'options');
+    is $message, 'Container does not exist', '.delete-category(): no container';
+#note $message;
+
+    $message = .delete-category( 'set 22345', 'sets');
+    is $message, 'Category does not exist', '.delete-category(): no category';
+
+    $message = .delete-category( 'set 2', 'sets');
     ok !$message, '.delete-category(): empty -> deleted';
 
-    .add-category( 'set 25', :container<sets>, :!lockable);
-    .add-category( 'set 26', :container<sets>, :!lockable);
-    $message = .delete-category('set 25');
-    ok !$message, '.delete-category(): empty -> deleted from container';
-    $message = .delete-category('set 25');
+    .add-category( 'set 25', 'sets');
+    .add-category( 'set 26', 'sets');
+    $message = .delete-category( 'set 25', 'sets');
+    ok !$message, '.delete-category(): empty -> deleted';
+    $message = .delete-category( 'set 25', 'sets');
     is $message, 'Category does not exist',
        '.delete-category(): category does not exist';
   }
