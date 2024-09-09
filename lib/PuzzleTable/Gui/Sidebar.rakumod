@@ -68,13 +68,11 @@ method fill-sidebar ( Bool :$init = False ) {
   my Array $totals = [ 0, 0, 0, 0];
 
   my @containers = $!config.get-containers;
-note "$?LINE @containers.gist()";
   for @containers -> $container {
     my Int $cat-row-count = 0;
     my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
     my @categories = $!config.get-categories($container);
-note "$?LINE   @categories.gist()";
     for @categories -> $category {
 
       my Gnome::Gtk4::Button $category-button =
@@ -112,37 +110,6 @@ note "$?LINE   @categories.gist()";
   self.set-child($cat-grid);
   self.select-category( :category<Default>, :container<Default>) if $init;
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method container-button ( Str:D $container --> Gnome::Gtk4::Button ) {
-  with my Gnome::Gtk4::Button $cont-button .= new-button {
-    $!config.set-css(
-      .get-style-context,
-      :css-class('pt-sidebar-container-button')
-    );
-
-    given my Gnome::Gtk4::Label $l .= new-label {
-      .set-text($container);
-      .set-hexpand(True);
-      .set-halign(GTK_ALIGN_START);
-      .set-max-width-chars(23);
-#      .set-ellipsize(True);
-
-      $!config.set-css(
-        .get-style-context,
-        :css-class('pt-sidebar-container-label')
-      );
-    }
-
-    .set-child($l);
-    .set-hexpand(True);
-    .set-halign(GTK_ALIGN_FILL);
-  }
-  
-  $cont-button
-}
-}}
 
 #-------------------------------------------------------------------------------
 method category-button (
