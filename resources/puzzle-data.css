@@ -4356,6 +4356,8 @@ progressbar.osd {
 /* Label of the sidebar button */
 .pt-sidebar-category-label {
   color: #a3d4fd;
+  font-size: 1em;
+  margin-left: 5px;
 }
 
 /* the sidebar grid of the expander child */
@@ -4367,6 +4369,7 @@ progressbar.osd {
 /* The label in the expander */
 .sidebar-expander-label {
   color: #83ff64;
+  font-size: 1em;
 }
 
 .pt-sidebar-container-button {

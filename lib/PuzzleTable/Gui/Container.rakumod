@@ -9,11 +9,12 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Dialog;
+use PuzzleTable::Gui::DropDown;
 
 use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
-use Gnome::Gtk4::DropDown:api<2>;
-use Gnome::Gtk4::StringList:api<2>;
+#use Gnome::Gtk4::DropDown:api<2>;
+#use Gnome::Gtk4::StringList:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -80,7 +81,8 @@ method container-delete ( N-Object $parameter ) {
     :dialog-header('Delete Container Dialog')
   ) {
     # Make a string list to be used in a combobox (dropdown)
-    my Gnome::Gtk4::DropDown() $dropdown = $!sidebar.fill-containers(:no-enpty);
+    my PuzzleTable::Gui::DropDown $dropdown .= new;
+    $dropdown.fill-containers($!config.get-current-container);
 
     # Show entry for input
     .add-content( 'Select container to delete', $dropdown);

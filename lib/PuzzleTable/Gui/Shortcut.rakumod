@@ -46,7 +46,9 @@ method set-shortcut-keys ( ) {
   my Gnome::Gtk4::KeyvalTrigger $trigger .= parse-string($shortcut-string);
   unless $trigger.is-valid {
     my PuzzleTable::Gui::MessageDialog $message .= new(
-      :$!main, :message("Invalid shortcut string: $shortcut-string"), :no-statusbar
+      :$!main,
+      :message("Invalid shortcut string: $shortcut-string"),
+      :no-statusbar
     );
 
     $message.show;

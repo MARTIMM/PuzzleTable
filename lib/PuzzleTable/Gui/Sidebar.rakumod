@@ -65,37 +65,35 @@ method fill-sidebar ( Bool :$init = False ) {
   $!config.set-css( $cat-grid.get-style-context, :css-class<pt-sidebar>);
 
   my Gnome::Gtk4::Label $l;
-
   my Array $totals = [ 0, 0, 0, 0];
-  for $!config.get-containers -> $container {
-note "$?LINE $container";
+
+  my @containers = $!config.get-containers;
+note "$?LINE @containers.gist()";
+  for @containers -> $container {
     my Int $cat-row-count = 0;
     my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
-    for $!config.get-categories($container) -> $category {
-note "$?LINE $category";
+    my @categories = $!config.get-categories($container);
+note "$?LINE   @categories.gist()";
+    for @categories -> $category {
 
-      my Gnome::Gtk4::Button $subcat-button =
-          self.sidebar-button( $category, $container);
+      my Gnome::Gtk4::Button $category-button =
+          self.category-button( $category, $container);
 
-      $category-grid.attach( $subcat-button, 0, $cat-row-count, 1, 1);
+      $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
 
       # Get information of each subcategory
       self.sidebar-status(
-        $category, $category-grid, $cat-row-count, $totals, :$container
+        $category, $container, $category-grid, $cat-row-count, $totals
       );
 
       $cat-row-count++;
-
-      my Gnome::Gtk4::Expander $expander = self.sidebar-expander($container);
-      $expander.set-child($category-grid);
-      $expander.set-expanded($!config.is-expanded($container));
-      $cat-grid.attach( $expander, 0, $row-count, 5, 1);
-
-      $expander.register-signal(
-        self, 'expand', 'activate', :container($container)
-      );
     }
+
+    my Gnome::Gtk4::Expander $expander = self.sidebar-expander($container);
+    $expander.set-child($category-grid);
+    $expander.set-expanded($!config.is-expanded($container));
+    $cat-grid.attach( $expander, 0, $row-count, 5, 1);
 
     $row-count++;
   }
@@ -112,19 +110,43 @@ note "$?LINE $category";
     EOTT
 
   self.set-child($cat-grid);
-  self.select-category(:category<Default>) if $init;
+  self.select-category( :category<Default>, :container<Default>) if $init;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
-method expand (
-  Gnome::Gtk4::Expander() :_native-object($expander), :$container
-) {
-  $!config.set-expand( $container, $expander.get-expanded ?? False !! True);
+method container-button ( Str:D $container --> Gnome::Gtk4::Button ) {
+  with my Gnome::Gtk4::Button $cont-button .= new-button {
+    $!config.set-css(
+      .get-style-context,
+      :css-class('pt-sidebar-container-button')
+    );
+
+    given my Gnome::Gtk4::Label $l .= new-label {
+      .set-text($container);
+      .set-hexpand(True);
+      .set-halign(GTK_ALIGN_START);
+      .set-max-width-chars(23);
+#      .set-ellipsize(True);
+
+      $!config.set-css(
+        .get-style-context,
+        :css-class('pt-sidebar-container-label')
+      );
+    }
+
+    .set-child($l);
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_FILL);
+  }
+  
+  $cont-button
 }
+}}
 
 #-------------------------------------------------------------------------------
-method sidebar-button (
-  Str $category, Str $container = '' --> Gnome::Gtk4::Button
+method category-button (
+  Str:D $category, Str:D $container --> Gnome::Gtk4::Button
 ) {
   with my Gnome::Gtk4::Button $cat-button .= new-button {
     $!config.set-css(
@@ -136,16 +158,12 @@ method sidebar-button (
       .set-text($category);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
-#      .set-max-width-chars(? $container ?? 23 !! 25 );
+      .set-max-width-chars(25);
 #      .set-ellipsize(True);
 
       $!config.set-css(
         .get-style-context,
-        :css-class(
-          ? $container
-            ?? 'pt-sidebar-container-label'
-            !! 'pt-sidebar-category-label'
-        )
+        :css-class('pt-sidebar-category-label')
       );
     }
 
@@ -166,12 +184,12 @@ method sidebar-button (
 }
 
 #-------------------------------------------------------------------------------
-method sidebar-expander ( Str $category --> Gnome::Gtk4::Expander ) {
-  with my Gnome::Gtk4::Expander $cat-expander .= new-expander(Str) {
+method sidebar-expander ( Str $container --> Gnome::Gtk4::Expander ) {
+  with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
     $!config.set-css( .get-style-context, :css-class<pt-sidebar-expander>);
 
     given my Gnome::Gtk4::Label $l .= new-label {
-      .set-text($category);
+      .set-text($container);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
       $!config.set-css(
@@ -182,21 +200,29 @@ method sidebar-expander ( Str $category --> Gnome::Gtk4::Expander ) {
     .set-label-widget($l);
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
+
+    .register-signal( self, 'expand', 'activate', :$container);
   }
   
-  $cat-expander
+  $expander
+}
+
+#-------------------------------------------------------------------------------
+method expand (
+  Gnome::Gtk4::Expander() :_native-object($expander), :$container
+) {
+  $!config.set-expand( $container, $expander.get-expanded ?? False !! True);
 }
 
 #-------------------------------------------------------------------------------
 method sidebar-status (
-  Str $category,
+  Str:D $category, Str:D $container,
   Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals,
-  Str :$category-container = ''
 ) {
   my Gnome::Gtk4::Label $l;
 
   my Array $cat-status =
-     $!config.get-category-status( $category, $category-container);
+     $!config.get-category-status( $category, $container);
 
   $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
@@ -234,7 +260,7 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method select-category ( Str :$category, Str :$container ) {
+method select-category ( Str:D :$category, Str:D :$container ) {
 #  $!current-category = $category;
   $!main.application-window.set-title("Puzzle Table Display - $category")
     if ?$!main.application-window;
@@ -243,9 +269,7 @@ method select-category ( Str :$category, Str :$container ) {
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  $!config.select-category(
-    $category, $container // $!config.get-current-container
-  );
+  $!config.select-category( $category, $container);
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
@@ -254,9 +278,9 @@ method select-category ( Str :$category, Str :$container ) {
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method set-category ( Str $category ) {
+method set-category ( Str:D $category, Str:D $container ) {
 
   # Fill the sidebar in case there is a new entry
   self.fill-sidebar;
-  self.select-category(:$category);
+  self.select-category( :$category, :$container);
 }

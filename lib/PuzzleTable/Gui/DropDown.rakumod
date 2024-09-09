@@ -58,8 +58,11 @@ method fill-categories (
   my Int $index = 0;
   my Bool $index-found = False;
   for $!config.get-categories( $container, :skip-containers) -> $subcat {
+    next if $skip-default and $subcat eq 'Default';
+
     $index-found = True if $subcat eq $category;  #$select-category;
     $index++ unless $index-found;
+
     $stringlist.append($subcat);
   }
 
@@ -68,19 +71,10 @@ method fill-categories (
 }
 
 #-------------------------------------------------------------------------------
-method fill-containers (
-  Bool :$no-empty = False, Str :$select-container = ''
-) {
+method fill-containers ( Str:D $select-container ) {
   my Gnome::Gtk4::StringList() $stringlist = self.get-model;
   my Int $index = 0;
   my Bool $index-found = False;
-
-  # Add an entry to be able to select a category at toplevel
-  unless $no-empty {
-    $stringlist.append('--');
-    $index-found = True unless ?$select-container;
-    $index++ unless $index-found;
-  }
 
   # Add the container strings
   for $!config.get-containers -> $container {
@@ -145,13 +139,9 @@ method select-categories (
   PuzzleTable::Gui::DropDown :$containers
 ) {
 
-  my Str $select-container = $containers.get-dropdown-text;
-  $select-container = '' if $select-container eq '--';
-
   $categories.fill-categories(
-    :$skip-default, :$select-container
+    $categories.get-dropdown-text, $containers.get-dropdown-text,
+    :$skip-default
   );
-
-#exit;
 }
 

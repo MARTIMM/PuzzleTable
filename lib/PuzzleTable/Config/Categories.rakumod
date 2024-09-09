@@ -56,7 +56,7 @@ submethod BUILD ( Str:D :$!root-dir ) {
     $!categories-config<puzzle-image-width> = 300;
     $!categories-config<puzzle-image-height> = 300;
 
-    self.save-categories-config;
+#    self.save-categories-config;
   }
 
   # Always lock at start
@@ -66,7 +66,6 @@ submethod BUILD ( Str:D :$!root-dir ) {
   $!current-category .= new(
     :category-name('Default'), :container(''), :$!root-dir
   );
-  self.update-category-status;
 }
 
 #-------------------------------------------------------------------------------
@@ -215,21 +214,21 @@ method delete-category (
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( Str:D $container is copy --> Seq ) {
+method get-categories ( Str:D $container is copy --> List ) {
   my Bool $locked = self.is-locked;
   $container = $!current-category.set-container-name($container);
 
   my @cat-key-list;
-  @cat-key-list = $!categories-config<containers>{$container}<categories>.keys;
+  @cat-key-list =
+    $!categories-config<containers>{$container}<categories>.keys.sort;
 
   my @cat = ();
   for @cat-key-list -> $category {
     next if ( $locked and self.is-category-lockable( $category, $container));
-
     @cat.push: $category;
   }
 
-  @cat.sort
+  @cat
 }
 
 #`{{
@@ -289,14 +288,17 @@ method get-current-container ( --> Str ) {
 
 #-------------------------------------------------------------------------------
 method get-category-status (
-  Str $category-name is copy, Str:D $container is copy --> Array
+  Str:D $category-name is copy, Str:D $container is copy --> Array
 ) {
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
+
   my Array $cat-status = [ 0, 0, 0, 0];
 
   my Hash $categories :=
      $!categories-config<containers>{$container}<categories>;
+
+#note "$?LINE $category-name, $container, ", $categories{$category-name}<status>:exists;
 
   if $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
@@ -408,16 +410,13 @@ method find-container ( Str:D $category-name is copy --> Str ) {
 
 #-------------------------------------------------------------------------------
 method add-container ( Str $container is copy = '' --> Bool ) {
-  my Bool $add-ok = True;
+  my Bool $add-ok = False;
   $container = $!current-category.set-container-name($container);
 
-  if $!categories-config<containers>{$container}:exists {
-    $add-ok = False;
-  }
-
-  else {
+  if $!categories-config<containers>{$container}:!exists {
     $!categories-config<containers>{$container} = %(:categories(%()));
-
+    mkdir "$!root-dir$container", 0o700 unless "$!root-dir$container".IO.e;
+    $add-ok = True;
   }
   
   $add-ok
@@ -441,22 +440,19 @@ method delete-container ( Str $container is copy = '' --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-containers ( --> Seq ) {
+method get-containers ( --> List ) {
 
   my Bool $locked = self.is-locked;
   my @containers = ();
-  my Bool $lockable = False;
-  for $!categories-config<containers>.keys -> $cat {
 
-    # If extension _EX_ is added then it is a container
-    if $cat ~~ m/ '_EX_' $/ {
-      $lockable = self.has-lockable-categories($cat);
-      (@containers.push: S/ '_EX_' $// with $cat) unless $lockable and $locked;
-    }
+  for $!categories-config<containers>.keys.sort -> $container {
+    # Containers have an _EX_ extension which is removed
+    # Don't include in list if lockable and table is locked
+    (@containers.push: S/ '_EX_' $// with $container)
+      unless self.has-lockable-categories($container).Bool and $locked;
   }
 
-  # Sort containers
-  @containers.sort
+  @containers
 }
 
 #-------------------------------------------------------------------------------
@@ -635,7 +631,7 @@ method get-puzzle-image ( Str $category, Str $container --> Str ) {
   return Str unless ?$puzzle-id;
 
   # Return path to image
-  $!root-dir ~ "$category/$puzzle-id/image400.jpg"
+  $!root-dir ~ "{$container}_EX_/$category/$puzzle-id/image400.jpg"
 }
 
 #-------------------------------------------------------------------------------

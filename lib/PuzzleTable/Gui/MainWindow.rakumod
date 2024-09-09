@@ -164,7 +164,7 @@ method remote-options (
   }
 
   $config.select-category( $opt-category, $config.get-current-container);
-  $!sidebar.set-category($opt-category);
+  $!sidebar.set-category( $opt-category, $opt-container);
 
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {

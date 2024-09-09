@@ -42,11 +42,14 @@ submethod BUILD (
 method set-container-name ( Str:D $name --> Str ) {
   my Str $container-name;
   if ? $name {
+#`{{
     if $name eq '--' {
       $container-name = 'Default_EX_';
     }
 
     elsif $name !~~ m/ '_EX_' $/ {
+}}
+    if $name !~~ m/ '_EX_' $/ {
       $container-name = $name.tc ~ '_EX_';
     }
 

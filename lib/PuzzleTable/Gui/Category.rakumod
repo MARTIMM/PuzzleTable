@@ -54,8 +54,8 @@ method category-add ( N-Object $parameter ) {
   my Str $select-category = $!config.get-current-category;
 
   # Make a string list to be used in a combobox (dropdown)
-  my PuzzleTable::Gui::DropDown() $dropdown .= new;
-  $dropdown.fill-containers(:select-container($!config.get-current-container));
+  my PuzzleTable::Gui::DropDown $dropdown .= new;
+  $dropdown.fill-containers($!config.get-current-container);
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Add Category Dialog')
@@ -95,7 +95,7 @@ method do-category-add (
   PuzzleTable::Gui::DropDown :$dropdown
 ) {
   my Bool $sts-ok = False;
-  my Str $category = $entry.get-text.tc;
+  my Str $category = $entry.get-text;
 
   if !$category {
     $dialog.set-status('No category name specified');
@@ -109,7 +109,7 @@ method do-category-add (
 
   else {
     my Str $container = $dropdown.get-dropdown-text;
-    $container = '' if $container eq '--';
+#    $container = '' if $container eq '--';
 
     # Add category to list. Message gets defined if something is wrong.
     my Str $msg = $!config.add-category(
@@ -133,7 +133,7 @@ method do-category-add (
 =begin pod
 =head2 category-rename
 
-Select from menu to rename a category. There are two drop down lists, one of a list of containers and the other to list categories. The category list is the list of categories found in a container and changes when another container is selected.
+Select from menu to rename a category. First select a category from the sidebar. There are two lists of categories and containers. These are used to rename the selected category. There is also a drop down list to select a container where the renamed category must reside.
 
   .category-rename ( N-Object $parameter )
 
@@ -149,36 +149,43 @@ method category-rename ( N-Object $parameter ) {
   # Prepare dialog entries.
   # An entry to change the name of the selected category, prefilled with
   # the current one.
-  my Gnome::Gtk4::Entry $entry .= new-entry;
-  $entry.set-text($select-category);
+  my Gnome::Gtk4::Entry $new-cat-entry .= new-entry;
+  $new-cat-entry.set-text($select-category);
 
   # A dropdown to list categories. The current category is preselected.
-  my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
-  $dropdown-cat.fill-categories(
+  my PuzzleTable::Gui::DropDown $old-cat-dropdown .= new;
+  $old-cat-dropdown.fill-categories(
     $select-category, $select-container, :skip-default
   );
 
+  # A dropdown to list categories. The current category is preselected.
+  my PuzzleTable::Gui::DropDown $old-cont-dropdown .= new;
+  $old-cont-dropdown.fill-containers($select-container);
+
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
-    .fill-containers(:$select-container);
+  with my PuzzleTable::Gui::DropDown $new-cont-dropdown .= new {
+    .fill-containers($select-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
-    .trap-container-changes( $dropdown-cat, :skip-default);
+    .trap-container-changes( $old-cat-dropdown, :skip-default);
   }
 
   # Build the dialog
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Select container', $dropdown-cont);
-    .add-content( 'Specify the category to rename', $dropdown-cat);
-    .add-content( 'New category name', $entry);
+    .add-content( 'Select container to show category list', $old-cont-dropdown);
+    .add-content( 'Specify the category to rename', $old-cat-dropdown);
+    .add-content( 'Select container to move category to', $new-cont-dropdown);
+    .add-content( 'New category name', $new-cat-entry);
 
     .add-button(
       self, 'do-category-rename', 'Rename',
-      :$entry, :$dropdown-cat, :$dropdown-cont, :$dialog
+      :$old-cat-dropdown, :$old-cont-dropdown,
+      :$new-cat-entry, :$new-cont-dropdown,
+      :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -188,12 +195,14 @@ method category-rename ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-rename (
+  PuzzleTable::Gui::DropDown :$old-cat-dropdown,
+  PuzzleTable::Gui::DropDown :$old-cont-dropdown,
+  Gnome::Gtk4::Entry :$new-cat-entry,
+  PuzzleTable::Gui::DropDown :$new-cont-dropdown,
   PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::Entry :$entry, PuzzleTable::Gui::DropDown :$dropdown-cat,
-  PuzzleTable::Gui::DropDown :$dropdown-cont,
 ) {
   my Bool $sts-ok = False;
-   my Str $new-category = $entry.get-text;
+   my Str $new-category = $new-cat-entry.get-text;
 
   if ! $new-category {
     $dialog.set-status('No category name specified');
@@ -210,8 +219,10 @@ method do-category-rename (
   else {
     # Move members to other category and container
     my Str $message = $!config.move-category(
-      $dropdown-cat.get-dropdown-text, $!config.get-current-container,
-      $new-category, $dropdown-cont.get-dropdown-text
+      $old-cat-dropdown.get-dropdown-text,
+      $old-cat-dropdown.get-dropdown-text,
+      $new-category,
+      $new-cont-dropdown.get-dropdown-text
     );
 
     if $message {
@@ -244,7 +255,7 @@ method category-delete ( N-Object $parameter ) {
   # Find the container of the current category and use it in the container
   # list to preselect it.
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
-    .fill-containers(:select-container($!config.get-current-container));
+    .fill-containers($!config.get-current-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -301,7 +312,7 @@ method category-lock ( N-Object $parameter ) {
   # Find the container of the current category and use it in the container
   # list to preselect it.
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
-    .fill-containers(:select-container($!config.get-current-container));
+    .fill-containers($!config.get-current-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.

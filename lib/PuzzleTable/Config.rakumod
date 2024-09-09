@@ -71,13 +71,11 @@ submethod BUILD ( ) {
 
 #-------------------------------------------------------------------------------
 method store-main-window ( $main ) {
-  note "$?LINE $!main-window.gist()";
   $!main-window = $main;
 }
 
 #-------------------------------------------------------------------------------
 method get-main-window ( --> Mu ) {
-  note "$?LINE $!main-window.gist()";
   $!main-window
 }
 

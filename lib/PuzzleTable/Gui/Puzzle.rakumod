@@ -59,7 +59,7 @@ method puzzle-move ( N-Object $parameter ) {
   # Find the container of the current category and use it in the container
   # list to preselect it.
   with my PuzzleTable::Gui::DropDown $dropdown-cont .= new-dropdown {
-    .fill-containers(:select-container($!config.get-current-container));
+    .fill-containers($!config.get-current-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
