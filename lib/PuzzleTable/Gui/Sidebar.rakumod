@@ -229,8 +229,9 @@ method show-tooltip (
 # Method to handle a category selection
 method select-category ( Str:D :$category, Str:D :$container ) {
 #  $!current-category = $category;
-  $!main.application-window.set-title("Puzzle Table Display - $category")
-    if ?$!main.application-window;
+  $!main.application-window.set-title(
+    "Puzzle Table Display - $category in $container"
+  ) if ?$!main.application-window;
 
   # Clear the puzzle table before showing the puzzles of this category
   $!main.table.clear-table;
