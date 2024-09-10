@@ -102,9 +102,7 @@ method do-category-add (
   }
 
   elsif $category.lc eq 'default' {
-    $dialog.set-status(
-      'Category \'default\' is fixed in any form of text-case'
-    );
+    $dialog.set-status('Category \'default\' already exists');
   }
 
   else {
@@ -220,10 +218,10 @@ method do-category-rename (
   else {
     # Move members to other category and container
     my Str $message = $!config.move-category(
-      $old-cat-dropdown.get-dropdown-text,
-      $old-cont-dropdown.get-dropdown-text,
+      my Str $ocat = $old-cat-dropdown.get-dropdown-text,
+      my Str $ocont = $old-cont-dropdown.get-dropdown-text,
       $new-category,
-      $new-cont-dropdown.get-dropdown-text
+      my Str $ncont = $new-cont-dropdown.get-dropdown-text
     );
 
     if $message {
@@ -232,6 +230,12 @@ method do-category-rename (
 
     else {
       $!sidebar.fill-sidebar;
+      if $ocat eq $!config.get-current-category and
+         $ocont eq $!config.get-current-container
+      {
+        $!sidebar.select-category( $new-category, $ncont);
+      }
+
       $sts-ok = True;
     }
   }
