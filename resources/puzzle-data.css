@@ -4364,6 +4364,14 @@ progressbar.osd {
 .pt-sidebar-expander {
   background-image: none;
   background-color: #1b0024;
+
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+  border-style: groove;
+  border-color: #310041;
+  border-radius: 6px;
 }
 
 /* The label in the expander */
