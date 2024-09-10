@@ -159,17 +159,18 @@ method category-rename ( N-Object $parameter ) {
   );
 
   # A dropdown to list categories. The current category is preselected.
-  my PuzzleTable::Gui::DropDown $old-cont-dropdown .= new;
-  $old-cont-dropdown.fill-containers($select-container);
-
-  # Find the container of the current category and use it in the container
-  # list to preselect it.
-  with my PuzzleTable::Gui::DropDown $new-cont-dropdown .= new {
+  with my PuzzleTable::Gui::DropDown $old-cont-dropdown .= new {
     .fill-containers($select-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
     .trap-container-changes( $old-cat-dropdown, :skip-default);
+  }
+
+  # Find the container of the current category and use it in the container
+  # list to preselect it.
+  with my PuzzleTable::Gui::DropDown $new-cont-dropdown .= new {
+    .fill-containers($select-container);
   }
 
   # Build the dialog
@@ -220,7 +221,7 @@ method do-category-rename (
     # Move members to other category and container
     my Str $message = $!config.move-category(
       $old-cat-dropdown.get-dropdown-text,
-      $old-cat-dropdown.get-dropdown-text,
+      $old-cont-dropdown.get-dropdown-text,
       $new-category,
       $new-cont-dropdown.get-dropdown-text
     );
@@ -269,7 +270,8 @@ method category-delete ( N-Object $parameter ) {
     .add-content( 'Select category to delete', $dropdown-cat);
 
     .add-button(
-      self, 'do-category-delete', 'Delete', :dropdown($dropdown-cat), :$dialog
+      self, 'do-category-delete', 'Delete',
+      :$dropdown-cat, :$dropdown-cont, :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -279,18 +281,27 @@ method category-delete ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-delete (
-  PuzzleTable::Gui::Dialog :$dialog, PuzzleTable::Gui::DropDown :$dropdown
+  PuzzleTable::Gui::Dialog :$dialog,
+  PuzzleTable::Gui::DropDown :$dropdown-cat,
+  PuzzleTable::Gui::DropDown :$dropdown-cont
 ) {
   my Bool $sts-ok = False;
-  my Str $category = $dropdown.get-dropdown-text;
-  if $!config.has-puzzles($category) {
+  my Str $category = $dropdown-cat.get-dropdown-text;
+  my Str $container = $dropdown-cont.get-dropdown-text;
+  if $!config.has-puzzles( $category, $container) {
     $dialog.set-status('Category still has puzzles');
   }
 
   else {
-    $!config.delete-category($category);
-    $!sidebar.fill-sidebar;
-    $sts-ok = True;
+    my Str $message = $!config.delete-category( $category, $container);
+    if ?$message {
+      $dialog.set-status($message);
+    }
+
+    else {
+      $!sidebar.fill-sidebar;
+      $sts-ok = True;
+    }
   }
 
   $dialog.destroy-dialog if $sts-ok;

@@ -115,7 +115,10 @@ method do-move-puzzles (
     }
 
     # Selecting the category again will redraw the puzzle table
-    $!main.sidebar.select-category(:category($current-cat));
+    $!main.sidebar.select-category(
+      :category($dest-cat),
+      :container($dest-cont)
+    );
 
     # Update status bar to show number of puzzles
     $!main.statusbar.set-status(
@@ -170,7 +173,8 @@ method do-archive-puzzles (
 
   if $check-button.get-active.Bool {
     my Str $current-cat = $!config.get-current-category;
-    $!config.select-category( $current-cat, $!config.get-current-container);
+    my Str $current-cont = $!config.get-current-container;
+    $!config.select-category( $current-cat, $current-cont);
 
     # Get the selected puzzles from the bitset and move them
     my Array $puzzle-ids = [];
@@ -184,7 +188,9 @@ method do-archive-puzzles (
     $!config.archive-puzzles( $puzzle-ids, PUZZLE_TRASH);
 
     # Update puzzle table
-    $!main.sidebar.select-category(:category($current-cat));
+    $!main.sidebar.select-category(
+      :category($current-cat), :container($current-cont)
+    );
 
     # Update status bar to show number of puzzles
     $!main.statusbar.set-status(
