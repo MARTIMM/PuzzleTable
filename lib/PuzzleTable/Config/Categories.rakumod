@@ -147,7 +147,7 @@ method move-category (
   $cont-to = $!current-category.set-container-name($cont-to);
 
   my Hash $cats := $!categories-config<containers>;
-  
+
   if $cats{$cont-from}<categories>{$cat-from}:exists and 
      $cats{$cont-to}<categories>{$cat-to}:!exists
   {
