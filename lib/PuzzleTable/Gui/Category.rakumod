@@ -233,7 +233,9 @@ method do-category-rename (
       if $ocat eq $!config.get-current-category and
          $ocont eq $!config.get-current-container
       {
-        $!sidebar.select-category( $new-category, $ncont);
+        $!sidebar.select-category(
+          :category($new-category), :container($ncont)
+        );
       }
 
       $sts-ok = True;
@@ -303,6 +305,11 @@ method do-category-delete (
     }
 
     else {
+      if $category eq $!config.get-current-category and
+         $container eq $!config.get-current-container
+      {
+        $!sidebar.select-category( :category('Default'), :container('Default'));
+      }
       $!sidebar.fill-sidebar;
       $sts-ok = True;
     }
