@@ -152,7 +152,7 @@ method remote-options (
   my Str $opt-container = 'Default';
 
   if $o<container>:exists {
-    $opt-container = $o<category>;
+    $opt-container = $o<container>;
     $config.add-container($opt-container);
   }
 
