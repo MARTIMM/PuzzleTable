@@ -82,8 +82,7 @@ method save-categories-config ( ) {
 }
 
 #-------------------------------------------------------------------------------
-# $category-container can be one of '', '--', '...' or '..._EX_'
-#
+# $category-container can be one of '', <name> or <name>_EX_
 method add-category (
   Str:D $category-name is copy, Str:D $container is copy, 
   :$lockable is copy = False
@@ -230,51 +229,6 @@ method get-categories ( Str:D $container is copy --> List ) {
 
   @cat
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-method group-in-subcategory (
-  Str:D $category-container is copy, Str:D $category-name is copy
-) {
-  $category-name .= tc;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
-
-  # Only move category when name is not in the subcategory
-  #TODO when cats are unique everywhere then test is not needed
-  my Hash $categories := $!categories-config<containers>;
-  if $categories{$category-name}:exists
-     and $categories{$category-container}{$category-name}:!exists
-  {
-    $categories{$category-container}<categories>{$category-name} =
-      $categories{$category-name}:delete;
-
-    self.save-categories-config;
-  }
-}
-
-#-------------------------------------------------------------------------------
-method ungroup-from-subcategory (
-  Str $category-container is copy, Str $category-name is copy
-) {
-  $category-name .= tc;
-  $category-container = $category-container.tc ~ '_EX_'
-     if ? $category-container and $category-container !~~ m/ '_EX_' $/;
-
-  # Only move back when name in subcat is not in cat
-  #TODO when cats are unique everywhere then test is not needed
-  my Hash $categories := $!categories-config<containers>;
-  if $categories{$category-container}<categories>{$category-name}:exists
-     and $categories{$category-name}:!exists
-  {
-    # Move category out of subcategory
-    $categories{$category-name} =
-      $categories{$category-container}<categories>{$category-name}:delete;
-
-    self.save-categories-config;
-  }
-}
-}}
 
 #-------------------------------------------------------------------------------
 method get-current-category ( --> Str ) {
