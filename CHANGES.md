@@ -39,15 +39,15 @@
 * program methods
   * [x] rename and move archiving operations into one module
   * [ ] drag and drop.
-  * [x] remember state of an opened container
+  * [x] remember state of an opened (expanded) container
   * [x] need to add key `<categories>` in containers to add other keys
   * [ ] add state info to containers to sum up states of contained categories
   * [x] importing puzzles should be shown in table and counts updated
   * update dialogs
     * [ ] work with focus and return chars in entries.
     * [x] show more space in a dialog. css font size.
-    * [x] filled in values if possible on entry and drop down.
-    * [x] 
+    * [x] filled in values if possible on entries and drop down lists.
+    * [x] extra dialogs to delete empty containers and categories
   * [x] puzzle table display update
   * [ ] fix needed; sometimes quit does not end program
 
