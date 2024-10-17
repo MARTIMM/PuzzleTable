@@ -26,7 +26,7 @@
 * command line
   * [x] add `--restore=<name>` option to restore an archive.
   * [ ] add `--palapeli=<type>` option to select preferred program.
-  * [ ] add `--puzzle-table-root=<path>` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path.
+  * [ ] add `--config=<path>[,<path>, …]` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path. Note however that the css and images are still used from its default location and that puzzle-table-data and puzzle-trash are only looked for with this option.
     * `<path>`: data such as css files.
     * `<path>/images`: images for buttons.
     * `<path/puzzle-table-data`: data for puzzles.
@@ -50,6 +50,15 @@
     * [x] extra dialogs to delete empty containers and categories
   * [x] puzzle table display update
   * [ ] fix needed; sometimes quit does not end program
+
+* storage
+  * [ ] When growing too large, configurations should be divided over several locations. Current default location is at `/home/marcel/.config/io.github.martimm.puzzle-table/` and has following files and directories
+    * `images`. Not duplicated.
+    * `puzzle-data.css`. Not duplicated.
+    * `puzzle-table-data`. Here is the puzzle data stored, so it must be duplicated.
+    * `puzzle-trash`. Here is the puzzle trash stored, so it must also be duplicated.
+    The module **PuzzleTable::Config::Categories** gets the root already from an argument to BUILD() so we can maintain several instances of different roots. Also, the config file `categories.yaml` must be split because only the _containers_ key is different for the several roots.
+    * [x] Split fixed portion in `categories.yaml` into <root>/config.yaml.
 
 ---
 * 2024-08-25 0.7.0

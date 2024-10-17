@@ -148,7 +148,7 @@ subtest 'move', {
     is-deeply $config<containers><Default_EX_><categories><Cat-5><status>, $sts,
       '.get-category-status()';
 
-    my Seq $cats = .get-categories('');
+    my List $cats = .get-categories('');
     is $cats.elems, 3, '.get-categories(): lockable filtered';
   }
 }
@@ -167,13 +167,13 @@ subtest 'containers', {
     is $config<containers><Options_EX_><categories>.elems, 4,
       '.add-category() elems';
 
-    my Seq $cats = .get-categories('Options');
+    my List $cats = .get-categories('Options');
     is $cats.elems, 2, '.get-categories(): filtered, container';
 
     lives-ok { .unlock('hoeperdepoep'); }, '.unlock()';
     $cats = .get-categories('options');
     is $cats.elems, 4, '.get-categories(): unfiltered, container';
-    is-deeply $cats, ( 'Opt 1', 'Opt 2', 'Opt 3', 'Opt 4'),
+    is-deeply $cats, [ 'Opt 1', 'Opt 2', 'Opt 3', 'Opt 4'],
       '.get-categories(): check key names in subcat';
 
     $message = .select-category( 'opt 1', '');
@@ -207,7 +207,7 @@ subtest 'containers', {
 #    $message =
       .add-category( 'set 2', 'sets', :!lockable);
     $cats = .get-categories('sets');
-    is-deeply $cats, ( 'Set 1', 'Set 2' ), '.add-category() add in container';
+    is-deeply $cats, [ 'Set 1', 'Set 2' ], '.add-category() add in container';
     $message =
       .add-category( 'set 2', 'sets', :!lockable);
     is $message, "Category Set 2 already exists",
@@ -237,7 +237,7 @@ subtest 'container', {
 
     ok .add-container('abc'), '.add-container()';
     nok .add-container('abc'), '.add-container() duplicate';
-    is-deeply .get-containers, ( 'Abc', 'Default', 'Sets', "Sub options"), '.get-containers()';
+    is-deeply .get-containers, [ 'Abc', 'Default', 'Sets', "Sub options"], '.get-containers()';
 
     nok .delete-container('sets'), '.delete-container(): container not empty';
     ok .delete-container('abc'), '.delete-container(): container deleted';

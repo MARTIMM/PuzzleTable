@@ -1,6 +1,7 @@
 use v6.d;
 
 use PuzzleTable::Types;
+use PuzzleTable::Config::Global;
 use PuzzleTable::Config::Categories;
 
 use Gnome::Gtk4::CssProvider:api<2>;
@@ -23,14 +24,20 @@ has Gnome::Gtk4::CssProvider $!css-provider;
 has Version $.version = v0.5.3;
 has Array $.options = [<
   category=s container=s pala-collection=s puzzles lock h help version verbose
-  restore=s unlock=s
+  restore=s unlock=s config=s
 >];
 
-has PuzzleTable::Config::Categories $!categories handles( <
+has PuzzleTable::Config::Global $!global-settings handles( <
       get-password check-password set-password
-      is-category-lockable set-category-lockable is-locked lock unlock
-      set-palapeli-preference get-palapeli-preference get-palapeli-image-size
-      get-palapeli-collection run-palapeli
+      is-locked lock unlock
+      run-palapeli
+      get-palapeli-preference set-palapeli-preference
+      get-palapeli-image-size set-palapeli-image-size
+      get-palapeli-collection
+    >);
+
+has PuzzleTable::Config::Categories $!categories handles( <
+      is-category-lockable set-category-lockable
       get-categories add-category delete-category move-category
       select-category find-container get-current-container
       get-containers add-container delete-container is-expanded set-expand
@@ -58,8 +65,12 @@ submethod BUILD ( ) {
   $!css-provider .= new-cssprovider;
   $!css-provider.load-from-path($css-file);
 
-  # Load the categories configuraton from the puzzle data directory
-  $!categories .= new(:root-dir(PUZZLE_TABLE_DATA));
+  # Load the global and default categories configuraton
+  # from the puzzle data directory
+
+  $!global-settings .= new( :root-dir(PUZZLE_TABLE_DATA));
+  $!categories .= new(:root-dir(PUZZLE_TABLE_DATA), :config(self));
+note "$?LINE $!global-settings.gist(), $!categories.gist()";
 
   # Save when an interrupt arrives
   signal(SIGINT).tap( {

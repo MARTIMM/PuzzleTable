@@ -87,6 +87,7 @@ method create-grid ( --> Gnome::Gtk4::Grid ) {
     .set-margin-start(3);
     .set-margin-end(3);
     .set-hexpand(True);
+note "$?LINE visible: ", .is-visible;
   }
 
   with my Gnome::Gtk4::ProgressBar $progress-bar .= new-progressbar {

@@ -11,12 +11,13 @@ use PuzzleTable::Config::Category;
 unit class PuzzleTable::Config::Categories:auth<github:MARTIMM>;
 
 has Str $!root-dir;
-has Str $.config-path;
+has Str $!config-path;
 has Hash $.categories-config;
 has PuzzleTable::Config::Category $!current-category;
+has #`{{PuzzleTable::Config}} $!config;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str:D :$!root-dir ) {
+submethod BUILD ( Str:D :$!root-dir, :$!config ) {
 
   $!config-path = "$!root-dir/categories.yaml";
   if $!config-path.IO.r {
@@ -26,6 +27,7 @@ submethod BUILD ( Str:D :$!root-dir ) {
   else {
     $!categories-config<containers><Default_EX_><categories><Default> = %(:!lockable);
 
+#`{{
     $!categories-config<password> = '';
 
     given $!categories-config<palapeli><Flatpak> {
@@ -55,18 +57,20 @@ submethod BUILD ( Str:D :$!root-dir ) {
     # Default width and height of displayed puzzle image
     $!categories-config<puzzle-image-width> = 300;
     $!categories-config<puzzle-image-height> = 300;
-
+}}
 #    self.save-categories-config;
   }
 
   # Always lock at start
-  $!categories-config<locked> = True;
+  #$!categories-config<locked> = True;
 
   # Always select the default category
   $!current-category .= new(
     :category-name('Default'), :container(''), :$!root-dir
   );
 }
+
+#PUZZLE_CONFIG
 
 #-------------------------------------------------------------------------------
 # Called after adding, removing, or other changes are made on a category
@@ -214,7 +218,7 @@ method delete-category (
 
 #-------------------------------------------------------------------------------
 method get-categories ( Str:D $container is copy --> List ) {
-  my Bool $locked = self.is-locked;
+  my Bool $locked = $!config.is-locked;
   $container = $!current-category.set-container-name($container);
 
   my @cat-key-list;
@@ -396,7 +400,7 @@ method delete-container ( Str $container is copy = '' --> Bool ) {
 #-------------------------------------------------------------------------------
 method get-containers ( --> List ) {
 
-  my Bool $locked = self.is-locked;
+  my Bool $locked = $!config.is-locked;
   my @containers = ();
 
   for $!categories-config<containers>.keys.sort -> $container {
@@ -659,6 +663,7 @@ method has-puzzles (
   $hp
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method set-palapeli-preference ( Str $preference ) {
   if $preference ~~ any(<Snap Flatpak Standard>) {
@@ -769,12 +774,14 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
   $progress
 }
+}}
 
 #-------------------------------------------------------------------------------
 method update-puzzle ( Hash $puzzle ) {
   $!current-category.update-puzzle( $puzzle<PuzzleID>, $puzzle);
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method get-password ( --> Str ) {
   $!categories-config<password> // ''
@@ -805,6 +812,7 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 
   $is-set
 }
+}}
 
 #-------------------------------------------------------------------------------
 # Get the category lockable state. Returns undefined when container/category
@@ -849,6 +857,7 @@ method set-category-lockable (
   $is-set
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 # Get the puzzle table locking state
 method is-locked ( --> Bool ) {
@@ -870,4 +879,4 @@ method unlock ( Str $password --> Bool ) {
   self.save-categories-config;
   $ok
 }
-
+}}
