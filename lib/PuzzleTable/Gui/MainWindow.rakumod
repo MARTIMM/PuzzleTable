@@ -83,7 +83,7 @@ method app-startup ( ) {
 method local-options ( N-Object $n-variant-dict --> Int ) {
 #say 'local opts';
 
-  my PuzzleTable::Config $config .= instance;
+#  my PuzzleTable::Config $config .= instance;
 
   # Management and admin
   my Int $exit-code = -1;
@@ -99,11 +99,26 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
     }
   }
 
-  my Capture $o = get-options(|$config.options);
+  my Capture $o = get-options(| $PuzzleTable::Config::options);
+
+  # This option can be used multiple times
+  my Str $root-table = PUZZLE_TABLE_DATA;
+  if $o<root-table>:exists {
+    $root-table = $o<root-table>;
+  }
+
+  # Prepare initialization of the config module
+  my PuzzleTable::Config $config;
+  my Str $root-global = GLOBAL_CONFIG;
+  if $o<root-global>:exists {
+    $root-global = $o<root-global>;
+  }
+
+  $config .= instance( $root-global, $root-table);
 
   # Handle the simple options here which do not require the primary instance
   if $o<version> {
-    note "Version of puzzle table; $config.version()";
+    note "Version of puzzle table; $PuzzleTable::Type::version";
     $exit-code = 0;
   }
 
@@ -119,14 +134,7 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 method remote-options (
   Gnome::Gio::ApplicationCommandLine() $command-line --> Int
 ) {
-#say 'remote opts';
-
-  my PuzzleTable::Config $config .= instance;
-
-  # We need the table and category management here already
-  $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
-  $!table .= new-scrolledwindow(:main(self)) unless ?$!table;
-  $!sidebar .= new-scrolledwindow(:main(self)) unless $!sidebar;
+say 'remote opts';
 
   my Int $exit-code = 0;
 #  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
@@ -134,9 +142,25 @@ method remote-options (
 #  );
 
   my Capture $o = get-options-from(
-    $command-line.get-arguments(Pointer), | $config.options
+    $command-line.get-arguments(Pointer), | $PuzzleTable::Config::options
   );
   my @args = $o.list;
+
+  my PuzzleTable::Config $config .= instance;
+
+  # This option can be used multiple times but only checked when called remotely
+  # First time it is called in local-options() above.
+  if $!table-is-displayed and $o<root-table>:exists {
+    $config.add-table-root($o<root-table>);
+  }
+
+
+note "$?LINE $config.gist()";
+
+  # We need the table and category management here already
+  $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
+  $!table .= new-scrolledwindow(:main(self)) unless ?$!table;
+  $!sidebar .= new-scrolledwindow(:main(self)) unless $!sidebar;
 
   my Bool $lockable = False;
   if $o<lock>:exists {
