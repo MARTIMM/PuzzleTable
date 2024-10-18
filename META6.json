@@ -1,7 +1,7 @@
 {
   "description": "",
   "name": "Gnome::PuzzleTable",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ ""],
@@ -30,6 +30,7 @@
     "PuzzleTable::Config": "lib/PuzzleTable/Config.rakumod",
     "PuzzleTable::Config::Categories": "lib/PuzzleTable/Config/Categories.rakumod",
     "PuzzleTable::Config::Category": "lib/PuzzleTable/Config/Category.rakumod",
+    "PuzzleTable::Config::Global": "lib/PuzzleTable/Config/Global.rakumod",
     "PuzzleTable::Config::Puzzle": "lib/PuzzleTable/Config/Puzzle.rakumod",
     "PuzzleTable::Archive": "lib/PuzzleTable/Archive.rakumod",
     "PuzzleTable::Types": "lib/PuzzleTable/Types.rakumod"
