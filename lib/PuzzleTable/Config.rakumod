@@ -21,10 +21,9 @@ has $!main-window;
 
 has Gnome::Gtk4::CssProvider $!css-provider;
 
-has Version $.version = v0.5.3;
-has Array $.options = [<
+our $options = [<
   category=s container=s pala-collection=s puzzles lock h help version verbose
-  restore=s unlock=s config=s
+  restore=s unlock=s root-global=s root-table=s
 >];
 
 has PuzzleTable::Config::Global $!global-settings handles( <
@@ -47,7 +46,8 @@ has PuzzleTable::Config::Categories $!categories handles( <
     >);
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( ) {
+submethod BUILD ( Str:D :$root-global, Str:D :$root-table ) {
+note "$?LINE $root-global, $root-table";
 
   # Copy images to the data directory
   my Str $png-file;
@@ -67,10 +67,8 @@ submethod BUILD ( ) {
 
   # Load the global and default categories configuraton
   # from the puzzle data directory
-
-  $!global-settings .= new( :root-dir(PUZZLE_TABLE_DATA));
-  $!categories .= new(:root-dir(PUZZLE_TABLE_DATA), :config(self));
-note "$?LINE $!global-settings.gist(), $!categories.gist()";
+  $!global-settings .= new( :root-dir($root-global));
+  $!categories .= new(:root-dir($root-table), :config(self));
 
   # Save when an interrupt arrives
   signal(SIGINT).tap( {
@@ -78,6 +76,33 @@ note "$?LINE $!global-settings.gist(), $!categories.gist()";
       exit 0;
     }
   );
+}
+
+#-------------------------------------------------------------------------------
+my PuzzleTable::Config $instance;
+multi method instance (
+  Str:D $root-global, Str:D $root-table --> PuzzleTable::Config
+) {
+note "$?LINE $root-global, $root-table";
+  $instance = self.bless( :$root-global, :$root-table);
+
+  $instance
+}
+
+multi method instance ( --> PuzzleTable::Config ) {
+  die "No instance of Config" unless ?$instance;
+  $instance
+}
+
+#-------------------------------------------------------------------------------
+method set-css ( N-Object $context, Str :$css-class = '' ) {
+  return unless ?$css-class;
+
+  my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
+  $style-context.add-provider(
+    $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
+  );
+  $style-context.add-class($css-class);
 }
 
 #-------------------------------------------------------------------------------
@@ -91,20 +116,5 @@ method get-main-window ( --> Mu ) {
 }
 
 #-------------------------------------------------------------------------------
-my PuzzleTable::Config $instance;
-method instance ( --> PuzzleTable::Config ) {
-  $instance //= self.bless;
-
-  $instance
-}
-
-#-------------------------------------------------------------------------------
-method set-css ( N-Object $context, Str :$css-class = '' ) {
-  return unless ?$css-class;
-
-  my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
-  $style-context.add-provider(
-    $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
-  );
-  $style-context.add-class($css-class);
+method add-table-root ( Str $root-table ) {
 }
