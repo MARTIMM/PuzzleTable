@@ -4,6 +4,7 @@ use Test;
 use YAMLish;
 use Digest::SHA256::Native;
 
+use PuzzleTable::Config::Global;
 use PuzzleTable::Config::Categories;
 
 #-------------------------------------------------------------------------------
@@ -16,26 +17,46 @@ constant CONFDATA = TESTDATA ~ 'puzzle-table-data/';
 constant GLOBDATA = TESTDATA;
 
 cleanup-puzzle-table-data(CONFDATA);
+unlink "{GLOBDATA}global-config.yaml";
 
 my Str $message;
 my Hash $config;
 
-my PuzzleTable::Config::Categories $categories .= new(
-  :root-dir(CONFDATA)
-);
 
-#`{{
-subtest 'password', {
-  with $categories {
+my PuzzleTable::Config::Categories $categories .= new(:root-dir(CONFDATA));
+$message = $categories.import-collection(COLLDATA);
+
+my PuzzleTable::Config::Global $global .= new(:root-dir(GLOBDATA));
+
+subtest 'global config', {
+  with $global {
     is .get-password, '', '.get-password()';
     ok .check-password(''), '.check-password()';
 
     .set-password( '', 'hoeperdepoep');
     ok .check-password('hoeperdepoep'), '.set-password()';
+
+    .set-palapeli-image-size( 100, 200);
+    is-deeply .get-palapeli-image-size, ( 100, 200),
+        '.set-palapeli-image-size() / .get-palapeli-image-size()';
+
+    my Array $puzzles = [|$categories.get-puzzles];
+    #note $puzzles.gist;
+
+    .set-palapeli-preference('Flatpak');
+    is .get-palapeli-preference, 'Flatpak', '.get-palapeli-preference()';
+    $config = load-yaml("{GLOBDATA}global-config.yaml".IO.slurp);
+    is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
+
+    # Works!
+    #lives-ok { .run-palapeli($puzzles[0]); }, '.run-palapeli()';
   }
 }
-}}
 
+done-testing;
+exit;
+
+#`{{
 subtest 'category', {
   with $categories {
     #$category .= new( :category-name<cat-2>, :root-dir(CONFDATA));
@@ -114,22 +135,6 @@ subtest 'puzzle', {
   }
 }
 
-#`{{
-subtest 'palapeli', {
-  with $categories {
-
-    my Array $puzzles = [|.get-puzzles];
-    #note $puzzles.gist;
-
-    .set-palapeli-preference('Flatpak');
-    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
-
-    # Works!
-    #lives-ok { .run-palapeli($puzzles[1]); }, '.run-palapeli()';
-  }
-}
-}}
 
 subtest 'move', {
   with $categories {
@@ -282,7 +287,7 @@ subtest 'category continued', {
        '.delete-category(): category does not exist';
   }
 }
-
+}}
 
 done-testing;
 exit;
