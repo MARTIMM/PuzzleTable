@@ -58,9 +58,10 @@
     * `puzzle-table-data`. Here is the puzzle data stored, so it must be duplicated.
     * `puzzle-trash`. Here is the puzzle trash stored, so it must also be duplicated.
     The module **PuzzleTable::Config::Categories** gets the root already from an argument to BUILD() so we can maintain several instances of different roots. Also, the config file `categories.yaml` must be split because only the _containers_ key is different for the several roots.
-    * [x] Split fixed portion in `categories.yaml` into `<root>/config.yaml`.
-    * [ ] The instance of **PuzzleTable::Config::Categories** is saved in **PuzzleTable::Config**. We must turn this into an Array or Hash.
-    * The program is fixed to a location in `~/.config`. This must now be controlled by new options. When options are absent the program defaults to the default location.
+    * [x] Split fixed portion in `categories.yaml` into `<root>/global-config.yaml`.
+    * [ ] Because of this, the top level key in `categories.yaml` can be removed because we have moved the other toplevel keys to the `global-config.yaml`.
+    * [ ] The instance of **PuzzleTable::Config::Categories** is saved in **PuzzleTable::Config**. Because of using handles on the class we cannot have an array to store several **::Categories** classes. So the solution to this is to maintain it in the **::Categories** class.
+    * The program is fixed to a location in `~/.config`. This must now be controlled by new options. When options are absent the program defaults to the default location. The statement `has Hash $.categories-config;` found the module, can be extended holding a root path in its top level key while the the second level becomes the container name keys. The paths are unique. where the 
       * [ ] --root-global=\<path>. Option to set the location for all global data like the `<root>/config.yaml` and images. By default in the `~/.config` directory. This can be set only once when the first instance of the program starts.
       * [ ] --root-table=\<path>,\<path>,…. This points to the directory where the table data and trash archive is stored. This can be set multiple times and defaults to the path set by the --root-global option.
 
