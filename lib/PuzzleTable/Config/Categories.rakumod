@@ -699,6 +699,7 @@ method get-palapeli-collection ( --> Str ) {
   my $preference = $!categories-config<palapeli><preference>;
   $!categories-config<palapeli>{$preference}<collection>
 }
+}}
 
 #-------------------------------------------------------------------------------
 # This puzzle hash must have the extra fields added by get-puzzles
@@ -774,7 +775,6 @@ method run-palapeli ( Hash $puzzle --> Str ) {
 
   $progress
 }
-}}
 
 #-------------------------------------------------------------------------------
 method update-puzzle ( Hash $puzzle ) {

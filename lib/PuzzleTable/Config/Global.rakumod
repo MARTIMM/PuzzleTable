@@ -694,6 +694,7 @@ method get-palapeli-collection ( --> Str ) {
   $!global-config<palapeli>{$preference}<collection>
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 # This puzzle hash must have the extra fields added by get-puzzles
 method run-palapeli ( Hash $puzzle --> Str ) {
@@ -771,6 +772,7 @@ note "$?LINE $!global-config.gist()";
 
   $progress
 }
+}}
 
 #`{{
 #-------------------------------------------------------------------------------
