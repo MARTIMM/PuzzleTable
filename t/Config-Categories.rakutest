@@ -78,8 +78,8 @@ subtest 'puzzle', {
     ok ! $message, '.import-collection(); puzzles imported from collection';
 
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<containers><Default_EX_><categories>.elems, 3, '.save-categories-config() (implicit)';
-    ok !$config<containers><Default_EX_><categories><Cat-2><lockable>, 'Check categories config';
+    is $config<Default_EX_><categories>.elems, 3, '.save-categories-config() (implicit)';
+    ok !$config<Default_EX_><categories><Cat-2><lockable>, 'Check categories config';
     $config = load-yaml("{CONFDATA}Default_EX_/Cat-2/puzzles.yaml".IO.slurp);
     is $config<members>.elems, 2, 'Check category config';
 
@@ -136,7 +136,7 @@ subtest 'move', {
 
     .move-category( 'Cat-1', '', 'Cat-5', '');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    ok $config<containers><Default_EX_><categories><Cat-5>:exists, '.move-category()';
+    ok $config<Default_EX_><categories><Cat-5>:exists, '.move-category()';
 
     .select-category( 'Cat-2', '');
     .move-puzzle( 'Cat-5', '', 'p002');
@@ -149,7 +149,7 @@ subtest 'move', {
     lives-ok { .update-category-status; }, '.update-category-status()';
     #.save-categories-config;
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is-deeply $config<containers><Default_EX_><categories><Cat-5><status>, $sts,
+    is-deeply $config<Default_EX_><categories><Cat-5><status>, $sts,
       '.get-category-status()';
 
     my List $cats = .get-categories('');
@@ -166,9 +166,9 @@ subtest 'containers', {
     $message = .add-category( 'opt 4', 'options', :lockable);
 
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    ok $config<containers><Options_EX_>:exists,
+    ok $config<Options_EX_>:exists,
       '.add-category() with container';
-    is $config<containers><Options_EX_><categories>.elems, 4,
+    is $config<Options_EX_><categories>.elems, 4,
       '.add-category() elems';
 
     my List $cats = .get-categories('Options');
@@ -188,20 +188,20 @@ subtest 'containers', {
 
     .move-category( 'opt 1', 'options', 'opt 1', '');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<containers><Options_EX_><categories>.elems, 3,
+    is $config<Options_EX_><categories>.elems, 3,
        '.move-category() elems';
-    ok $config<containers><Default_EX_><categories><opt 1>:exists, '.move-category() check';
+    ok $config<Default_EX_><categories><opt 1>:exists, '.move-category() check';
 
     .move-category( 'opt 2', 'options', 'opt 2', 'sub options');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    ok $config<containers>{'Sub options_EX_'}<categories>:exists,
+    ok $config{'Sub options_EX_'}<categories>:exists,
        '.move-category() to other container';
 
     .move-category( 'opt 3', 'options', 'opt 3', 'sub options');
     nok .delete-container('options'), '.delete-container() not enpty' ;
     .move-category( 'opt 4', 'options', 'opt 4', 'sub options');
     $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<containers><Options_EX_><categories>.elems, 0,
+    is $config<Options_EX_><categories>.elems, 0,
        '.move-category() subcat empty';
     ok .delete-container('options'), '.delete-container() deleted' ;
 
