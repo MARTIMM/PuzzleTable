@@ -90,7 +90,7 @@ method add-category (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
 
-  my Hash $cats := $!global-config<containers>;
+  my Hash $cats := $!global-config;
   if $cats{$container}<categories>{$category-name}:exists {
     $message = "Category $category-name already exists";
   }
@@ -118,7 +118,7 @@ method select-category (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
 
-  my Hash $cats := $!global-config<containers>;
+  my Hash $cats := $!global-config;
   if $cats{$container}<categories>{$category-name}:exists {
     $!current-category .= new( :$category-name, :$container, :$!root-dir);
   }
@@ -143,7 +143,7 @@ method move-category (
   $cont-from = $!current-category.set-container-name($cont-from);
   $cont-to = $!current-category.set-container-name($cont-to);
 
-  my Hash $cats := $!global-config<containers>;
+  my Hash $cats := $!global-config;
 
   if $cats{$cont-from}<categories>{$cat-from}:exists and 
      $cats{$cont-to}<categories>{$cat-to}:!exists
@@ -179,7 +179,7 @@ method delete-category (
   $category .= tc;
   $container = $!current-category.set-container-name($container);
 
-  my Hash $conts := $!global-config<containers>;
+  my Hash $conts := $!global-config;
   if $conts{$container}:exists {
     if $conts{$container}<categories>{$category}:exists {
       if self.has-puzzles( $category, $container) {
@@ -217,7 +217,7 @@ method get-categories ( Str:D $container is copy --> List ) {
 
   my @cat-key-list;
   @cat-key-list =
-    $!global-config<containers>{$container}<categories>.keys.sort;
+    $!global-config{$container}<categories>.keys.sort;
 
   my @cat = ();
   for @cat-key-list -> $category {
@@ -248,7 +248,7 @@ method get-category-status (
   my Array $cat-status = [ 0, 0, 0, 0];
 
   my Hash $categories :=
-     $!global-config<containers>{$container}<categories>;
+     $!global-config{$container}<categories>;
 
 #note "$?LINE $category-name, $container, ", $categories{$category-name}<status>:exists;
 
@@ -317,11 +317,11 @@ method update-category-status (
   my Str $container-name = $category.container;
 
   if ? $container-name {
-    $!global-config<containers>{$container-name}<categories>{$category-name}<status> = $cat-status;
+    $!global-config{$container-name}<categories>{$category-name}<status> = $cat-status;
   }
 
   else {
-    $!global-config<containers>{$category-name}<status> = $cat-status;
+    $!global-config{$category-name}<status> = $cat-status;
   }
 
   self.save-categories-config;
@@ -337,7 +337,7 @@ method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
 method find-container ( Str:D $category-name is copy --> Str ) {
   $category-name .= tc;
 
-  my Hash $cats := $!global-config<containers>;
+  my Hash $cats := $!global-config;
   my Str $container;
   for $cats.keys -> $cat {
     if $cat ~~ m/ '_EX_' $/ {
@@ -365,8 +365,8 @@ method add-container ( Str $container is copy = '' --> Bool ) {
   my Bool $add-ok = False;
   $container = $!current-category.set-container-name($container);
 
-  if $!global-config<containers>{$container}:!exists {
-    $!global-config<containers>{$container} = %(:categories(%()));
+  if $!global-config{$container}:!exists {
+    $!global-config{$container} = %(:categories(%()));
     mkdir "$!root-dir$container", 0o700 unless "$!root-dir$container".IO.e;
     $add-ok = True;
   }
@@ -379,10 +379,10 @@ method delete-container ( Str $container is copy = '' --> Bool ) {
   my Bool $delete-ok = False;
   $container = $!current-category.set-container-name($container);
 
-  if $!global-config<containers>{$container}:exists and
-     $!global-config<containers>{$container}<categories>.elems == 0
+  if $!global-config{$container}:exists and
+     $!global-config{$container}<categories>.elems == 0
   {
-    $!global-config<containers>{$container}:delete;
+    $!global-config{$container}:delete;
     self.save-categories-config;
     rmdir "$!root-dir$container";
     $delete-ok = True;
@@ -397,7 +397,7 @@ method get-containers ( --> List ) {
   my Bool $locked = self.is-locked;
   my @containers = ();
 
-  for $!global-config<containers>.keys.sort -> $container {
+  for $!global-config.keys.sort -> $container {
     # Containers have an _EX_ extension which is removed
     # Don't include in list if lockable and table is locked
     (@containers.push: S/ '_EX_' $// with $container)
@@ -411,8 +411,8 @@ method get-containers ( --> List ) {
 method is-expanded ( Str:D $container is copy --> Bool ) {
   my Bool $expanded = False;
   $container = $!current-category.set-container-name($container);
-  $expanded = $!global-config<containers>{$container}<expanded> // False
-     if $!global-config<containers>{$container}:exists;
+  $expanded = $!global-config{$container}<expanded> // False
+     if $!global-config{$container}:exists;
 
   $expanded
 }
@@ -423,8 +423,8 @@ method set-expand ( Str:D $container is copy, Bool $expanded --> Str ) {
 
   $container = $!current-category.set-container-name($container);
   
-  if $!global-config<containers>{$container}:exists {
-    $!global-config<containers>{$container}<expanded> = $expanded;
+  if $!global-config{$container}:exists {
+    $!global-config{$container}<expanded> = $expanded;
     self.save-categories-config;
   }
 
@@ -441,7 +441,7 @@ method has-lockable-categories ( Str $container is copy = '' --> Bool ) {
   my Bool $lockable-categeries = False;
   $container = $!current-category.set-container-name($container);
 
-  for $!global-config<containers>{$container}<categories>.keys -> $category
+  for $!global-config{$container}<categories>.keys -> $category
   {
     if self.is-category-lockable( $category, $container) {
       $lockable-categeries = True;
@@ -694,6 +694,28 @@ method get-palapeli-collection ( --> Str ) {
   $!global-config<palapeli>{$preference}<collection>
 }
 
+#-------------------------------------------------------------------------------
+method set-palapeli-env ( ) {
+  my $preference = $!global-config<palapeli><preference>;
+  for $!global-config<palapeli>{$preference}<env>.kv -> $env-key, $env-val {
+    %*ENV{$env-key} = $env-val;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method unset-palapeli-env ( ) {
+  my $preference = $!global-config<palapeli><preference>;
+  for $!global-config<palapeli>{$preference}<env>.keys -> $env-key {
+    %*ENV{$env-key}:delete;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method get-palapeli-exec ( --> Str ) {
+  my $preference = $!global-config<palapeli><preference>;
+  $!global-config<palapeli>{$preference}<exec>
+}
+
 #`{{
 #-------------------------------------------------------------------------------
 # This puzzle hash must have the extra fields added by get-puzzles
@@ -824,7 +846,7 @@ method is-category-lockable (
   $category .= tc;
   $container = $!current-category.set-container-name($container);
 
-  my Hash $cats := $!global-config<containers>;
+  my Hash $cats := $!global-config;
   if $cats{$container}<categories>{$category}:exists {
     $lockable = $cats{$container}<categories>{$category}<lockable>.Bool;
   }
@@ -844,7 +866,7 @@ method set-category-lockable (
 
   # Never any category in the Default container
   if $container ne 'Default_EX_' {
-    my Hash $cats := $!global-config<containers>;
+    my Hash $cats := $!global-config;
     if $cats{$container}<categories>{$category}:exists {
       $cats{$container}<categories>{$category}<lockable> = $lockable;
     }

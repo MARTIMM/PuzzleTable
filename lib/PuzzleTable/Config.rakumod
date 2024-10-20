@@ -32,6 +32,7 @@ has PuzzleTable::Config::Global $!global-settings handles( <
       get-palapeli-preference set-palapeli-preference
       get-palapeli-image-size set-palapeli-image-size
       get-palapeli-collection
+      set-palapeli-env unset-palapeli-env get-palapeli-exec
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
