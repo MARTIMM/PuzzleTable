@@ -4,6 +4,7 @@ use Test;
 use YAMLish;
 use Digest::SHA256::Native;
 
+use PuzzleTable::Config;
 use PuzzleTable::Config::Categories;
 
 #-------------------------------------------------------------------------------
@@ -19,22 +20,15 @@ cleanup-puzzle-table-data(CONFDATA);
 
 my Str $message;
 my Hash $config;
+my PuzzleTable::Config $cfg-obj .= instance( GLOBDATA, CONFDATA);
 
 my PuzzleTable::Config::Categories $categories .= new(
-  :root-dir(CONFDATA)
+  :root-dir(CONFDATA), :config($cfg-obj)
 );
 
-#`{{
-subtest 'password', {
-  with $categories {
-    is .get-password, '', '.get-password()';
-    ok .check-password(''), '.check-password()';
 
-    .set-password( '', 'hoeperdepoep');
-    ok .check-password('hoeperdepoep'), '.set-password()';
-  }
-}
-}}
+# Test done in Config-Global
+$cfg-obj.set-password( '', 'hoeperdepoep');
 
 subtest 'category', {
   with $categories {
@@ -111,25 +105,11 @@ subtest 'puzzle', {
     ok $puzzles[0]<PieceCount> <=
           $puzzles[1]<PieceCount> <=
           $puzzles[2]<PieceCount>, '.get-puzzles(); Check order';
-  }
-}
-
-#`{{
-subtest 'palapeli', {
-  with $categories {
-
-    my Array $puzzles = [|.get-puzzles];
-    #note $puzzles.gist;
-
-    .set-palapeli-preference('Flatpak');
-    $config = load-yaml("{CONFDATA}categories.yaml".IO.slurp);
-    is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
 
     # Works!
     #lives-ok { .run-palapeli($puzzles[1]); }, '.run-palapeli()';
   }
 }
-}}
 
 subtest 'move', {
   with $categories {
@@ -157,7 +137,6 @@ subtest 'move', {
   }
 }
 
-
 subtest 'containers', {
   with $categories {
     $message = .add-category( 'opt 1', 'options', :!lockable);
@@ -174,7 +153,7 @@ subtest 'containers', {
     my List $cats = .get-categories('Options');
     is $cats.elems, 2, '.get-categories(): filtered, container';
 
-    lives-ok { .unlock('hoeperdepoep'); }, '.unlock()';
+    lives-ok { $cfg-obj.unlock('hoeperdepoep'); }, '.unlock()';
     $cats = .get-categories('options');
     is $cats.elems, 4, '.get-categories(): unfiltered, container';
     is-deeply $cats, [ 'Opt 1', 'Opt 2', 'Opt 3', 'Opt 4'],
@@ -204,7 +183,6 @@ subtest 'containers', {
     is $config<Options_EX_><categories>.elems, 0,
        '.move-category() subcat empty';
     ok .delete-container('options'), '.delete-container() deleted' ;
-
 
 #    $message =
       .add-category( 'set 1', 'sets', :!lockable);

@@ -47,9 +47,6 @@ subtest 'global config', {
     is .get-palapeli-preference, 'Flatpak', '.get-palapeli-preference()';
     $config = load-yaml("{GLOBDATA}global-config.yaml".IO.slurp);
     is $config<palapeli><preference>, 'Flatpak', '.set-palapeli-preference()';
-
-    # Works!
-    #lives-ok { .run-palapeli($puzzles[0]); }, '.run-palapeli()';
   }
 }
 

@@ -12,17 +12,18 @@ unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
 has Str $.category-name;
 has Str $.container;
 has Str $!config-dir;
+has Str $.root-dir;
 has Hash $!category-config;
 has Str $!config-path;
 
 #-------------------------------------------------------------------------------
 submethod BUILD (
-  Str:D :$!category-name, Str:D :$!container, Str:D :$root-dir
+  Str:D :$!category-name, Str:D :$!container, Str:D :$!root-dir
 ) {
   $!category-name .= tc;
   $!container = self.set-container-name($!container);
 
-  $!config-dir = "$root-dir$!container/$!category-name";
+  $!config-dir = "$!root-dir$!container/$!category-name";
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
 
   $!config-path = "$!config-dir/puzzles.yaml";
@@ -39,16 +40,12 @@ submethod BUILD (
 }
 
 #-------------------------------------------------------------------------------
+# Change the name which must be defined but may be empty ('')
+# - First letter uppercase
+# - Append '_EX_' to the name
 method set-container-name ( Str:D $name --> Str ) {
   my Str $container-name;
   if ? $name {
-#`{{
-    if $name eq '--' {
-      $container-name = 'Default_EX_';
-    }
-
-    elsif $name !~~ m/ '_EX_' $/ {
-}}
     if $name !~~ m/ '_EX_' $/ {
       $container-name = $name.tc ~ '_EX_';
     }

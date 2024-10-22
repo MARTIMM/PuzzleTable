@@ -36,6 +36,7 @@ has PuzzleTable::Config::Global $!global-settings handles( <
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
+      add-table-root
       is-category-lockable set-category-lockable
       get-categories add-category delete-category move-category
       select-category find-container get-current-container
@@ -114,8 +115,4 @@ method store-main-window ( $main ) {
 #-------------------------------------------------------------------------------
 method get-main-window ( --> Mu ) {
   $!main-window
-}
-
-#-------------------------------------------------------------------------------
-method add-table-root ( Str $root-table ) {
 }
