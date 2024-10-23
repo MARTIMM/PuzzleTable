@@ -49,7 +49,6 @@ has PuzzleTable::Config::Categories $!categories handles( <
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$root-global, Str:D :$root-table ) {
-note "$?LINE $root-global, $root-table";
 
   # Copy images to the data directory
   my Str $png-file;
@@ -69,8 +68,8 @@ note "$?LINE $root-global, $root-table";
 
   # Load the global and default categories configuraton
   # from the puzzle data directory
-  $!global-settings .= new( :root-dir($root-global));
-  $!categories .= new(:root-dir($root-table), :config(self));
+  $!global-settings .= new(:root-dir($root-global));
+  $!categories .= new( :root-dir($root-table), :config(self));
 
   # Save when an interrupt arrives
   signal(SIGINT).tap( {
@@ -85,7 +84,6 @@ my PuzzleTable::Config $instance;
 multi method instance (
   Str:D $root-global, Str:D $root-table --> PuzzleTable::Config
 ) {
-note "$?LINE $root-global, $root-table";
   $instance = self.bless( :$root-global, :$root-table);
 
   $instance

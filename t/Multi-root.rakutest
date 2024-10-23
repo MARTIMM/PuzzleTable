@@ -1,0 +1,65 @@
+use v6.d;
+use Test;
+
+use YAMLish;
+use Digest::SHA256::Native;
+
+use PuzzleTable::Config;
+use PuzzleTable::Config::Categories;
+
+#-------------------------------------------------------------------------------
+constant TESTDATA = $*CWD ~ '/t/test-data/';
+constant COLLDATA = TESTDATA ~ 'puzzle-collection/';
+constant EXPDATA = TESTDATA ~ 'exported-puzzles/';
+constant ARCHDATA = TESTDATA ~ 'archived-puzzles/';
+constant EXTRDATA = TESTDATA ~ 'puzzle-extract/';
+constant CONFDATA1 = TESTDATA ~ 'puzzle-table-data1/';
+constant CONFDATA2 = TESTDATA ~ 'puzzle-table-data2/';
+constant GLOBDATA = TESTDATA;
+
+cleanup-puzzle-table-data(CONFDATA1);
+cleanup-puzzle-table-data(CONFDATA2);
+
+my Str $message;
+my Hash $config;
+my PuzzleTable::Config $cfg-obj .= instance( GLOBDATA, CONFDATA1);
+
+
+# Prepare 1st root
+my PuzzleTable::Config::Categories $categories .= new(
+  :root-dir(CONFDATA1), :config($cfg-obj)
+);
+
+with $categories {
+  .add-category( 'm1-1', 'Da0', :lockable);
+  .add-category( 'm1-2', 'Da0', :lockable);
+  .add-category( 'm1-3', '', :!lockable);
+
+
+  # Prepare 2nd root
+  .add-table-root(CONFDATA2);
+
+  .add-category( 'm2-1', 'Co1', :lockable);
+  .add-category( 'm2-2', 'Co2', :!lockable);
+  .add-category( 'm2-3', 'Co2', :lockable);
+}
+
+
+done-testing;
+exit;
+
+#-------------------------------------------------------------------------------
+sub cleanup-puzzle-table-data ( Str:D $d ) {
+  return unless $d.IO.d;
+
+  for dir($d) -> $f {
+    if $f.d {
+      cleanup-puzzle-table-data($f.Str);
+      $f.rmdir;
+    }
+
+    else {
+      $f.unlink;
+    }
+  }
+}

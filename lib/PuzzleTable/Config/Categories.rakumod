@@ -10,21 +10,32 @@ use PuzzleTable::Config::Category;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config::Categories:auth<github:MARTIMM>;
 
-has Str $!config-path;
+has Hash $!config-paths = %();
 has Hash $.categories-config = %();
 has PuzzleTable::Config::Category $!current-category;
 has #`{{PuzzleTable::Config}} $!config;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$root-dir, :$!config ) {
-  $!config-path = "$root-dir/categories.yaml";
-  if $!config-path.IO.r {
-    $!categories-config{$root-dir} = load-yaml($!config-path.IO.slurp);
-  }
+  self.load-category-config($root-dir);
+}
 
-  else {
-    $!categories-config{$root-dir}<Default_EX_><categories><Default> =
-      %(:!lockable);
+#-------------------------------------------------------------------------------
+method load-category-config ( Str:D $root-dir ) {
+note "$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
+
+  if $!config-paths{$root-dir}:!exists {
+    $!config-paths{$root-dir} = "$root-dir/categories.yaml";
+
+    if $!config-paths{$root-dir}.IO.r {
+      $!categories-config{$root-dir} =
+        load-yaml($!config-paths{$root-dir}.IO.slurp);
+    }
+
+    else {
+      $!categories-config{$root-dir}<Default_EX_><categories><Default> =
+        %(:!lockable);
+    }
   }
 
   # Always select the default category
@@ -35,6 +46,7 @@ submethod BUILD ( Str:D :$root-dir, :$!config ) {
 
 #-------------------------------------------------------------------------------
 method add-table-root ( Str $root-dir ) {
+  self.load-category-config($root-dir);
 }
 
 #-------------------------------------------------------------------------------
@@ -44,7 +56,7 @@ method save-categories-config ( Str $root-dir = $!current-category.root-dir ) {
   my $t0 = now;
 
   # Save categories config
-  $!config-path.IO.spurt(save-yaml($!categories-config{$root-dir}));
+  $!config-paths{$root-dir}.IO.spurt(save-yaml($!categories-config{$root-dir}));
 
   note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}."
        if $*verbose-output;
@@ -53,22 +65,27 @@ method save-categories-config ( Str $root-dir = $!current-category.root-dir ) {
 #-------------------------------------------------------------------------------
 method add-category (
   Str:D $category-name is copy, Str:D $container is copy, 
-  :$lockable is copy = False
+  :$lockable is copy = False, Str :$root-dir is copy
   --> Str
 ) {
   my Str $message = '';
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
+note "$?LINE $category-name, $container, $root-dir";
+note "$?LINE $!categories-config.gist()";
 
-  if $!categories-config{$root-dir}{$container}<categories>{$category-name}:exists
-  {
+  $!categories-config{$root-dir}{$container}<categories> = %()
+      if $!categories-config{$root-dir}{$container}<categories>:!exists;
+
+  my Hash $cats := $!categories-config{$root-dir}{$container}<categories>;
+  if $cats{$category-name}:exists {
     $message = "Category $category-name already exists";
   }
 
   else {
     $lockable = False if $container eq 'Default_EX_';
-    $!categories-config{$root-dir}{$container}<categories>{$category-name}<lockable> = $lockable;
+    $cats{$category-name}<lockable> = $lockable;
     mkdir "$root-dir$container/$category-name", 0o700;
 
     my PuzzleTable::Config::Category $category .= new(
@@ -83,15 +100,16 @@ method add-category (
 
 #-------------------------------------------------------------------------------
 method select-category (
-  Str:D $category-name is copy, Str:D $container is copy --> Str
+  Str:D $category-name is copy, Str:D $container is copy,
+  Str :$root-dir is copy --> Str
 ) {
   my Str $message = '';
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
 
-  if $!categories-config{$root-dir}{$container}<categories>{$category-name}:exists
-  {
+  my Hash $cats = $!categories-config{$root-dir}{$container}<categories>;
+  if $cats{$category-name}:exists {
     $!current-category .= new( :$category-name, :$container, :$root-dir);
   }
 
