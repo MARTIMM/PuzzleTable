@@ -22,3 +22,4 @@ xt/data/OffscreenWindow-surface.png
 xt/data/OffscreenWindow.png
 xt/analize/*
 t/test-data/*
+t/double-root-tests/*
