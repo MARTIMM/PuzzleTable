@@ -4362,15 +4362,55 @@ progressbar.osd {
 
 /* the sidebar grid of the expander child */
 .pt-sidebar-expander {
+/*
   background-image: none;
   background-color: #1b0024;
-
+*/
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
+}
+
+/* Several versions of color choices to show containers found in
+   another data table root
+*/
+.pt-sidebar-expander-ptr0 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
+  background-color: #1b0024;
   border-style: groove;
   border-color: #310041;
+  border-radius: 6px;
+}
+
+.pt-sidebar-expander-ptr1 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
+  background-color: #002411;
+  border-style: groove;
+  border-color: #00470e;
+  border-radius: 6px;
+}
+
+.pt-sidebar-expander-ptr2 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
+  background-color: #000524;
+  border-style: groove;
+  border-color: #01004f;
   border-radius: 6px;
 }
 

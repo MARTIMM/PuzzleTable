@@ -66,13 +66,28 @@ method fill-sidebar ( Bool :$init = False ) {
 
   my Gnome::Gtk4::Label $l;
   my Array $totals = [ 0, 0, 0, 0];
+  my Str $prev-root-dir;
+  my Int $expander-color-count;
 
   my @containers = $!config.get-containers;
-  for @containers -> $container {
+  for @containers -> Pair $c {
+    my Str $container = $c.key;
+    my Str $root-dir = $c.value;
+    if !$prev-root-dir {
+      $prev-root-dir = $root-dir;
+      $expander-color-count = 0;
+    }
+
+    elsif $prev-root-dir ne $root-dir {
+      $prev-root-dir = $root-dir;
+      $expander-color-count++;
+    }
+
+#note "$?LINE $container, $root-dir, $expander-color-count";
     my Int $cat-row-count = 0;
     my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
-    my @categories = $!config.get-categories($container);
+    my @categories = $!config.get-categories( $container, $root-dir);
     for @categories -> $category {
 
       my Gnome::Gtk4::Button $category-button =
@@ -88,7 +103,10 @@ method fill-sidebar ( Bool :$init = False ) {
       $cat-row-count++;
     }
 
-    my Gnome::Gtk4::Expander $expander = self.sidebar-expander($container);
+    my Gnome::Gtk4::Expander $expander = self.sidebar-expander(
+      $container, $expander-color-count
+    );
+
     $expander.set-child($category-grid);
     $expander.set-expanded($!config.is-expanded($container));
     $cat-grid.attach( $expander, 0, $row-count, 5, 1);
@@ -151,16 +169,21 @@ method category-button (
 }
 
 #-------------------------------------------------------------------------------
-method sidebar-expander ( Str $container --> Gnome::Gtk4::Expander ) {
+method sidebar-expander (
+  Str $container, Int $expander-color-count --> Gnome::Gtk4::Expander
+) {
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
-    $!config.set-css( .get-style-context, :css-class<pt-sidebar-expander>);
+    my Str $css-class = "pt-sidebar-expander-ptr$expander-color-count";
+note "$?LINE $container, $css-class";
+
+    $!config.set-css( .get-style-context, :$css-class);
 
     given my Gnome::Gtk4::Label $l .= new-label {
       .set-text($container);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
       $!config.set-css(
-        .get-style-context, :css-class('sidebar-expander-label')
+        .get-style-context, :css-class<sidebar-expander-label>
       );
     }
 
