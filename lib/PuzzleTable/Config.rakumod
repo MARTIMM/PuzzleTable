@@ -23,7 +23,7 @@ has Gnome::Gtk4::CssProvider $!css-provider;
 
 our $options = [<
   category=s container=s pala-collection=s puzzles lock h help version verbose
-  restore=s unlock=s root-global=s root-table=s
+  restore=s unlock=s root-global=s root-tables=s
 >];
 
 has PuzzleTable::Config::Global $!global-settings handles( <
@@ -36,7 +36,7 @@ has PuzzleTable::Config::Global $!global-settings handles( <
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
-      add-table-root
+      add-table-root get-current-root
       is-category-lockable set-category-lockable
       get-categories add-category delete-category move-category
       select-category find-container get-current-container
@@ -48,7 +48,7 @@ has PuzzleTable::Config::Categories $!categories handles( <
     >);
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str:D :$root-global, Str:D :$root-table ) {
+submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
 
   # Copy images to the data directory
   my Str $png-file;
@@ -69,7 +69,11 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-table ) {
   # Load the global and default categories configuraton
   # from the puzzle data directory
   $!global-settings .= new(:root-dir($root-global));
-  $!categories .= new( :root-dir($root-table), :config(self));
+  my @tables = $root-tables.split(/\s* \, \s*/);
+  $!categories .= new( :root-dir(@tables[0]), :config(self));
+  for @tables[1..*-1] -> $table {
+    $!categories.add-table-root($table);
+  }
 
   # Save when an interrupt arrives
   signal(SIGINT).tap( {
@@ -82,9 +86,9 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-table ) {
 #-------------------------------------------------------------------------------
 my PuzzleTable::Config $instance;
 multi method instance (
-  Str:D $root-global, Str:D $root-table --> PuzzleTable::Config
+  Str:D $root-global, Str:D $root-tables --> PuzzleTable::Config
 ) {
-  $instance = self.bless( :$root-global, :$root-table);
+  $instance = self.bless( :$root-global, :$root-tables);
 
   $instance
 }

@@ -102,9 +102,9 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
   my Capture $o = get-options(| $PuzzleTable::Config::options);
 
   # This option can be used multiple times
-  my Str $root-table = PUZZLE_TABLE_DATA;
-  if $o<root-table>:exists {
-    $root-table = $o<root-table>;
+  my Str $root-tables = PUZZLE_TABLE_DATA;
+  if $o<root-tables>:exists {
+    $root-tables = $o<root-tables>;
   }
 
   # Prepare initialization of the config module
@@ -114,7 +114,7 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
     $root-global = $o<root-global>;
   }
 
-  $config .= instance( $root-global, $root-table);
+  $config .= instance( $root-global, $root-tables);
 
   # Handle the simple options here which do not require the primary instance
   if $o<version> {
@@ -150,8 +150,8 @@ say 'remote opts';
 
   # This option can be used multiple times but only checked when called remotely
   # First time it is called in local-options() above.
-  if $!table-is-displayed and $o<root-table>:exists {
-    $config.add-table-root($o<root-table>);
+  if $!table-is-displayed and $o<root-tables>:exists {
+    $config.add-table-root($o<root-tables>);
   }
 
 

@@ -21,7 +21,8 @@ submethod BUILD ( Str:D :$root-dir, :$!config ) {
 }
 
 #-------------------------------------------------------------------------------
-method load-category-config ( Str:D $root-dir ) {
+method load-category-config ( Str:D $root-dir is copy ) {
+  $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
 note "$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
 
   if $!config-paths{$root-dir}:!exists {
@@ -42,9 +43,14 @@ note "$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
   $!current-category .= new(
     :category-name('Default'), :container(''), :$root-dir
   );
+
+note "$?LINE $!categories-config.gist()";
 }
 
 #-------------------------------------------------------------------------------
+# Method to add another root where table data is found. It is created when
+# it not exists. Also the default container and category is created (both
+# called Default).
 method add-table-root ( Str $root-dir ) {
   self.load-category-config($root-dir);
 }
@@ -72,8 +78,6 @@ method add-category (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
-note "$?LINE $category-name, $container, $root-dir";
-note "$?LINE $!categories-config.gist()";
 
   $!categories-config{$root-dir}{$container}<categories> = %()
       if $!categories-config{$root-dir}{$container}<categories>:!exists;
@@ -107,6 +111,9 @@ method select-category (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
+
+  $!categories-config{$root-dir}{$container}<categories> = %()
+      if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
   my Hash $cats = $!categories-config{$root-dir}{$container}<categories>;
   if $cats{$category-name}:exists {
@@ -206,10 +213,10 @@ method delete-category (
 }
 
 #-------------------------------------------------------------------------------
-method get-categories ( Str:D $container is copy --> List ) {
+method get-categories ( Str:D $container is copy, Str:D $root-dir --> List ) {
   my Bool $locked = $!config.is-locked;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
 
   my @cat-key-list;
   @cat-key-list =
@@ -235,6 +242,11 @@ method get-current-container ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-current-root ( --> Str ) {
+  S/ '_EX_' $// with $!current-category.root-dir
+}
+
+#-------------------------------------------------------------------------------
 method get-category-status (
   Str:D $category-name is copy, Str:D $container is copy --> Array
 ) {
@@ -244,6 +256,9 @@ method get-category-status (
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
   my Array $cat-status = [ 0, 0, 0, 0];
+
+  $!categories-config{$root-dir}{$container}<categories> = %()
+      if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
   my Hash $categories :=
      $!categories-config{$root-dir}{$container}<categories>;
@@ -372,14 +387,16 @@ method delete-container ( Str $container is copy = '' --> Bool ) {
 method get-containers ( --> List ) {
 
   my Bool $locked = $!config.is-locked;
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
   my @containers = ();
 
-  for $!categories-config{$root-dir}.keys.sort -> $container {
-    # Containers have an _EX_ extension which is removed
-    # Don't include in list if lockable and table is locked
-    (@containers.push: S/ '_EX_' $// with $container)
-      unless self.has-lockable-categories($container).Bool and $locked;
+  for $!categories-config.keys.sort -> $root-dir {
+    for $!categories-config{$root-dir}.keys.sort -> $container {
+      # Containers have an _EX_ extension which is removed
+      # Don't include in list if lockable and table is locked
+      @containers.push: Pair.new( (S/ '_EX_' $// with $container), $root-dir)
+        unless self.has-lockable-categories($container).Bool and $locked;
+    }
   }
 
   @containers

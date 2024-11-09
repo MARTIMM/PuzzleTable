@@ -17,6 +17,7 @@ unit class PuzzleTable::Gui::DropDown:auth<github:MARTIMM>;
 also is Gnome::Gtk4::DropDown;
 
 has PuzzleTable::Config $!config;
+has Str $!root-dir;
 #has Gnome::Gtk4::StringList $!stringlist;
 
 #-------------------------------------------------------------------------------
@@ -57,7 +58,11 @@ method fill-categories (
 
   my Int $index = 0;
   my Bool $index-found = False;
-  for $!config.get-categories( $container, :skip-containers) -> $subcat {
+  $!root-dir //= $!config.get-current-root;
+
+  for $!config.get-categories( $container, $!root-dir, :skip-containers)
+    -> $subcat
+  {
     next if $skip-default and $subcat eq 'Default';
 
     $index-found = True if $subcat eq $category;  #$select-category;
@@ -77,7 +82,10 @@ method fill-containers ( Str:D $select-container ) {
   my Bool $index-found = False;
 
   # Add the container strings
-  for $!config.get-containers -> $container {
+  for $!config.get-containers -> Pair $c {
+    my Str $container = $c.key;
+    once $!root-dir = $c.value; # root dir is the same for all containers
+
     $stringlist.append($container);
     $index-found = True if $container eq $select-container;
     $index++ unless $index-found;
