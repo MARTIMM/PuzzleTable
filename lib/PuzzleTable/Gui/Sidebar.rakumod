@@ -91,7 +91,7 @@ method fill-sidebar ( Bool :$init = False ) {
     for @categories -> $category {
 
       my Gnome::Gtk4::Button $category-button =
-          self.category-button( $category, $container);
+        self.category-button( $category, $container, :$root-dir);
 
       $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
 
@@ -126,12 +126,14 @@ method fill-sidebar ( Bool :$init = False ) {
     EOTT
 
   self.set-child($cat-grid);
-  self.select-category( :category<Default>, :container<Default>) if $init;
+  self.select-category(
+    :category<Default>, :container<Default>
+  ) if $init;
 }
 
 #-------------------------------------------------------------------------------
 method category-button (
-  Str:D $category, Str:D $container --> Gnome::Gtk4::Button
+  Str:D $category, Str:D $container, Str :$root-dir --> Gnome::Gtk4::Button
 ) {
   with my Gnome::Gtk4::Button $cat-button .= new-button {
     $!config.set-css(
@@ -161,7 +163,7 @@ method category-button (
       self, 'show-tooltip', 'query-tooltip', :$category, :$container
     );
     .register-signal(
-      self, 'select-category', 'clicked', :$category, :$container
+      self, 'select-category', 'clicked', :$category, :$container, :$root-dir
     );
   }
   
@@ -250,11 +252,13 @@ method show-tooltip (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method select-category ( Str:D :$category, Str:D :$container ) {
+method select-category (
+  Str:D :$category, Str:D :$container, Str :$root-dir
+) {
 #  $!current-category = $category;
-  $!main.application-window.set-title(
-    "Puzzle Table Display - $category in $container"
-  ) if ?$!main.application-window;
+  my $root-text = ? $root-dir ?? "$root-dir " !! '';
+  my Str $title = "Puzzle Table Display - $root-text - $category in $container";
+  $!main.application-window.set-title($title) if ?$!main.application-window;
 
   # Clear the puzzle table before showing the puzzles of this category
   $!main.table.clear-table;
