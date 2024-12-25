@@ -148,14 +148,15 @@ say 'remote opts';
 
   my PuzzleTable::Config $config .= instance;
 
+#`{{
   # This option can be used multiple times but only checked when called remotely
   # First time it is called in local-options() above.
   if $!table-is-displayed and $o<root-tables>:exists {
     $config.add-table-root($o<root-tables>);
   }
+}}
 
-
-note "$?LINE $config.gist()";
+#note "$?LINE $config.gist()";
 
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
@@ -187,8 +188,13 @@ note "$?LINE $config.gist()";
     $config.add-category( $opt-category, $opt-container, :$lockable);
   }
 
-  $config.select-category( $opt-category, $config.get-current-container);
-  $!sidebar.set-category( $opt-category, $opt-container);
+  $config.select-category(
+    $opt-category, $config.get-current-container,
+    :root-dir($config.get-current-root)
+  );
+  $!sidebar.set-category(
+    $opt-category, $opt-container, :root-dir($config.get-current-root)
+  );
 
   if $o<puzzles>:exists {
     for @args[1..*-1] -> $puzzle-path {
@@ -316,7 +322,7 @@ method usage ( ) {
     puzzle-table --help
     puzzle-table --puzzles [--container=<name>] [--category=<name>] [--lock] <puzzle-path> …
     puzzle-table --pala-collection=<collection-path>
-    puzzle-table --restore=<archive>
+    puzzle-table --restore=<archive>·
 
   Options:
     --container <name>
