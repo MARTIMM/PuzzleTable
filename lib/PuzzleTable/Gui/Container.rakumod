@@ -46,10 +46,6 @@ method container-add ( N-Object $parameter ) {
 
       # Show dropdown
       .add-content( 'Select a root', $roots-dd);
-
-      # Set a handler on the container list to change the category list
-      # when an item is selected.
-      $roots-dd.trap-root-changes( $roots-dd, :skip-default);
    }
 
     # Show entry for input
@@ -79,7 +75,7 @@ method do-container-add (
     $root-dir = $roots-dd.get-dropdown-text;
   }
 
-  my Str $container = $entry.get-text.tc;
+  my Str $container = $entry.get-text.lc.tc;
   if ! $container {
     $dialog.set-status('No category name specified');
   }

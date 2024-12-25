@@ -50,6 +50,7 @@ method fill-categories (
   Str:D $category, Str:D $container, Bool :$skip-default = False,
   Str :$root-dir is copy
 ) {
+  $root-dir //= $!config.get-current-root;
   self.set-selection(
     $!config.get-categories( $container, $root-dir, :skip-containers),
     $category, :$skip-default
@@ -88,6 +89,7 @@ method fill-categories (
 method fill-containers (
   Str:D $select-container, Str :$root-dir is copy, Bool :$skip-default = False
 ) {
+  $root-dir //= $!config.get-current-root;
   self.set-selection(
     $!config.get-containers(:$root-dir), $select-container, :$skip-default
   );

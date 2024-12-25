@@ -24,6 +24,7 @@ submethod BUILD (
   $!container = self.set-container-name($!container);
 
   $!config-dir = "$!root-dir$!container/$!category-name";
+note "$?LINE $!config-dir, $!container, $!category-name";
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
 
   $!config-path = "$!config-dir/puzzles.yaml";

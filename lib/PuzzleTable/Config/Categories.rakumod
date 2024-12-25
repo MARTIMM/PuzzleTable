@@ -91,7 +91,7 @@ method add-category (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
-
+note "$?LINE $root-dir";
   $!categories-config{$root-dir}{$container}<categories> = %()
       if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
@@ -425,7 +425,6 @@ method get-containers ( Str :$root-dir is copy --> List ) {
   my @containers = ();
 #  for $!categories-config.keys.sort -> $root-dir {
     for $!categories-config{$root-dir}.keys.sort -> $container {
-note "$?LINE $root-dir, $container";
       # Containers have an _EX_ extension which is removed
       # Don't include in list if lockable and table is locked
       @containers.push: (S/ '_EX_' $// with $container)

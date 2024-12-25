@@ -59,6 +59,10 @@ method category-add ( N-Object $parameter ) {
         is placed in the selected container
         EOCATD
   ) {
+    # Make a string list to be used in a combobox (dropdown)
+    my PuzzleTable::Gui::DropDown $container-dd .= new;
+    $container-dd.fill-containers($!config.get-current-container);
+
     my PuzzleTable::Gui::DropDown $roots-dd;
     if $*multiple-roots {
       $roots-dd .= new;
@@ -66,11 +70,11 @@ method category-add ( N-Object $parameter ) {
 
       # Show dropdown
       .add-content( 'Select a root', $roots-dd);
-    }
 
-    # Make a string list to be used in a combobox (dropdown)
-    my PuzzleTable::Gui::DropDown $container-dd .= new;
-    $container-dd.fill-containers($!config.get-current-container);
+      # Set a handler on the container list to change the category list
+      # when an item is selected.
+      $roots-dd.trap-root-changes($container-dd);
+    }
 
     # Show dropdown
     .add-content( 'Select a container', $container-dd);
@@ -267,33 +271,45 @@ method category-delete ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
+#  my Str $select-root = $!config.get-current-root;
 
   # Prepare dialog entries.
   # A dropdown to list categories. The current category is preselected.
-  my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
-  $dropdown-cat.fill-categories(
+  my PuzzleTable::Gui::DropDown $category-dd .= new;
+  $category-dd.fill-categories(
     $select-category, $select-container, :skip-default
   );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
+  with my PuzzleTable::Gui::DropDown $container-dd .= new {
     .fill-containers($!config.get-current-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
-    .trap-container-changes( $dropdown-cat, :skip-default);
+    .trap-container-changes( $category-dd, :skip-default);
+  }
+
+  my PuzzleTable::Gui::DropDown $roots-dd;
+  if $*multiple-roots {
+    $roots-dd .= new;
+    $roots-dd.fill-roots($!config.get-current-root);
+
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    $roots-dd.trap-root-changes($container-dd);
   }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Select container', $dropdown-cont);
-    .add-content( 'Select category to delete', $dropdown-cat);
+    .add-content( 'Select a root', $roots-dd) if $*multiple-roots;
+    .add-content( 'Select container', $container-dd);
+    .add-content( 'Select category to delete', $category-dd);
 
     .add-button(
       self, 'do-category-delete', 'Delete',
-      :$dropdown-cat, :$dropdown-cont, :$dialog
+      :$category-dd, :$container-dd, :$dialog, :$roots-dd
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -304,12 +320,13 @@ method category-delete ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-delete (
   PuzzleTable::Gui::Dialog :$dialog,
-  PuzzleTable::Gui::DropDown :$dropdown-cat,
-  PuzzleTable::Gui::DropDown :$dropdown-cont
+  PuzzleTable::Gui::DropDown :$category-dd,
+  PuzzleTable::Gui::DropDown :$container-dd,
+  PuzzleTable::Gui::DropDown :$roots-dd
 ) {
   my Bool $sts-ok = False;
-  my Str $category = $dropdown-cat.get-dropdown-text;
-  my Str $container = $dropdown-cont.get-dropdown-text;
+  my Str $category = $category-dd.get-dropdown-text;
+  my Str $container = $container-dd.get-dropdown-text;
   if $!config.has-puzzles( $category, $container) {
     $dialog.set-status('Category still has puzzles');
   }
@@ -321,10 +338,17 @@ method do-category-delete (
     }
 
     else {
+      my Str $root-dir;
+      if $*multiple-roots {
+        $root-dir = $roots-dd.get-dropdown-text;
+      }
+
       if $category eq $!config.get-current-category and
          $container eq $!config.get-current-container
       {
-        $!sidebar.select-category( :category('Default'), :container('Default'));
+        $!sidebar.select-category(
+          :category('Default'), :container('Default'), :$root-dir
+        );
       }
       $!sidebar.fill-sidebar;
       $sts-ok = True;
@@ -342,19 +366,19 @@ method category-lock ( N-Object $parameter ) {
   my Str $select-container = $!config.get-current-container;
 
   # A dropdown to list categories. The current category is preselected.
-  my PuzzleTable::Gui::DropDown $dropdown-cat .= new;
-  $dropdown-cat.fill-categories(
+  my PuzzleTable::Gui::DropDown $category-dd .= new;
+  $category-dd.fill-categories(
     $select-category, $select-container, :skip-default
   );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new {
+  with my PuzzleTable::Gui::DropDown $container-dd .= new {
     .fill-containers($!config.get-current-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
-    .trap-container-changes( $dropdown-cat, :skip-default);
+    .trap-container-changes( $category-dd, :skip-default);
   }
 
   my Gnome::Gtk4::CheckButton $check-button .=
@@ -364,13 +388,13 @@ method category-lock ( N-Object $parameter ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('(Un)Lock Dialog')
   ) {
-    .add-content( 'Select container', $dropdown-cont);
-    .add-content( 'Category to (un)lock', $dropdown-cat);
+    .add-content( 'Select container', $container-dd);
+    .add-content( 'Category to (un)lock', $category-dd);
     .add-content( '', $check-button);
 
     .add-button(
       self, 'do-category-lock', 'Lock / Unlock',
-      :$dropdown-cat, :$dropdown-cont, :$dialog, :$check-button
+      :$category-dd, :$container-dd, :$dialog, :$check-button
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -381,14 +405,14 @@ method category-lock ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-category-lock (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
-  PuzzleTable::Gui::DropDown :$dropdown-cat,
-  PuzzleTable::Gui::DropDown :$dropdown-cont
+  PuzzleTable::Gui::DropDown :$category-dd,
+  PuzzleTable::Gui::DropDown :$container-dd
 ) {
   my Bool $sts-ok = False;
 
   $!config.set-category-lockable(
-    $dropdown-cat.get-dropdown-text,
-    $dropdown-cont.get-dropdown-text,
+    $category-dd.get-dropdown-text,
+    $container-dd.get-dropdown-text,
     $check-button.get-active.Bool
   );
 
