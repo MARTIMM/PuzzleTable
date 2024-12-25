@@ -51,22 +51,32 @@ submethod BUILD ( :$!main ) {
 # Select from menu to add a category
 method category-add ( N-Object $parameter ) {
 
-  my Str $select-category = $!config.get-current-category;
-
-  # Make a string list to be used in a combobox (dropdown)
-  my PuzzleTable::Gui::DropDown $dropdown .= new;
-  $dropdown.fill-containers($!config.get-current-container);
+#  my Str $select-category = $!config.get-current-category;
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :dialog-header('Add Category Dialog')
+    :dialog-title('New Category'), :dialog-header(Q:to/EOCATD/)
+        Create a new category. The category
+        is placed in the selected container
+        EOCATD
   ) {
+    my PuzzleTable::Gui::DropDown $roots-dd;
+    if $*multiple-roots {
+      $roots-dd .= new;
+      $roots-dd.fill-roots($!config.get-current-root);
+
+      # Show dropdown
+      .add-content( 'Select a root', $roots-dd);
+    }
+
+    # Make a string list to be used in a combobox (dropdown)
+    my PuzzleTable::Gui::DropDown $container-dd .= new;
+    $container-dd.fill-containers($!config.get-current-container);
 
     # Show dropdown
-    .add-content( 'Select a container', $dropdown);
-
+    .add-content( 'Select a container', $container-dd);
     # Show entry for input
     my Gnome::Gtk4::Entry $entry .= new-entry;
-    $entry.set-text($select-category);
+    $entry.set-text($!config.get-current-category);
     .add-content( 'Specify a new category', $entry);
 
     # Show checkbutton to make the category locakbel
@@ -79,7 +89,7 @@ method category-add ( N-Object $parameter ) {
     # Buttons to add the category or cancel
     .add-button(
       self, 'do-category-add', 'Add', :$entry, :$check-button,
-      :$dialog, :$dropdown
+      :$dialog, :$container-dd, :$roots-dd
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -92,7 +102,8 @@ method category-add ( N-Object $parameter ) {
 method do-category-add (
   PuzzleTable::Gui::Dialog :$dialog,
   Gnome::Gtk4::Entry :$entry, Gnome::Gtk4::CheckButton :$check-button,
-  PuzzleTable::Gui::DropDown :$dropdown
+  PuzzleTable::Gui::DropDown :$container-dd,
+  PuzzleTable::Gui::DropDown :$roots-dd
 ) {
   my Bool $sts-ok = False;
   my Str $category = $entry.get-text;
@@ -106,12 +117,17 @@ method do-category-add (
   }
 
   else {
-    my Str $container = $dropdown.get-dropdown-text;
+    my Str $root-dir;
+    if $*multiple-roots {
+      $root-dir = $roots-dd.get-dropdown-text;
+    }
+
+    my Str $container = $container-dd.get-dropdown-text;
 #    $container = '' if $container eq '--';
 
     # Add category to list. Message gets defined if something is wrong.
     my Str $msg = $!config.add-category(
-      $category, $container, :lockable($check-button.get-active)
+      $category, $container, :lockable($check-button.get-active), :$root-dir
     );
 
     if ?$msg {

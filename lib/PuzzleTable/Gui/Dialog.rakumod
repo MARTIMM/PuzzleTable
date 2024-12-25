@@ -34,7 +34,7 @@ method new ( |c ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str :$dialog-header = '', Bool :$no-statusbar = False ) {
+submethod BUILD ( Str :$dialog-header = '',  Str :$dialog-title = '', Bool :$no-statusbar = False ) {
   my PuzzleTable::Config $config .= instance;
   $!main-loop .= new-mainloop( N-Object, True);
 
@@ -64,6 +64,7 @@ submethod BUILD ( Str :$dialog-header = '', Bool :$no-statusbar = False ) {
   }
   $!button-row.append($button-row-strut);
 
+
   unless $no-statusbar {
     with $!statusbar .= new-statusbar(:context<dialog>) {
       .set-margin-top(5);
@@ -74,17 +75,15 @@ submethod BUILD ( Str :$dialog-header = '', Bool :$no-statusbar = False ) {
     }
   }
 
-#`{{
   my Gnome::Gtk4::Label $header .= new-label;
   $header.set-text($dialog-header);
-}}
 
   with my Gnome::Gtk4::Box $box .= new-box( GTK_ORIENTATION_VERTICAL, 0) {
-#    .append($header);
+    .append($header);
     .append($!content);
     .append($!button-row);
     .append($!statusbar) unless $no-statusbar;
-    .set-visible(True);
+#    .set-visible(True);
   }
 
   with self {
@@ -93,7 +92,7 @@ submethod BUILD ( Str :$dialog-header = '', Bool :$no-statusbar = False ) {
     .set-destroy-with-parent(True);
     .set-modal(True);
     .set-size-request( 400, 100);
-    .set-title($dialog-header);
+    .set-title($dialog-title);
     .register-signal( self, 'close-dialog', 'destroy');
     .set-child($box);
   }
