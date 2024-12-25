@@ -17,7 +17,7 @@ unit class PuzzleTable::Gui::DropDown:auth<github:MARTIMM>;
 also is Gnome::Gtk4::DropDown;
 
 has PuzzleTable::Config $!config;
-has Str $!root-dir;
+#has Str $!root-dir;
 #has Gnome::Gtk4::StringList $!stringlist;
 
 #-------------------------------------------------------------------------------
@@ -47,8 +47,17 @@ Fill a dropdown widget with a list of category names
 =end pod
 
 method fill-categories (
-  Str:D $category, Str:D $container, Bool :$skip-default = False
+  Str:D $category, Str:D $container, Bool :$skip-default = False,
+  Str :$root-dir is copy
 ) {
+  self.set-selection(
+    $!config.get-categories( $container, $root-dir, :skip-containers),
+    $category, :$skip-default
+  );
+
+
+
+#`{{
 #  my Gnome::Gtk4::StringList() $category-list;
   my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
   self.set-model($stringlist);
@@ -58,9 +67,9 @@ method fill-categories (
 
   my Int $index = 0;
   my Bool $index-found = False;
-  $!root-dir //= $!config.get-current-root;
+  $root-dir //= $!config.get-current-root;
 
-  for $!config.get-categories( $container, $!root-dir, :skip-containers)
+  for $!config.get-categories( $container, $root-dir, :skip-containers)
     -> $subcat
   {
     next if $skip-default and $subcat eq 'Default';
@@ -71,34 +80,82 @@ method fill-categories (
     $stringlist.append($subcat);
   }
 
-  $index = 0 unless $index-found;
-  self.set-selected($index);
+  self.set-selected($index-found ?? $index !! 0);
+}}
 }
 
 #-------------------------------------------------------------------------------
-method fill-containers ( Str:D $select-container ) {
-  my Gnome::Gtk4::StringList() $stringlist = self.get-model;
+method fill-containers (
+  Str:D $select-container, Str :$root-dir is copy, Bool :$skip-default = False
+) {
+  self.set-selection(
+    $!config.get-containers(:$root-dir), $select-container, :$skip-default
+  );
+#`{{
+  my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
+  self.set-model($stringlist);
   my Int $index = 0;
   my Bool $index-found = False;
+  $root-dir //= $!config.get-current-root;
+note "$?LINE $root-dir";
 
   # Add the container strings
-  for $!config.get-containers -> Pair $c {
-    my Str $container = $c.key;
-    once $!root-dir = $c.value; # root dir is the same for all containers
-
+  for $!config.get-containers(:$root-dir) -> $container {
     $stringlist.append($container);
     $index-found = True if $container eq $select-container;
     $index++ unless $index-found;
   }
 
-  self.set-selected($index);
+  self.set-selected($index-found ?? $index !! 0);
+}}
+}
+
+#-------------------------------------------------------------------------------
+method fill-roots ( Str:D $select-root ) {
+  self.set-selection( $!config.get-roots, $select-root);
+#`{{
+  my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
+  self.set-model($stringlist);
+  my Int $index = 0;
+  my Bool $index-found = False;
+
+  # Add the container strings
+  for $!config.get-roots -> $root {
+note "$?LINE $root";
+    $stringlist.append($root);
+    $index-found = True if $root eq $select-root;
+    $index++ unless $index-found;
+  }
+
+  self.set-selected($index-found ?? $index !! 0);
+}}
+}
+
+#-------------------------------------------------------------------------------
+method set-selection ( @items, Str $select-item, Bool :$skip-default = False ) {
+  my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
+  self.set-model($stringlist);
+  my Int $index = 0;
+  my Bool $index-found = False;
+
+  # Add the container strings
+  for @items -> $item {
+note "$?LINE $item, $skip-default";
+    next if $skip-default and $item eq 'Default';
+
+    $stringlist.append($item);
+    $index-found = True if $item eq $select-item;
+    $index++ unless $index-found;
+  }
+
+  self.set-selected($index-found ?? $index !! 0);
 }
 
 #-------------------------------------------------------------------------------
 method get-dropdown-text ( --> Str ) {
+#say Backtrace.new.nice;
   my Gnome::Gtk4::StringList() $stringlist;
   my UInt $p;
-
   $stringlist = self.get-model;
   $p = self.get-selected;
 
@@ -111,7 +168,7 @@ method get-dropdown-text ( --> Str ) {
 #-------------------------------------------------------------------------------
 # Only a container drop down list can call this
 method trap-container-changes (
-  PuzzleTable::Gui::DropDown $categories, Bool $skip-default = False
+  PuzzleTable::Gui::DropDown $categories, Bool :$skip-default = False
 ) {
   state $containers = self;
   self.register-signal(
@@ -119,7 +176,7 @@ method trap-container-changes (
     :$containers, :$categories, :$skip-default
   );
 
-  my Str $select-container = self.get-dropdown-text;
+#  my Str $select-container = self.get-dropdown-text;
 }
 
 #-------------------------------------------------------------------------------
@@ -148,8 +205,50 @@ method select-categories (
 ) {
 
   $categories.fill-categories(
-    $categories.get-dropdown-text, $containers.get-dropdown-text,
-    :$skip-default
+    '', $containers.get-dropdown-text, :$skip-default
+  );
+}
+
+#-------------------------------------------------------------------------------
+# Only a container drop down list can call this
+method trap-root-changes (
+  PuzzleTable::Gui::DropDown $containers, Bool :$skip-default = False
+) {
+  state $roots = self;
+  self.register-signal(
+    self, 'select-containers', 'notify::selected',
+    :$roots, :$containers, :$skip-default
+  );
+
+#  my Str $select-root = self.get-dropdown-text;
+}
+
+#-------------------------------------------------------------------------------
+=begin pod
+=head2 select-categories
+
+Handler for the container dropdown list to change the category dropdown list after a selecteion is made.
+
+  method select-categories (
+    N-Object $, Gnome::Gtk4::DropDown() :_native-object($containers),
+    Gnome::Gtk4::DropDown() :$categories, Bool :$skip-default
+  )
+
+=item $ ; A ParamSpec object. It is ignored.
+=item $containers: The container list.
+=item $categories: The category list.
+=item $skip-default; Used to hide the 'Default' category from the list.
+
+=end pod
+
+#TODO somehow there is an empty stringlist when using _native-object named argument
+method select-containers (
+  N-Object $, # PuzzleTable::Gui::DropDown() :_native-object($containers),
+  PuzzleTable::Gui::DropDown :$containers, Bool :$skip-default,
+  PuzzleTable::Gui::DropDown :$roots
+) {
+  $containers.fill-containers(
+    '', :root-dir($roots.get-dropdown-text), :$skip-default
   );
 }
 
