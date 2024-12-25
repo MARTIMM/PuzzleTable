@@ -23,7 +23,7 @@ submethod BUILD ( Str:D :$root-dir, :$!config ) {
 #-------------------------------------------------------------------------------
 method load-category-config ( Str:D $root-dir is copy ) {
   $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
-note "$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
+note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
 
   if $!config-paths{$root-dir}:!exists {
     $!config-paths{$root-dir} = "$root-dir/categories.yaml";
@@ -39,12 +39,15 @@ note "$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
     }
   }
 
-  # Always select the default category
+  # Always select the default category in the default container of
+  # the current root directory
   $!current-category .= new(
-    :category-name('Default'), :container(''), :$root-dir
+    :category-name('Default'), :container('Default'), :$root-dir
   );
 
-note "$?LINE $!categories-config.gist()";
+#for $!categories-config.keys -> $root-dir {
+#note "\n$?LINE $root-dir\n$!categories-config{$root-dir}.gist()";
+#}
 }
 
 #-------------------------------------------------------------------------------
@@ -56,16 +59,26 @@ method add-table-root ( Str $root-dir ) {
 }
 
 #-------------------------------------------------------------------------------
+method get-roots ( --> Seq ) {
+  $!categories-config.keys.sort
+}
+
+#-------------------------------------------------------------------------------
 # Called after adding, removing, or other changes made on a category
-method save-categories-config ( Str $root-dir = $!current-category.root-dir ) {
+method save-categories-config ( ) {
 
   my $t0 = now;
 
   # Save categories config
-  $!config-paths{$root-dir}.IO.spurt(save-yaml($!categories-config{$root-dir}));
+  for $!categories-config.keys -> $root-dir {
+#note "$?LINE save to $root-dir";
+    $!config-paths{$root-dir}.IO.spurt(
+      save-yaml($!categories-config{$root-dir})
+    );
+  }
 
-  note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}."
-       if $*verbose-output;
+  note "Time needed to save categories: ",
+       (now - $t0).fmt('%.1f sec.') if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
@@ -96,7 +109,7 @@ method add-category (
       :$category-name, :$container, :$root-dir
     );
     self.update-category-status(:$category);
-    self.save-categories-config($root-dir);
+    self.save-categories-config;
   }
 
   $message
@@ -111,6 +124,7 @@ method select-category (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
+#note "$?LINE $category-name, $container, $root-dir";
 
   $!categories-config{$root-dir}{$container}<categories> = %()
       if $!categories-config{$root-dir}{$container}<categories>:!exists;
@@ -148,8 +162,7 @@ method move-category (
     $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to} =
       $!categories-config{$root-dir-from}{$cont-from}<categories>{$cat-from}:delete;
 
-    self.save-categories-config($root-dir-from);
-    self.save-categories-config($root-dir-to);
+    self.save-categories-config;
 
     # Create category dir if it doesn't exist
     mkdir "$root-dir-to$cont-to", 0o700 unless "$root-dir-to$cont-to".IO.e;
@@ -196,7 +209,7 @@ method delete-category (
         .unlink for dir("$root-dir$container/$category");
         "$root-dir$container/$category".IO.rmdir;
 
-        self.save-categories-config($root-dir);
+        self.save-categories-config;
       }
     }
 
@@ -253,20 +266,32 @@ method get-category-status (
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
   my Str $root-dir = $!current-category.root-dir;
+#note "$?LINE $root-dir $container $category-name";
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
   my Array $cat-status = [ 0, 0, 0, 0];
 
+  # initialize if not yet available
   $!categories-config{$root-dir}{$container}<categories> = %()
-      if $!categories-config{$root-dir}{$container}<categories>:!exists;
+    if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
   my Hash $categories :=
      $!categories-config{$root-dir}{$container}<categories>;
 
-#note "$?LINE $category-name, $container, ", $categories{$category-name}<status>:exists;
+#note "$?LINE ", $categories{$category-name}.gist, "\n", $categories{$category-name}<status>:exists;
 
   if $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
+
+    # maybe an update needed when all is 0
+    if $cat-status.sum == 0 {
+      my PuzzleTable::Config::Category $category .= new(
+        :$category-name, :$container, :$root-dir
+      );
+
+      self.update-category-status(:$category);
+      $cat-status = $categories{$category-name}<status>;
+    }
   }
 
   else {
@@ -295,7 +320,7 @@ method get-category-status (
     }
 
     $categories{$category-name}<status> = $cat-status;
-    self.save-categories-config($root-dir);
+    self.save-categories-config;
   }
 
   $cat-status
@@ -303,7 +328,8 @@ method get-category-status (
 
 #-------------------------------------------------------------------------------
 method update-category-status (
-  PuzzleTable::Config::Category :$category = $!current-category ) {
+  PuzzleTable::Config::Category :$category = $!current-category
+) {
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
   my Array $cat-status = [ 0, 0, 0, 0];
@@ -330,7 +356,7 @@ method update-category-status (
 
   my Str $category-name = $category.category-name;
   my Str $container-name = $category.container;
-  my Str $root-dir = $!current-category.root-dir;
+  my Str $root-dir = $category.root-dir;
 
   if ? $container-name {
     $!categories-config{$root-dir}{$container-name}<categories>{$category-name}<status> = $cat-status;
@@ -340,7 +366,9 @@ method update-category-status (
     $!categories-config{$root-dir}{$category-name}<status> = $cat-status;
   }
 
-  self.save-categories-config($root-dir);
+#note "$?LINE new status ", $cat-status.gist();
+
+  self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -349,33 +377,39 @@ method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
 }
 
 #-------------------------------------------------------------------------------
-method add-container ( Str $container is copy = '' --> Bool ) {
+method add-container (
+  Str $container is copy = '', Str :$root-dir is copy --> Bool
+) {
+note "$?LINE $root-dir, $container";
   my Bool $add-ok = False;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
 
   if $!categories-config{$root-dir}{$container}:!exists {
     $!categories-config{$root-dir}{$container} = %(:categories(%()));
     mkdir "$root-dir$container", 0o700 unless "$root-dir$container".IO.e;
     $add-ok = True;
 
-    self.save-categories-config($root-dir);
+    self.save-categories-config;
   }
   
   $add-ok
 }
 
 #-------------------------------------------------------------------------------
-method delete-container ( Str $container is copy = '' --> Bool ) {
+method delete-container (
+  Str $container is copy = '', Str :$root-dir is copy --> Bool
+) {
+note "$?LINE $root-dir, $container";
   my Bool $delete-ok = False;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
 
   if $!categories-config{$root-dir}{$container}:exists and
      $!categories-config{$root-dir}{$container}<categories>.elems == 0
   {
     $!categories-config{$root-dir}{$container}:delete;
-    self.save-categories-config($root-dir);
+    self.save-categories-config;
     rmdir "$root-dir$container";
     $delete-ok = True;
   }
@@ -384,20 +418,20 @@ method delete-container ( Str $container is copy = '' --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-containers ( --> List ) {
+method get-containers ( Str :$root-dir is copy --> List ) {
 
   my Bool $locked = $!config.is-locked;
-#  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
   my @containers = ();
-
-  for $!categories-config.keys.sort -> $root-dir {
+#  for $!categories-config.keys.sort -> $root-dir {
     for $!categories-config{$root-dir}.keys.sort -> $container {
+note "$?LINE $root-dir, $container";
       # Containers have an _EX_ extension which is removed
       # Don't include in list if lockable and table is locked
-      @containers.push: Pair.new( (S/ '_EX_' $// with $container), $root-dir)
+      @containers.push: (S/ '_EX_' $// with $container)
         unless self.has-lockable-categories($container).Bool and $locked;
     }
-  }
+#  }
 
   @containers
 }
@@ -422,7 +456,7 @@ method set-expand ( Str:D $container is copy, Bool $expanded --> Str ) {
 
   if $!categories-config{$root-dir}{$container}:exists {
     $!categories-config{$root-dir}{$container}<expanded> = $expanded;
-    self.save-categories-config($root-dir);
+    self.save-categories-config;
   }
 
   else {
@@ -855,7 +889,7 @@ method set-category-lockable (
       $!categories-config{$root-dir}{$container}<categories>{$category}<lockable> = $lockable;
     }
 
-    self.save-categories-config($root-dir);
+    self.save-categories-config;
     $is-set = True;
   }
 

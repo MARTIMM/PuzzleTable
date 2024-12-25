@@ -36,7 +36,7 @@ has PuzzleTable::Config::Global $!global-settings handles( <
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
-      add-table-root get-current-root
+      add-table-root get-current-root get-roots
       is-category-lockable set-category-lockable
       get-categories add-category delete-category move-category
       select-category find-container get-current-container
@@ -75,6 +75,10 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
     $!categories.add-table-root($table);
   }
 
+  $*multiple-roots = @tables.elems > 1;
+note "\n$?LINE @tables.gist()";
+#exit;
+
   # Save when an interrupt arrives
   signal(SIGINT).tap( {
       self.save-categories-config;
@@ -94,7 +98,7 @@ multi method instance (
 }
 
 multi method instance ( --> PuzzleTable::Config ) {
-  die "No instance of Config" unless ?$instance;
+  die "No instance of Config, aborting …" unless ?$instance;
   $instance
 }
 
