@@ -51,6 +51,7 @@ submethod BUILD ( :$!main ) {
 
 #-------------------------------------------------------------------------------
 method fill-sidebar ( Bool :$init = False ) {
+#note "$?LINE fill sidebar";
 
   # Get the child from the scrollbar which is a grid and clear it.
   my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
@@ -68,50 +69,56 @@ method fill-sidebar ( Bool :$init = False ) {
   my Array $totals = [ 0, 0, 0, 0];
   my Str $prev-root-dir;
   my Int $expander-color-count;
+  my Str $root-dir;
+  my Str $container;
 
-  my @containers = $!config.get-containers;
-  for @containers -> Pair $c {
-    my Str $container = $c.key;
-    my Str $root-dir = $c.value;
-    if !$prev-root-dir {
-      $prev-root-dir = $root-dir;
-      $expander-color-count = 0;
-    }
+  for $!config.get-roots -> $root-dir {
+    my @containers = $!config.get-containers(:$root-dir);
+    for @containers -> $container {
+#    for @containers -> Pair $c {
+#      $container = $c.key;
+#      $root-dir = $c.value;
+      if !$prev-root-dir {
+        $prev-root-dir = $root-dir;
+        $expander-color-count = 0;
+      }
 
-    elsif $prev-root-dir ne $root-dir {
-      $prev-root-dir = $root-dir;
-      $expander-color-count++;
-    }
+      elsif $prev-root-dir ne $root-dir {
+        $prev-root-dir = $root-dir;
+        $expander-color-count++;
+      }
 
-#note "$?LINE $container, $root-dir, $expander-color-count";
-    my Int $cat-row-count = 0;
-    my Gnome::Gtk4::Grid $category-grid .= new-grid;
+  #note "$?LINE $container, $root-dir, $expander-color-count";
+      my Int $cat-row-count = 0;
+      my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
-    my @categories = $!config.get-categories( $container, $root-dir);
-    for @categories -> $category {
+      my @categories = $!config.get-categories( $container, $root-dir);
+      for @categories -> $category {
+  #note "$?LINE $category";
 
-      my Gnome::Gtk4::Button $category-button =
-        self.category-button( $category, $container, :$root-dir);
+        my Gnome::Gtk4::Button $category-button =
+          self.category-button( $category, $container, :$root-dir);
 
-      $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
+        $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
 
-      # Get information of each subcategory
-      self.sidebar-status(
-        $category, $container, $category-grid, $cat-row-count, $totals
+        # Get information of each subcategory
+        self.sidebar-status(
+          $category, $container, $category-grid, $cat-row-count, $totals
+        );
+
+        $cat-row-count++;
+      }
+
+      my Gnome::Gtk4::Expander $expander = self.sidebar-expander(
+        $container, $expander-color-count
       );
 
-      $cat-row-count++;
+      $expander.set-child($category-grid);
+      $expander.set-expanded($!config.is-expanded($container));
+      $cat-grid.attach( $expander, 0, $row-count, 5, 1);
+
+      $row-count++;
     }
-
-    my Gnome::Gtk4::Expander $expander = self.sidebar-expander(
-      $container, $expander-color-count
-    );
-
-    $expander.set-child($category-grid);
-    $expander.set-expanded($!config.is-expanded($container));
-    $cat-grid.attach( $expander, 0, $row-count, 5, 1);
-
-    $row-count++;
   }
 
   # Display gathered information in a tooltip
@@ -127,7 +134,7 @@ method fill-sidebar ( Bool :$init = False ) {
 
   self.set-child($cat-grid);
   self.select-category(
-    :category<Default>, :container<Default>
+    :category<Default>, :container<Default>, :$root-dir
   ) if $init;
 }
 
@@ -176,7 +183,7 @@ method sidebar-expander (
 ) {
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
     my Str $css-class = "pt-sidebar-expander-ptr$expander-color-count";
-note "$?LINE $container, $css-class";
+#note "$?LINE $container, $css-class";
 
     $!config.set-css( .get-style-context, :$css-class);
 
@@ -256,15 +263,15 @@ method select-category (
   Str:D :$category, Str:D :$container, Str :$root-dir
 ) {
 #  $!current-category = $category;
-  my $root-text = ? $root-dir ?? "$root-dir " !! '';
-  my Str $title = "Puzzle Table Display - $root-text - $category in $container";
+  my $root-text = (?$root-dir and $*multiple-roots) ?? "- $root-dir -" !! '';
+  my Str $title = "Puzzle Table Display: $root-text $category in $container";
   $!main.application-window.set-title($title) if ?$!main.application-window;
 
   # Clear the puzzle table before showing the puzzles of this category
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  $!config.select-category( $category, $container);
+  $!config.select-category( $category, $container, :$root-dir);
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
@@ -273,9 +280,9 @@ method select-category (
 
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
-method set-category ( Str:D $category, Str:D $container ) {
+method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
 
   # Fill the sidebar in case there is a new entry
   self.fill-sidebar;
-  self.select-category( :$category, :$container);
+  self.select-category( :$category, :$container, :$root-dir);
 }
