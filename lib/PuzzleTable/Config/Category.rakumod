@@ -20,11 +20,13 @@ has Str $!config-path;
 submethod BUILD (
   Str:D :$!category-name, Str:D :$!container, Str:D :$!root-dir
 ) {
-  $!category-name .= tc;
+#  $!category-name .= tc;
   $!container = self.set-container-name($!container);
 
   $!config-dir = "$!root-dir$!container/$!category-name";
-note "$?LINE $!config-dir, $!container, $!category-name";
+#note "$?LINE $!config-dir, $!container, $!category-name";
+note "$?LINE mkdir '$!config-dir'" unless $!config-dir.IO.e;
+note "$?LINE Second call for pt2\n", Backtrace.new.nice if ! $!config-dir.IO.e and $!config-dir ~~ m/'/pt2/'/;
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
 
   $!config-path = "$!config-dir/puzzles.yaml";
@@ -45,10 +47,15 @@ note "$?LINE $!config-dir, $!container, $!category-name";
 # - First letter uppercase
 # - Append '_EX_' to the name
 method set-container-name ( Str:D $name --> Str ) {
+note "$?LINE Use of '' in \$name\n", Backtrace.new.nice if $name eq '';
+
   my Str $container-name;
+
+  # name has non empty string
   if ? $name {
+    # name does not have _EX_ postfix yet
     if $name !~~ m/ '_EX_' $/ {
-      $container-name = $name.tc ~ '_EX_';
+      $container-name = $name.lc.tc ~ '_EX_';
     }
 
     else {
@@ -56,6 +63,7 @@ method set-container-name ( Str:D $name --> Str ) {
     }
   }
 
+  # TODO test above for empty string using Backtrace
   else {
     $container-name = 'Default_EX_';
   }

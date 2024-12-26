@@ -103,7 +103,8 @@ method fill-sidebar ( Bool :$init = False ) {
 
         # Get information of each subcategory
         self.sidebar-status(
-          $category, $container, $category-grid, $cat-row-count, $totals
+          $category, $container, $root-dir, $category-grid,
+          $cat-row-count, $totals
         );
 
         $cat-row-count++;
@@ -167,7 +168,7 @@ method category-button (
     .set-has-tooltip(True);
 
     .register-signal(
-      self, 'show-tooltip', 'query-tooltip', :$category, :$container
+      self, 'show-tooltip', 'query-tooltip', :$category, :$container, :$root-dir
     );
     .register-signal(
       self, 'select-category', 'clicked', :$category, :$container, :$root-dir
@@ -215,13 +216,13 @@ method expand (
 
 #-------------------------------------------------------------------------------
 method sidebar-status (
-  Str:D $category, Str:D $container,
+  Str:D $category, Str:D $container, $root-dir,
   Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals,
 ) {
   my Gnome::Gtk4::Label $l;
 
   my Array $cat-status =
-     $!config.get-category-status( $category, $container);
+     $!config.get-category-status( $category, $container, $root-dir);
 
   $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
@@ -244,10 +245,12 @@ method sidebar-status (
 #-------------------------------------------------------------------------------
 method show-tooltip (
   Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip,
-  Str :$category, Str :$container
+  Str :$category, Str :$container, Str :$root-dir
   --> gboolean
 ) {
-  my Str $puzzle-image-name = $!config.get-puzzle-image( $category, $container);
+  my Str $puzzle-image-name = $!config.get-puzzle-image(
+    $category, $container, $root-dir
+  );
   if ?$puzzle-image-name {
     my Gnome::Gtk4::Picture $p .= new-picture;
     $p.set-filename($puzzle-image-name);

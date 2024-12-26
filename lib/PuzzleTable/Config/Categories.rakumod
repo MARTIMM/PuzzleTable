@@ -88,7 +88,7 @@ method add-category (
   --> Str
 ) {
   my Str $message = '';
-  $category-name .= tc;
+  $category-name = $category-name.lc.tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
 note "$?LINE $root-dir";
@@ -101,9 +101,12 @@ note "$?LINE $root-dir";
   }
 
   else {
-    $lockable = False if $container eq 'Default_EX_';
+    # Default containers and categories aren't lockable
+    $lockable = False
+      if $container eq 'Default_EX_' or $category-name eq 'Default';
     $cats{$category-name}<lockable> = $lockable;
-    mkdir "$root-dir$container/$category-name", 0o700;
+#note "$?LINE mkdir '$root-dir$container/$category-name'";
+#    mkdir "$root-dir$container/$category-name", 0o700;
 
     my PuzzleTable::Config::Category $category .= new(
       :$category-name, :$container, :$root-dir
@@ -261,11 +264,13 @@ method get-current-root ( --> Str ) {
 
 #-------------------------------------------------------------------------------
 method get-category-status (
-  Str:D $category-name is copy, Str:D $container is copy --> Array
+  Str:D $category-name is copy, Str:D $container is copy,
+  Str:D $root-dir is copy
+  --> Array
 ) {
   $category-name .= tc;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
 #note "$?LINE $root-dir $container $category-name";
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
@@ -620,9 +625,11 @@ method restore-puzzles (
 }
 
 #-------------------------------------------------------------------------------
-method get-puzzle-image ( Str $category, Str $container --> Str ) {
+method get-puzzle-image (
+  Str $category, Str $container, Str $root-dir is copy --> Str
+) {
 
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
   my PuzzleTable::Config::Category $cat .= new(
     :category-name($category), :$container, :$root-dir
   );
