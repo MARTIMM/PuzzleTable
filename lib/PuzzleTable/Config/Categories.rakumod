@@ -23,7 +23,7 @@ submethod BUILD ( Str:D :$root-dir, :$!config ) {
 #-------------------------------------------------------------------------------
 method load-category-config ( Str:D $root-dir is copy ) {
   $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
-note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
+#note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
 
   if $!config-paths{$root-dir}:!exists {
     $!config-paths{$root-dir} = "$root-dir/categories.yaml";
@@ -91,7 +91,7 @@ method add-category (
   $category-name = $category-name.lc.tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
-note "$?LINE $root-dir";
+#note "$?LINE $root-dir";
   $!categories-config{$root-dir}{$container}<categories> = %()
       if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
@@ -146,18 +146,18 @@ method select-category (
 
 #-------------------------------------------------------------------------------
 method move-category (
-  Str $cat-from is copy, Str:D $cont-from is copy,
-  Str $cat-to is copy, Str:D $cont-to is copy
+  Str $cat-from, Str:D $cont-from is copy, Str:D $root-dir-from,
+  Str $cat-to, Str:D $cont-to is copy, Str:D $root-dir-to
   --> Str
 ) {
   my Str $message = '';
 
-  $cat-from .= tc;
-  $cat-to .= tc;
+#  $cat-from .= tc;
+#  $cat-to .= tc;
   $cont-from = $!current-category.set-container-name($cont-from);
   $cont-to = $!current-category.set-container-name($cont-to);
-  my Str $root-dir-from = $!current-category.root-dir;
-  my Str $root-dir-to = $!current-category.root-dir;
+#  my Str $root-dir-from = $!current-category.root-dir;
+#  my Str $root-dir-to = $!current-category.root-dir;
 
   if $!categories-config{$root-dir-from}{$cont-from}<categories>{$cat-from}:exists and 
      $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to}:!exists
@@ -189,18 +189,18 @@ method move-category (
 
 #-------------------------------------------------------------------------------
 method delete-category (
-  Str:D $category is copy, Str:D $container is copy --> Str
+  Str:D $category, Str:D $container is copy, Str:D $root-dir is copy --> Str
 ) {
   my Str $message = '';
 
-  $category .= tc;
+#  $category .= tc;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+  $root-dir //= $!current-category.root-dir;
 
   my Hash $conts := $!categories-config{$root-dir};
   if $conts{$container}:exists {
     if $conts{$container}<categories>{$category}:exists {
-      if self.has-puzzles( $category, $container) {
+      if self.has-puzzles( $category, $container, $root-dir) {
         $message = 'Category still has puzzles';
       }
 
@@ -385,7 +385,6 @@ method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
 method add-container (
   Str $container is copy = '', Str :$root-dir is copy --> Bool
 ) {
-note "$?LINE $root-dir, $container";
   my Bool $add-ok = False;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
@@ -402,21 +401,20 @@ note "$?LINE $root-dir, $container";
 }
 
 #-------------------------------------------------------------------------------
-method delete-container (
-  Str $container is copy = '', Str :$root-dir is copy --> Bool
-) {
-note "$?LINE $root-dir, $container";
+method delete-container ( Str:D $cont, Str:D $root-dir --> Bool ) {
   my Bool $delete-ok = False;
-  $container = $!current-category.set-container-name($container);
-  $root-dir //= $!current-category.root-dir;
+  my Str $container = $!current-category.set-container-name($cont);
 
-  if $!categories-config{$root-dir}{$container}:exists and
-     $!categories-config{$root-dir}{$container}<categories>.elems == 0
-  {
-    $!categories-config{$root-dir}{$container}:delete;
-    self.save-categories-config;
-    rmdir "$root-dir$container";
-    $delete-ok = True;
+  if $!categories-config{$root-dir}{$container}:exists {
+
+note "$?LINE bug, no <categories>", Backtrace.new.nice unless $!categories-config{$root-dir}{$container}<categories>:exists;
+
+    if $!categories-config{$root-dir}{$container}<categories>.elems == 0 {
+      $!categories-config{$root-dir}{$container}:delete;
+      self.save-categories-config;
+      rmdir "$root-dir$container";
+      $delete-ok = True;
+    }
   }
 
   $delete-ok
@@ -691,24 +689,24 @@ method get-puzzles ( --> Seq ) {
 
 #-------------------------------------------------------------------------------
 method has-puzzles (
-  Str:D $category is copy, Str:D $container is copy --> Bool
+  Str:D $category, Str:D $container, Str:D $root-dir --> Bool
 ) {
   my Bool $hp = False;
   
-  $category .= tc;
-  $container = $!current-category.set-container-name($container);
-  if $category eq $!current-category.category-name {
-    $hp = $!current-category.get-puzzle-ids.elems.Bool;
-  }
+#  $category .= tc;
+#  $container = $!current-category.set-container-name($container);
+#  if $category eq $!current-category.category-name {
+#    $hp = $!current-category.get-puzzle-ids.elems.Bool;
+#  }
 
-  else {
-    my Str $root-dir = $!current-category.root-dir;
+#  else {
+#    $root-dir //= $!current-category.root-dir;
     my PuzzleTable::Config::Category $cat .= new(
       :category-name($category), :$container, :$root-dir
     );
     
     $hp = $cat.get-puzzle-ids.elems.Bool;
-  }
+#  }
 
   $hp
 }

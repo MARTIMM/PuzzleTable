@@ -171,39 +171,62 @@ method category-rename ( N-Object $parameter ) {
   $new-cat-entry.set-text($select-category);
 
   # A dropdown to list categories. The current category is preselected.
-  my PuzzleTable::Gui::DropDown $old-cat-dropdown .= new;
-  $old-cat-dropdown.fill-categories(
+  my PuzzleTable::Gui::DropDown $old-category-dd .= new;
+  $old-category-dd.fill-categories(
     $select-category, $select-container, :skip-default
   );
 
-  # A dropdown to list categories. The current category is preselected.
-  with my PuzzleTable::Gui::DropDown $old-cont-dropdown .= new {
+  # A dropdown to list containers. The current container is preselected.
+  with my PuzzleTable::Gui::DropDown $old-container-dd .= new {
     .fill-containers($select-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
-    .trap-container-changes( $old-cat-dropdown, :skip-default);
+    .trap-container-changes( $old-category-dd, :skip-default);
   }
 
-  # Find the container of the current category and use it in the container
-  # list to preselect it.
-  with my PuzzleTable::Gui::DropDown $new-cont-dropdown .= new {
-    .fill-containers($select-container);
+  # A dropdown to list containers. The current container is preselected.
+  with my PuzzleTable::Gui::DropDown $new-container-dd .= new {
+    .fill-containers('');
+
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+#    .trap-container-changes( $old-category-dd, :skip-default);
+  }
+
+  my PuzzleTable::Gui::DropDown ( $old-roots-dd, $new-roots-dd);
+  if $*multiple-roots {
+    $old-roots-dd .= new;
+    $old-roots-dd.fill-roots($!config.get-current-root);
+
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    $old-roots-dd.trap-root-changes($old-container-dd);
+
+    $new-roots-dd .= new;
+    $new-roots-dd.fill-roots($!config.get-current-root);
+
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    $new-roots-dd.trap-root-changes($new-container-dd);
   }
 
   # Build the dialog
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Select container to show category list', $old-cont-dropdown);
-    .add-content( 'Specify the category to rename', $old-cat-dropdown);
-    .add-content( 'Select container to move category to', $new-cont-dropdown);
+    .add-content( 'Select the root where old container is', $old-roots-dd);
+    .add-content( 'Select container where old category is', $old-container-dd);
+    .add-content( 'Specify the category to move', $old-category-dd);
+
+    .add-content( 'Select the root where new container is', $new-roots-dd);
+    .add-content( 'Select container to move category to', $new-container-dd);
     .add-content( 'New category name', $new-cat-entry);
 
     .add-button(
       self, 'do-category-rename', 'Rename',
-      :$old-cat-dropdown, :$old-cont-dropdown,
-      :$new-cat-entry, :$new-cont-dropdown,
+      :$old-category-dd, :$old-container-dd, :$old-roots-dd,
+      :$new-cat-entry, :$new-container-dd, :$new-roots-dd,
       :$dialog
     );
 
@@ -214,11 +237,13 @@ method category-rename ( N-Object $parameter ) {
 
 #-------------------------------------------------------------------------------
 method do-category-rename (
-  PuzzleTable::Gui::DropDown :$old-cat-dropdown,
-  PuzzleTable::Gui::DropDown :$old-cont-dropdown,
-  Gnome::Gtk4::Entry :$new-cat-entry,
-  PuzzleTable::Gui::DropDown :$new-cont-dropdown,
   PuzzleTable::Gui::Dialog :$dialog,
+  PuzzleTable::Gui::DropDown :$old-category-dd,
+  PuzzleTable::Gui::DropDown :$old-container-dd,
+  PuzzleTable::Gui::DropDown :$old-roots-dd,
+  PuzzleTable::Gui::DropDown :$new-container-dd,
+  PuzzleTable::Gui::DropDown :$new-roots-dd,
+  Gnome::Gtk4::Entry :$new-cat-entry,
 ) {
   my Bool $sts-ok = False;
    my Str $new-category = $new-cat-entry.get-text;
@@ -238,10 +263,12 @@ method do-category-rename (
   else {
     # Move members to other category and container
     my Str $message = $!config.move-category(
-      my Str $ocat = $old-cat-dropdown.get-dropdown-text,
-      my Str $ocont = $old-cont-dropdown.get-dropdown-text,
+      my Str $ocat = $old-category-dd.get-dropdown-text,
+      my Str $ocont = $old-container-dd.get-dropdown-text,
+      my Str $oroot = $old-roots-dd.get-dropdown-text,
       $new-category,
-      my Str $ncont = $new-cont-dropdown.get-dropdown-text
+      my Str $ncont = $new-container-dd.get-dropdown-text,
+      my Str $nroot = $new-roots-dd.get-dropdown-text
     );
 
     if $message {
@@ -250,13 +277,13 @@ method do-category-rename (
 
     else {
       $!sidebar.fill-sidebar;
-      if $ocat eq $!config.get-current-category and
-         $ocont eq $!config.get-current-container
-      {
+#      if $ocat eq $!config.get-current-category and
+#         $ocont eq $!config.get-current-container
+#      {
         $!sidebar.select-category(
-          :category($new-category), :container($ncont)
+          :category($new-category), :container($ncont), :root-dir($nroot)
         );
-      }
+#      }
 
       $sts-ok = True;
     }
@@ -327,21 +354,26 @@ method do-category-delete (
   my Bool $sts-ok = False;
   my Str $category = $category-dd.get-dropdown-text;
   my Str $container = $container-dd.get-dropdown-text;
-  if $!config.has-puzzles( $category, $container) {
+
+  my Str $root-dir;
+  if $*multiple-roots {
+    $root-dir = $roots-dd.get-dropdown-text;
+  }
+
+  if $!config.has-puzzles( $category, $container, $root-dir) {
     $dialog.set-status('Category still has puzzles');
   }
 
   else {
-    my Str $message = $!config.delete-category( $category, $container);
+    my Str $message = $!config.delete-category(
+      $category, $container, $root-dir
+    );
+
     if ?$message {
       $dialog.set-status($message);
     }
 
     else {
-      my Str $root-dir;
-      if $*multiple-roots {
-        $root-dir = $roots-dd.get-dropdown-text;
-      }
 
       if $category eq $!config.get-current-category and
          $container eq $!config.get-current-container

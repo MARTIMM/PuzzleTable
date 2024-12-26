@@ -22,7 +22,6 @@ has PuzzleTable::Config $!config;
 
 #-------------------------------------------------------------------------------
 method new ( |c ) {
-#note "$?LINE ", c.gist;
   self.new-dropdown(|c);
 }
 
@@ -55,34 +54,6 @@ method fill-categories (
     $!config.get-categories( $container, $root-dir, :skip-containers),
     $category, :$skip-default
   );
-
-
-
-#`{{
-#  my Gnome::Gtk4::StringList() $category-list;
-  my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
-  self.set-model($stringlist);
-
-  #my Str $category = $select-category;  # // $!config.get-current-category;
-  #my Str $container = $select-container # // $!config.find-container($category);
-
-  my Int $index = 0;
-  my Bool $index-found = False;
-  $root-dir //= $!config.get-current-root;
-
-  for $!config.get-categories( $container, $root-dir, :skip-containers)
-    -> $subcat
-  {
-    next if $skip-default and $subcat eq 'Default';
-
-    $index-found = True if $subcat eq $category;  #$select-category;
-    $index++ unless $index-found;
-
-    $stringlist.append($subcat);
-  }
-
-  self.set-selected($index-found ?? $index !! 0);
-}}
 }
 
 #-------------------------------------------------------------------------------
@@ -93,44 +64,11 @@ method fill-containers (
   self.set-selection(
     $!config.get-containers(:$root-dir), $select-container, :$skip-default
   );
-#`{{
-  my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
-  self.set-model($stringlist);
-  my Int $index = 0;
-  my Bool $index-found = False;
-  $root-dir //= $!config.get-current-root;
-note "$?LINE $root-dir";
-
-  # Add the container strings
-  for $!config.get-containers(:$root-dir) -> $container {
-    $stringlist.append($container);
-    $index-found = True if $container eq $select-container;
-    $index++ unless $index-found;
-  }
-
-  self.set-selected($index-found ?? $index !! 0);
-}}
 }
 
 #-------------------------------------------------------------------------------
 method fill-roots ( Str:D $select-root ) {
   self.set-selection( $!config.get-roots, $select-root);
-#`{{
-  my Gnome::Gtk4::StringList() $stringlist .= new-stringlist([]);
-  self.set-model($stringlist);
-  my Int $index = 0;
-  my Bool $index-found = False;
-
-  # Add the container strings
-  for $!config.get-roots -> $root {
-note "$?LINE $root";
-    $stringlist.append($root);
-    $index-found = True if $root eq $select-root;
-    $index++ unless $index-found;
-  }
-
-  self.set-selected($index-found ?? $index !! 0);
-}}
 }
 
 #-------------------------------------------------------------------------------
@@ -142,7 +80,6 @@ method set-selection ( @items, Str $select-item, Bool :$skip-default = False ) {
 
   # Add the container strings
   for @items -> $item {
-note "$?LINE $item, $skip-default";
     next if $skip-default and $item eq 'Default';
 
     $stringlist.append($item);

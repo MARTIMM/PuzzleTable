@@ -142,9 +142,12 @@ method do-container-delete (
     $root-dir = $roots-dd.get-dropdown-text;
   }
 
+  else {
+    $root-dir = $!config.get-current-root;
+  }
+
   my Str $container = $container-dd.get-dropdown-text;
-  
-  if not $!config.delete-container( $container, :$root-dir) {
+  if not $!config.delete-container( $container, $root-dir) {
     $dialog.set-status("Container $container not empty");
   }
 

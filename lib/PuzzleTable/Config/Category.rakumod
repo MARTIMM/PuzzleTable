@@ -25,8 +25,8 @@ submethod BUILD (
 
   $!config-dir = "$!root-dir$!container/$!category-name";
 #note "$?LINE $!config-dir, $!container, $!category-name";
-note "$?LINE mkdir '$!config-dir'" unless $!config-dir.IO.e;
-note "$?LINE Second call for pt2\n", Backtrace.new.nice if ! $!config-dir.IO.e and $!config-dir ~~ m/'/pt2/'/;
+#note "$?LINE mkdir '$!config-dir'" unless $!config-dir.IO.e;
+#note "$?LINE Second call for pt2\n", Backtrace.new.nice if ! $!config-dir.IO.e and $!config-dir ~~ m/'/pt2/'/;
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
 
   $!config-path = "$!config-dir/puzzles.yaml";
@@ -47,7 +47,7 @@ note "$?LINE Second call for pt2\n", Backtrace.new.nice if ! $!config-dir.IO.e a
 # - First letter uppercase
 # - Append '_EX_' to the name
 method set-container-name ( Str:D $name --> Str ) {
-note "$?LINE Use of '' in \$name\n", Backtrace.new.nice if $name eq '';
+#note "$?LINE Use of '' in \$name\n", Backtrace.new.nice if $name eq '';
 
   my Str $container-name;
 
@@ -258,6 +258,7 @@ method get-puzzle ( Str $puzzle-id, Bool :$delete = False --> Hash ) {
 
 #-------------------------------------------------------------------------------
 method get-puzzle-ids ( --> Seq ) {
+
   $!category-config<members>.keys
 }
 
