@@ -76,9 +76,8 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
   }
 
   $*multiple-roots = @tables.elems > 1;
-note "\n$?LINE @tables.gist()";
-#exit;
 
+# TODO sometimes: Segmentation fault (core dumped)
   # Save when an interrupt arrives
   signal(SIGINT).tap( {
       self.save-categories-config;
