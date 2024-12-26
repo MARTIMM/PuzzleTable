@@ -61,7 +61,7 @@ submethod BUILD ( Str:D :$!root-dir ) {
 
   # Always select the default category
   $!current-category .= new(
-    :category-name('Default'), :container(''), :$!root-dir
+    :category-name('Default'), :container('Default'), :$!root-dir
   );
 }
 
