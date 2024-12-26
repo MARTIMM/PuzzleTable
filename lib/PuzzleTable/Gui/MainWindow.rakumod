@@ -134,7 +134,7 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 method remote-options (
   Gnome::Gio::ApplicationCommandLine() $command-line --> Int
 ) {
-say 'remote opts';
+#say 'remote opts';
 
   my Int $exit-code = 0;
 #  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
