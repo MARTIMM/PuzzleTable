@@ -38,12 +38,12 @@ has PuzzleTable::Config $!config;
 submethod BUILD ( :$!main ) {
   $!config .= instance;
 
-  self.set-halign(GTK_ALIGN_FILL);
+#  self.set-halign(GTK_ALIGN_FILL);
   self.set-valign(GTK_ALIGN_FILL);
-  self.set-vexpand(True);
+#  self.set-vexpand(True);
   self.set-propagate-natural-width(True);
 
-  self.set-min-content-width(0);
+#  self.set-min-content-width(200);
   self.set-max-content-width(450);
 
   self.fill-sidebar(:init);
