@@ -240,7 +240,9 @@ method get-categories ( Str:D $container is copy, Str:D $root-dir --> List ) {
 
   my @cat = ();
   for @cat-key-list -> $category {
-    next if ( $locked and self.is-category-lockable( $category, $container));
+    next if (
+      $locked and self.is-category-lockable( $category, $container, $root-dir)
+    );
     @cat.push: $category;
   }
 
@@ -421,17 +423,17 @@ note "$?LINE bug, no <categories>", Backtrace.new.nice unless $!categories-confi
 }
 
 #-------------------------------------------------------------------------------
-method get-containers ( Str :$root-dir is copy --> List ) {
+method get-containers ( Str $root-dir --> List ) {
 
   my Bool $locked = $!config.is-locked;
-  $root-dir //= $!current-category.root-dir;
+#  $root-dir //= $!current-category.root-dir;
   my @containers = ();
 #  for $!categories-config.keys.sort -> $root-dir {
     for $!categories-config{$root-dir}.keys.sort -> $container {
       # Containers have an _EX_ extension which is removed
       # Don't include in list if lockable and table is locked
-      @containers.push: (S/ '_EX_' $// with $container)
-        unless self.has-lockable-categories($container).Bool and $locked;
+      @containers.push: (S/ '_EX_' $// with $container) unless
+        self.has-lockable-categories( $container, $root-dir).Bool and $locked;
     }
 #  }
 
@@ -439,10 +441,10 @@ method get-containers ( Str :$root-dir is copy --> List ) {
 }
 
 #-------------------------------------------------------------------------------
-method is-expanded ( Str:D $container is copy --> Bool ) {
+method is-expanded ( Str:D $container is copy, Str $root-dir --> Bool ) {
   my Bool $expanded = False;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
 
   $expanded = $!categories-config{$root-dir}{$container}<expanded> // False
      if $!categories-config{$root-dir}{$container}:exists;
@@ -451,10 +453,12 @@ method is-expanded ( Str:D $container is copy --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-expand ( Str:D $container is copy, Bool $expanded --> Str ) {
+method set-expand (
+  Str:D $container is copy, Str $root-dir, Bool $expanded --> Str
+) {
   my Str $message = '';
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
 
   if $!categories-config{$root-dir}{$container}:exists {
     $!categories-config{$root-dir}{$container}<expanded> = $expanded;
@@ -470,14 +474,16 @@ method set-expand ( Str:D $container is copy, Bool $expanded --> Str ) {
 
 #-------------------------------------------------------------------------------
 # Method to check if container needs to be hidden
-method has-lockable-categories ( Str $container is copy = '' --> Bool ) {
+method has-lockable-categories (
+  Str:D $container is copy, Str:D $root-dir --> Bool
+) {
   my Bool $lockable-categeries = False;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
 
   for $!categories-config{$root-dir}{$container}<categories>.keys -> $category
   {
-    if self.is-category-lockable( $category, $container) {
+    if self.is-category-lockable( $category, $container, $root-dir) {
       $lockable-categeries = True;
       last
     }
@@ -518,15 +524,14 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 
 #-------------------------------------------------------------------------------
 method move-puzzle (
-  Str:D $to-cat is copy, Str:D $to-cont is copy, Str:D $puzzle-id,
-  Str :$root-dir-to is copy
+  Str:D $to-cat, Str:D $to-cont, Str:D $puzzle-id, Str:D $root-dir-to
 ) {
   $to-cat .= tc;
 
   # Init the categories initialized
   my PuzzleTable::Config::Category $c-from = $!current-category;
-  my Str $root-dir-from = $!current-category.root-dir;
-  $root-dir-to //= $root-dir-from;
+#  my Str $root-dir-from = $!current-category.root-dir;
+#  $root-dir-to //= $root-dir-from;
 
   my PuzzleTable::Config::Category $c-to .= new(
     :category-name($to-cat), :container($to-cont), :root-dir($root-dir-to)
@@ -861,13 +866,13 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 # Get the category lockable state. Returns undefined when container/category
 # is not found.
 method is-category-lockable (
-  Str:D $category is copy, Str:D $container is copy --> Bool
+  Str:D $category, Str:D $container is copy, Str:D $root-dir --> Bool
 ) {
   my Bool $lockable;
 
-  $category .= tc;
+#  $category .= tc;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
 
   if $!categories-config{$root-dir}{$container}<categories>{$category}:exists {
     $lockable = $!categories-config{$root-dir}{$container}<categories>{$category}<lockable>.Bool;
@@ -880,17 +885,18 @@ method is-category-lockable (
 # Set the category lockable state. Returns undefined when container/category
 # is not found.
 method set-category-lockable (
-  Str:D $category, Str:D $container is copy, Bool:D $lockable
+  Str:D $category, Str:D $container is copy, Str:D $root-dir, Bool:D $lockable
   --> Bool
 ) {
   my Bool $is-set = False;
   $container = $!current-category.set-container-name($container);
-  my Str $root-dir = $!current-category.root-dir;
+#  my Str $root-dir = $!current-category.root-dir;
 
   # Never any category in the Default container
   if $container ne 'Default_EX_' {
-    if $!categories-config{$root-dir}{$container}<categories>{$category}:exists {
-      $!categories-config{$root-dir}{$container}<categories>{$category}<lockable> = $lockable;
+    my Hash $c := $!categories-config{$root-dir}{$container};
+    if $c<categories>{$category}:exists {
+      $c<categories>{$category}<lockable> = $lockable;
     }
 
     self.save-categories-config;

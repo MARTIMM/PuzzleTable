@@ -62,7 +62,7 @@ method fill-containers (
 ) {
   $root-dir //= $!config.get-current-root;
   self.set-selection(
-    $!config.get-containers(:$root-dir), $select-container, :$skip-default
+    $!config.get-containers($root-dir), $select-container, :$skip-default
   );
 }
 
@@ -151,12 +151,14 @@ method select-categories (
 #-------------------------------------------------------------------------------
 # Only a container drop down list can call this
 method trap-root-changes (
-  PuzzleTable::Gui::DropDown $containers, Bool :$skip-default = False
+  PuzzleTable::Gui::DropDown $containers,
+  PuzzleTable::Gui::DropDown :$categories,
+  Bool :$skip-default = False
 ) {
   state $roots = self;
   self.register-signal(
     self, 'select-containers', 'notify::selected',
-    :$roots, :$containers, :$skip-default
+    :$roots, :$containers, :$categories, :$skip-default
   );
 
 #  my Str $select-root = self.get-dropdown-text;
@@ -183,11 +185,17 @@ Handler for the container dropdown list to change the category dropdown list aft
 #TODO somehow there is an empty stringlist when using _native-object named argument
 method select-containers (
   N-Object $, # PuzzleTable::Gui::DropDown() :_native-object($containers),
-  PuzzleTable::Gui::DropDown :$containers, Bool :$skip-default,
-  PuzzleTable::Gui::DropDown :$roots
+  PuzzleTable::Gui::DropDown :$categories,
+  PuzzleTable::Gui::DropDown :$containers,
+  PuzzleTable::Gui::DropDown :$roots,
+  Bool :$skip-default,
 ) {
   $containers.fill-containers(
     '', :root-dir($roots.get-dropdown-text), :$skip-default
   );
+
+  $categories.fill-categories(
+    '', $containers.get-dropdown-text, :$skip-default
+  ) if ?$categories;
 }
 

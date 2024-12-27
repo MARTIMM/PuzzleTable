@@ -324,7 +324,7 @@ method category-delete ( N-Object $parameter ) {
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
-    $roots-dd.trap-root-changes($container-dd);
+    $roots-dd.trap-root-changes($container-dd, :categories($category-dd));
   }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
@@ -413,20 +413,30 @@ method category-lock ( N-Object $parameter ) {
     .trap-container-changes( $category-dd, :skip-default);
   }
 
-  my Gnome::Gtk4::CheckButton $check-button .=
-    new-with-label('Lock category');
+  my PuzzleTable::Gui::DropDown $roots-dd;
+  if $*multiple-roots {
+    $roots-dd .= new;
+    $roots-dd.fill-roots($!config.get-current-root);
+
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    $roots-dd.trap-root-changes( $container-dd, :categories($category-dd));
+  }
+
+  my Gnome::Gtk4::CheckButton $check-button .= new-with-label('Lock category');
   $check-button.set-active(False);
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('(Un)Lock Dialog')
   ) {
+    .add-content( 'Select a root', $roots-dd) if $*multiple-roots;
     .add-content( 'Select container', $container-dd);
     .add-content( 'Category to (un)lock', $category-dd);
     .add-content( '', $check-button);
 
     .add-button(
       self, 'do-category-lock', 'Lock / Unlock',
-      :$category-dd, :$container-dd, :$dialog, :$check-button
+      :$category-dd, :$container-dd, :$roots-dd, :$dialog, :$check-button
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -438,13 +448,15 @@ method category-lock ( N-Object $parameter ) {
 method do-category-lock (
   PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::CheckButton :$check-button,
   PuzzleTable::Gui::DropDown :$category-dd,
-  PuzzleTable::Gui::DropDown :$container-dd
+  PuzzleTable::Gui::DropDown :$container-dd,
+  PuzzleTable::Gui::DropDown :$roots-dd
 ) {
   my Bool $sts-ok = False;
 
   $!config.set-category-lockable(
     $category-dd.get-dropdown-text,
     $container-dd.get-dropdown-text,
+    $roots-dd.get-dropdown-text,
     $check-button.get-active.Bool
   );
 

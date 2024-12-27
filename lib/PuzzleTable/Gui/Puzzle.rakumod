@@ -51,30 +51,42 @@ method puzzle-move ( N-Object $parameter ) {
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
 
-  my PuzzleTable::Gui::DropDown $dropdown-cat .= new-dropdown;
-  $dropdown-cat.fill-categories(
+  my PuzzleTable::Gui::DropDown $category-dd .= new-dropdown;
+  $category-dd.fill-categories(
     $select-category, $select-container, :!skip-default
   );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
-  with my PuzzleTable::Gui::DropDown $dropdown-cont .= new-dropdown {
+  with my PuzzleTable::Gui::DropDown $container-dd .= new-dropdown {
     .fill-containers($!config.get-current-container);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
-    .trap-container-changes( $dropdown-cat, :!skip-default);
+    .trap-container-changes( $category-dd, :!skip-default);
+  }
+
+  my PuzzleTable::Gui::DropDown $roots-dd;
+  if $*multiple-roots {
+    $roots-dd .= new;
+    $roots-dd.fill-roots($!config.get-current-root);
+
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    $roots-dd.trap-root-changes( $container-dd, :categories($category-dd));
   }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Move Puzzles Dialog')
   ) {
-    .add-content( 'Specify the container to move to', $dropdown-cont);
-    .add-content( 'Specify the category to move puzzles to', $dropdown-cat);
+    .add-content( 'Select a root to move to', $roots-dd) if $*multiple-roots;
+    .add-content( 'Specify the container to move to', $container-dd);
+    .add-content( 'Specify the category to move puzzles to', $category-dd);
 
     .add-button(
       self, 'do-move-puzzles', 'Move',
-      :categories($dropdown-cat), :containers($dropdown-cont), :$bitset, :$dialog
+      :$roots-dd, :$category-dd, :$container-dd,
+      :$bitset, :$dialog
     );
 
     .add-button( $dialog, 'destroy-dialog', 'Cancel');
@@ -85,16 +97,18 @@ method puzzle-move ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-move-puzzles ( 
   PuzzleTable::Gui::Dialog :$dialog,
-  PuzzleTable::Gui::DropDown :$categories,
-  PuzzleTable::Gui::DropDown :$containers,
+  PuzzleTable::Gui::DropDown :$category-dd,
+  PuzzleTable::Gui::DropDown :$container-dd,
+  PuzzleTable::Gui::DropDown :$roots-dd,
   Gnome::Gtk4::N-Bitset :$bitset
 ) {
 #  note "do move";
   my Bool $sts-ok = False;
 
   my Str $current-cat = $!config.get-current-category;
-  my Str $dest-cat = $categories.get-dropdown-text;
-  my Str $dest-cont = $containers.get-dropdown-text;
+  my Str $dest-cat = $category-dd.get-dropdown-text;
+  my Str $dest-cont = $container-dd.get-dropdown-text;
+  my Str $dest-root = $roots-dd.get-dropdown-text;
 
   if $current-cat eq $dest-cat and
      $!config.get-current-container eq $dest-cont
@@ -110,14 +124,15 @@ method do-move-puzzles (
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
       $!config.move-puzzle(
-        $dest-cat, $dest-cont, $!main.table.puzzle-objects.get-string($item-pos)
+        $dest-cat, $dest-cont, $dest-root, $!main.table.puzzle-objects.get-string($item-pos)
       );
     }
 
     # Selecting the category again will redraw the puzzle table
     $!main.sidebar.select-category(
       :category($dest-cat),
-      :container($dest-cont)
+      :container($dest-cont),
+      :root-dir($dest-root)
     );
 
     # Update status bar to show number of puzzles

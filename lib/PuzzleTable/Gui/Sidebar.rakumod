@@ -73,11 +73,8 @@ method fill-sidebar ( Bool :$init = False ) {
   my Str $container;
 
   for $!config.get-roots -> $root-dir {
-    my @containers = $!config.get-containers(:$root-dir);
+    my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
-#    for @containers -> Pair $c {
-#      $container = $c.key;
-#      $root-dir = $c.value;
       if !$prev-root-dir {
         $prev-root-dir = $root-dir;
         $expander-color-count = 0;
@@ -88,14 +85,11 @@ method fill-sidebar ( Bool :$init = False ) {
         $expander-color-count++;
       }
 
-  #note "$?LINE $container, $root-dir, $expander-color-count";
       my Int $cat-row-count = 0;
       my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
       my @categories = $!config.get-categories( $container, $root-dir);
       for @categories -> $category {
-  #note "$?LINE $category";
-
         my Gnome::Gtk4::Button $category-button =
           self.category-button( $category, $container, :$root-dir);
 
@@ -111,11 +105,11 @@ method fill-sidebar ( Bool :$init = False ) {
       }
 
       my Gnome::Gtk4::Expander $expander = self.sidebar-expander(
-        $container, $expander-color-count
+        $container, $root-dir, $expander-color-count
       );
 
       $expander.set-child($category-grid);
-      $expander.set-expanded($!config.is-expanded($container));
+      $expander.set-expanded($!config.is-expanded( $container, $root-dir));
       $cat-grid.attach( $expander, 0, $row-count, 5, 1);
 
       $row-count++;
@@ -174,13 +168,14 @@ method category-button (
       self, 'select-category', 'clicked', :$category, :$container, :$root-dir
     );
   }
-  
+
   $cat-button
 }
 
 #-------------------------------------------------------------------------------
 method sidebar-expander (
-  Str $container, Int $expander-color-count --> Gnome::Gtk4::Expander
+  Str $container, Str $root-dir, Int $expander-color-count
+  --> Gnome::Gtk4::Expander
 ) {
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
     my Str $css-class = "pt-sidebar-expander-ptr$expander-color-count";
@@ -201,7 +196,7 @@ method sidebar-expander (
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
 
-    .register-signal( self, 'expand', 'activate', :$container);
+    .register-signal( self, 'expand', 'activate', :$container, :$root-dir);
   }
   
   $expander
@@ -209,9 +204,12 @@ method sidebar-expander (
 
 #-------------------------------------------------------------------------------
 method expand (
-  Gnome::Gtk4::Expander() :_native-object($expander), :$container
+  Gnome::Gtk4::Expander() :_native-object($expander), Str :$container,
+  Str :$root-dir
 ) {
-  $!config.set-expand( $container, $expander.get-expanded ?? False !! True);
+  $!config.set-expand(
+    $container, $root-dir, $expander.get-expanded ?? False !! True
+  );
 }
 
 #-------------------------------------------------------------------------------
