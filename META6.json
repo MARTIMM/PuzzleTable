@@ -48,6 +48,7 @@
   "resources": [
     "start-puzzle-64.png", "edit-puzzle-64.png", "puzzle-data.css",
     "add-cat.png", "ren-cat.png", "rem-cat.png", "move-64.png", "remove-64.png",
+    "icons8-padlock-64.png", "icons8-lock-64.png", 
     "shortcuts-window.ui", "io.github.martimm.puzzle-table.desktop"
   ]
 }
