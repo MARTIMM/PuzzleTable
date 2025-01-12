@@ -13,8 +13,6 @@ use PuzzleTable::Gui::DropDown;
 
 use Gnome::Gtk4::Entry:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
-#use Gnome::Gtk4::DropDown:api<2>;
-#use Gnome::Gtk4::StringList:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -75,7 +73,7 @@ method do-container-add (
     $root-dir = $roots-dd.get-dropdown-text;
   }
 
-  my Str $container = $entry.get-text.lc.tc;
+  my Str $container = $entry.get-text.tc;
   if ! $container {
     $dialog.set-status('No category name specified');
   }
@@ -98,10 +96,12 @@ method container-delete ( N-Object $parameter ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Delete Container Dialog')
   ) {
+    my Str $current-root = $!config.get-current-root;
+
     # Make a string list to be used in a combobox (dropdown)
     my PuzzleTable::Gui::DropDown $container-dd .= new;
     $container-dd.fill-containers(
-      $!config.get-current-container, :skip-default
+      $!config.get-current-container, $current-root, :skip-default
     );
 
     my PuzzleTable::Gui::DropDown $roots-dd;
@@ -134,7 +134,8 @@ method container-delete ( N-Object $parameter ) {
 #-------------------------------------------------------------------------------
 method do-container-delete (
   PuzzleTable::Gui::Dialog :$dialog,
-  Gnome::Gtk4::DropDown :$container-dd, Gnome::Gtk4::DropDown :$roots-dd
+  PuzzleTable::Gui::DropDown :$container-dd,
+  PuzzleTable::Gui::DropDown :$roots-dd
 ) {
   my Bool $sts-ok = False;
   my Str $root-dir;

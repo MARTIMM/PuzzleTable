@@ -26,12 +26,15 @@
 * command line
   * [x] add `--restore=<name>` option to restore an archive.
   * [ ] add `--palapeli=<type>` option to select preferred program.
-  * [ ] add `--config=<path>[,<path>, …]` option to specify a preferred data location. This will be `~/.config/io.github.martimm.puzzle-table` by default. The program will use and store data in the following locations using this path. Note however that the css and images are still used from its default location and that puzzle-table-data and puzzle-trash are only looked for with this option.
-    * `<path>`: data such as css files.
-    * `<path>/images`: images for buttons.
-    * `<path/puzzle-table-data`: data for puzzles.
-    * `<path/puzzle-trash`: archiving of removed puzzles.
-  * [ ] generating palapeli puzzles from commandline -> C++.
+  * [x] By default the location where everything is to be found is `~/.config/io.github.martimm.puzzle-table`. The following files and directories are;
+      * `global-config.yaml`: Global configuration. Can be changed with `--root-global`.
+      * `puzzle-data.css`: The css file.
+      * `images/`: The images for buttons.
+      * `puzzle-table-data/`: Directory for puzzles. This can be changed with `--root-tables` option.
+      * `puzzle-trash/`: Directory for removed puzzles.
+  * [ ] add `--root-global=<path>` 
+  * [ ] add `--root-tables=<path>[,<path>, …]` option to specify a preferred puzzle table location.
+  * [ ] generating palapeli puzzles from commandline -> C++ hook into Palapeli.
 
 * shortcut keys
   * [x] `<CTRL>Q` to quit program

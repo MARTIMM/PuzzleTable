@@ -67,20 +67,17 @@ method fill-sidebar ( Bool :$init = False ) {
 
   my Gnome::Gtk4::Label $l;
   my Array $totals = [ 0, 0, 0, 0];
-  my Str $prev-root-dir;
-  my Int $expander-color-count;
-  my Str $root-dir;
+  my Str $prev-root-dir = '';
+  my Int $expander-color-count = -1; # used to change color of expanders in css
   my Str $container;
 
-  for $!config.get-roots -> $root-dir {
+  my @roots = $!config.get-roots;
+  for @roots -> $root-dir {
+#note "\n$?LINE $root-dir";
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
-      if !$prev-root-dir {
-        $prev-root-dir = $root-dir;
-        $expander-color-count = 0;
-      }
-
-      elsif $prev-root-dir ne $root-dir {
+#note "$?LINE   $container";
+      if $prev-root-dir ne $root-dir {
         $prev-root-dir = $root-dir;
         $expander-color-count++;
       }
@@ -90,8 +87,9 @@ method fill-sidebar ( Bool :$init = False ) {
 
       my @categories = $!config.get-categories( $container, $root-dir);
       for @categories -> $category {
+#note "$?LINE     $category";
         my Gnome::Gtk4::Button $category-button =
-          self.category-button( $category, $container, :$root-dir);
+          self!category-button( $category, $container, $root-dir);
 
         $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
 
@@ -128,15 +126,18 @@ method fill-sidebar ( Bool :$init = False ) {
     EOTT
 
   self.set-child($cat-grid);
-  self.select-category(
-    :category<Default>, :container<Default>, :$root-dir
-  ) if $init;
+  if $init {
+    my Str $root-dir = @roots[0];
+    self.select-category( :category<Default>, :container<Default>, :$root-dir);
+  }
 }
 
 #-------------------------------------------------------------------------------
-method category-button (
-  Str:D $category, Str:D $container, Str :$root-dir --> Gnome::Gtk4::Button
+method !category-button (
+  Str:D $category, Str:D $container, Str:D $root-dir --> Gnome::Gtk4::Button
 ) {
+#note "$?LINE $category, $container, $root-dir";
+
   with my Gnome::Gtk4::Button $cat-button .= new-button {
     $!config.set-css(
       .get-style-context,
@@ -214,7 +215,7 @@ method expand (
 
 #-------------------------------------------------------------------------------
 method sidebar-status (
-  Str:D $category, Str:D $container, $root-dir,
+  Str:D $category, Str:D $container, Str:D $root-dir,
   Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals,
 ) {
   my Gnome::Gtk4::Label $l;
@@ -261,18 +262,19 @@ method show-tooltip (
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category (
-  Str:D :$category, Str:D :$container, Str :$root-dir
+  Str:D :$category, Str:D :$container, Str:D :$root-dir
 ) {
 #  $!current-category = $category;
-  my $root-text = (?$root-dir and $*multiple-roots) ?? "- $root-dir -" !! '';
-  my Str $title = "Puzzle Table Display: $root-text $category in $container";
+  my $root-text =
+    (?$root-dir and $*multiple-roots) ?? "Root path $root-dir, " !! '';
+  my Str $title = "Puzzle Table Display: {$root-text}Container $container, Category $category";
   $!main.application-window.set-title($title) if ?$!main.application-window;
 
   # Clear the puzzle table before showing the puzzles of this category
   $!main.table.clear-table;
 
   # Get the puzzles and send them to the table
-  $!config.select-category( $category, $container, :$root-dir);
+  $!config.select-category( $category, $container, $root-dir);
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles

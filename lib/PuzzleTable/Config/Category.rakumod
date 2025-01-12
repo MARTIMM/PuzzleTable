@@ -11,10 +11,10 @@ unit class PuzzleTable::Config::Category:auth<github:MARTIMM>;
 
 has Str $.category-name;
 has Str $.container;
-has Str $!config-dir;
 has Str $.root-dir;
 has Hash $!category-config;
-has Str $!config-path;
+has Str $.config-dir;
+has Str $.config-path;
 
 #-------------------------------------------------------------------------------
 submethod BUILD (
@@ -24,7 +24,7 @@ submethod BUILD (
   $!container = self.set-container-name($!container);
 
   $!config-dir = "$!root-dir$!container/$!category-name";
-#note "$?LINE $!config-dir, $!container, $!category-name";
+#note "\n$?LINE $!config-dir\n", Backtrace.new.nice unless $!config-dir.IO.e;
 #note "$?LINE mkdir '$!config-dir'" unless $!config-dir.IO.e;
 #note "$?LINE Second call for pt2\n", Backtrace.new.nice if ! $!config-dir.IO.e and $!config-dir ~~ m/'/pt2/'/;
   mkdir $!config-dir, 0o700 unless $!config-dir.IO.e;
@@ -55,7 +55,7 @@ method set-container-name ( Str:D $name --> Str ) {
   if ? $name {
     # name does not have _EX_ postfix yet
     if $name !~~ m/ '_EX_' $/ {
-      $container-name = $name.lc.tc ~ '_EX_';
+      $container-name = $name.tc ~ '_EX_';
     }
 
     else {
@@ -217,13 +217,10 @@ method archive-puzzles (
 }
 
 #-------------------------------------------------------------------------------
-method restore-puzzles (
-  Str:D $archive-trashbin, Str:D $archive-name --> Bool
-) {
+method restore-puzzles ( Str:D $archive-path --> Bool ) {
   my PuzzleTable::Archive $archive .= new;
-
   my Hash $puzzles =
-    $archive.restore-puzzles( $archive-trashbin, $archive-name, $!config-dir);
+    $archive.restore-puzzles( $archive-path, $!config-dir);
 
   return False unless ?$puzzles;
 
@@ -264,7 +261,7 @@ method get-puzzle-ids ( --> Seq ) {
 
 #-------------------------------------------------------------------------------
 method get-puzzle-destination ( Str $puzzle-id --> Str ) {
-
+#note "$?LINE $!config-dir, $puzzle-id";
   # Define path to directory for the puzzle
   my Str $puzzle-destination = [~] $!config-dir, '/', $puzzle-id;
 

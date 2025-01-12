@@ -12,33 +12,18 @@ use PuzzleTable::Gui::Dialog;
 use PuzzleTable::Gui::DropDown;
 
 use Gnome::Gtk4::Entry:api<2>;
-#use Gnome::Gtk4::PasswordEntry:api<2>;
-#use Gnome::Gtk4::Picture:api<2>;
-#use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::CheckButton:api<2>;
-#use Gnome::Gtk4::Button:api<2>;
-#use Gnome::Gtk4::Label:api<2>;
-#use Gnome::Gtk4::Grid:api<2>;
-#use Gnome::Gtk4::Box:api<2>;
-#use Gnome::Gtk4::Expander:api<2>;
-#use Gnome::Gtk4::ComboBoxText:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
-#use Gnome::Gtk4::ScrolledWindow:api<2>;
-#use Gnome::Gtk4::DropDown:api<2>;
-#use Gnome::Gtk4::StringList:api<2>;
 
 #use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
-#also is Gnome::Gtk4::ScrolledWindow;
 
 has $!main is required;
 has PuzzleTable::Config $!config;
 has $!sidebar;
-#has Gnome::Gtk4::Grid $!cat-grid;
-#has Str $!current-category;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
@@ -51,17 +36,19 @@ submethod BUILD ( :$!main ) {
 # Select from menu to add a category
 method category-add ( N-Object $parameter ) {
 
-#  my Str $select-category = $!config.get-current-category;
-
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-title('New Category'), :dialog-header(Q:to/EOCATD/)
         Create a new category. The category
         is placed in the selected container
         EOCATD
   ) {
+    my $current-root = $!config.get-current-root;
+
     # Make a string list to be used in a combobox (dropdown)
     my PuzzleTable::Gui::DropDown $container-dd .= new;
-    $container-dd.fill-containers($!config.get-current-container);
+    $container-dd.fill-containers(
+      $!config.get-current-container, $current-root
+    );
 
     my PuzzleTable::Gui::DropDown $roots-dd;
     if $*multiple-roots {
@@ -127,7 +114,6 @@ method do-category-add (
     }
 
     my Str $container = $container-dd.get-dropdown-text;
-#    $container = '' if $container eq '--';
 
     # Add category to list. Message gets defined if something is wrong.
     my Str $msg = $!config.add-category(
@@ -163,6 +149,7 @@ method category-rename ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
+  my Str $select-root-dir = $!config.get-current-root;
 
   # Prepare dialog entries.
   # An entry to change the name of the selected category, prefilled with
@@ -173,12 +160,12 @@ method category-rename ( N-Object $parameter ) {
   # A dropdown to list categories. The current category is preselected.
   my PuzzleTable::Gui::DropDown $old-category-dd .= new;
   $old-category-dd.fill-categories(
-    $select-category, $select-container, :skip-default
+    $select-category, $select-container, $select-root-dir, :skip-default
   );
 
   # A dropdown to list containers. The current container is preselected.
   with my PuzzleTable::Gui::DropDown $old-container-dd .= new {
-    .fill-containers($select-container);
+    .fill-containers( $select-container, $select-root-dir);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -187,7 +174,7 @@ method category-rename ( N-Object $parameter ) {
 
   # A dropdown to list containers. The current container is preselected.
   with my PuzzleTable::Gui::DropDown $new-container-dd .= new {
-    .fill-containers('');
+    .fill-containers( '', $select-root-dir);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -298,19 +285,19 @@ method category-delete ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
-#  my Str $select-root = $!config.get-current-root;
+  my Str $select-root = $!config.get-current-root;
 
   # Prepare dialog entries.
   # A dropdown to list categories. The current category is preselected.
   my PuzzleTable::Gui::DropDown $category-dd .= new;
   $category-dd.fill-categories(
-    $select-category, $select-container, :skip-default
+    $select-category, $select-container, $select-root, :skip-default
   );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
   with my PuzzleTable::Gui::DropDown $container-dd .= new {
-    .fill-containers($!config.get-current-container);
+    .fill-containers( $!config.get-current-container, $select-root);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -320,7 +307,7 @@ method category-delete ( N-Object $parameter ) {
   my PuzzleTable::Gui::DropDown $roots-dd;
   if $*multiple-roots {
     $roots-dd .= new;
-    $roots-dd.fill-roots($!config.get-current-root);
+    $roots-dd.fill-roots($select-root);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -396,17 +383,18 @@ method category-lock ( N-Object $parameter ) {
 
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
+  my Str $select-root = $!config.get-current-root;
 
   # A dropdown to list categories. The current category is preselected.
   my PuzzleTable::Gui::DropDown $category-dd .= new;
   $category-dd.fill-categories(
-    $select-category, $select-container, :skip-default
+    $select-category, $select-container, $select-root, :skip-default
   );
 
   # Find the container of the current category and use it in the container
   # list to preselect it.
   with my PuzzleTable::Gui::DropDown $container-dd .= new {
-    .fill-containers($!config.get-current-container);
+    .fill-containers( $!config.get-current-container, $select-root);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
@@ -416,7 +404,7 @@ method category-lock ( N-Object $parameter ) {
   my PuzzleTable::Gui::DropDown $roots-dd;
   if $*multiple-roots {
     $roots-dd .= new;
-    $roots-dd.fill-roots($!config.get-current-root);
+    $roots-dd.fill-roots($select-root);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.

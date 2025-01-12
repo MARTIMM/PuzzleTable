@@ -42,7 +42,7 @@ method load-category-config ( Str:D $root-dir is copy ) {
   # Always select the default category in the default container of
   # the current root directory
   $!current-category .= new(
-    :category-name('Default'), :container('Default'), :$root-dir
+    :category-name<Default>, :container<Default>, :$root-dir
   );
 
 #for $!categories-config.keys -> $root-dir {
@@ -59,6 +59,21 @@ method add-table-root ( Str $root-dir ) {
 }
 
 #-------------------------------------------------------------------------------
+# Method to set the root. It must be existent. Returns False if not.
+method set-table-root ( Str:D $root-dir --> Bool ) {
+  if my Bool $exists = $!config-paths{$root-dir}:exists {
+
+    # Always select the default category in the default container of
+    # the current root directory
+    $!current-category .= new(
+      :category-name<Default>, :container<Default>, :$root-dir
+    );
+  }
+
+  $exists
+}
+
+#-------------------------------------------------------------------------------
 method get-roots ( --> Seq ) {
   $!categories-config.keys.sort
 }
@@ -71,7 +86,6 @@ method save-categories-config ( ) {
 
   # Save categories config
   for $!categories-config.keys -> $root-dir {
-#note "$?LINE save to $root-dir";
     $!config-paths{$root-dir}.IO.spurt(
       save-yaml($!categories-config{$root-dir})
     );
@@ -88,7 +102,7 @@ method add-category (
   --> Str
 ) {
   my Str $message = '';
-  $category-name = $category-name.lc.tc;
+  $category-name = $category-name.tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
 #note "$?LINE $root-dir";
@@ -111,7 +125,7 @@ method add-category (
     my PuzzleTable::Config::Category $category .= new(
       :$category-name, :$container, :$root-dir
     );
-    self.update-category-status(:$category);
+    self.update-category-status($category);
     self.save-categories-config;
   }
 
@@ -120,13 +134,12 @@ method add-category (
 
 #-------------------------------------------------------------------------------
 method select-category (
-  Str:D $category-name is copy, Str:D $container is copy,
-  Str :$root-dir is copy --> Str
+  Str:D $category-name, Str:D $container is copy, Str:D $root-dir --> Str
 ) {
   my Str $message = '';
-  $category-name .= tc;
+#  $category-name .= tc;
   $container = $!current-category.set-container-name($container);
-  $root-dir //= $!current-category.root-dir;
+#  $root-dir //= $!current-category.root-dir;
 #note "$?LINE $category-name, $container, $root-dir";
 
   $!categories-config{$root-dir}{$container}<categories> = %()
@@ -167,16 +180,24 @@ method move-category (
 
     self.save-categories-config;
 
-    # Create category dir if it doesn't exist
-    mkdir "$root-dir-to$cont-to", 0o700 unless "$root-dir-to$cont-to".IO.e;
-
-    # Rename source category directory
     my Str $dir-from = "$root-dir-from$cont-from/$cat-from";
     my Str $dir-to = "$root-dir-to$cont-to/$cat-to";
-    $dir-from.IO.rename( $dir-to, :createonly);
+
+    # Create destination category dir if it doesn't exist
+    mkdir $dir-to, 0o700 unless $dir-to.IO.e;
+
+    # Rename source category directory
+    if $*multiple-roots {
+      self.move-files( $dir-from, $dir-to);
+    }
+
+    else {
+      $dir-from.IO.rename( $dir-to, :createonly);
+    }
   }
 
-  elsif $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to}:exists {
+  elsif $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to}:exists
+  {
     $message = 'Destination already exists';
   }
 
@@ -185,6 +206,25 @@ method move-category (
   }
 
   $message
+}
+
+#-------------------------------------------------------------------------------
+method move-files ( Str:D $dir-from, Str:D $dir-to ) {
+  mkdir $dir-to, 0o700 unless $dir-to.IO.e;
+
+  for $dir-from.IO.dir -> $f {
+    my Str $to-file = $dir-to ~ '/' ~ $f.basename;
+    if $f.d {
+      self.move-files( $f.Str, $to-file);
+    }
+
+    else {
+      $f.move($to-file);
+      $f.unlink;
+    }
+  }
+
+  rmdir $dir-from;
 }
 
 #-------------------------------------------------------------------------------
@@ -233,13 +273,16 @@ method get-categories ( Str:D $container is copy, Str:D $root-dir --> List ) {
   my Bool $locked = $!config.is-locked;
   $container = $!current-category.set-container-name($container);
 #  my Str $root-dir = $!current-category.root-dir;
+#note "$?LINE $root-dir, $container\n  $!categories-config{$root-dir}{$container}<categories>.gist()";
 
   my @cat-key-list;
   @cat-key-list =
     $!categories-config{$root-dir}{$container}<categories>.keys.sort;
+#note "$?LINE $root-dir, $container, @cat-key-list.elems()";
 
   my @cat = ();
   for @cat-key-list -> $category {
+#note "$?LINE   $category, $locked, {self.is-category-lockable( $category, $container, $root-dir)}";
     next if (
       $locked and self.is-category-lockable( $category, $container, $root-dir)
     );
@@ -266,13 +309,13 @@ method get-current-root ( --> Str ) {
 
 #-------------------------------------------------------------------------------
 method get-category-status (
-  Str:D $category-name is copy, Str:D $container is copy,
-  Str:D $root-dir is copy
+  Str:D $category-name, Str:D $container is copy, Str:D $root-dir,
+  
   --> Array
 ) {
-  $category-name .= tc;
+#  $category-name .= tc;
   $container = $!current-category.set-container-name($container);
-  $root-dir //= $!current-category.root-dir;
+#  $root-dir //= $!current-category.root-dir;
 #note "$?LINE $root-dir $container $category-name";
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
@@ -287,6 +330,7 @@ method get-category-status (
 
 #note "$?LINE ", $categories{$category-name}.gist, "\n", $categories{$category-name}<status>:exists;
 
+##`{{
   if $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
 
@@ -296,12 +340,13 @@ method get-category-status (
         :$category-name, :$container, :$root-dir
       );
 
-      self.update-category-status(:$category);
+      self.update-category-status($category);
       $cat-status = $categories{$category-name}<status>;
     }
   }
 
   else {
+#}}
     my PuzzleTable::Config::Category $category .= new(
       :$category-name, :$container, :$root-dir
     );
@@ -334,9 +379,7 @@ method get-category-status (
 }
 
 #-------------------------------------------------------------------------------
-method update-category-status (
-  PuzzleTable::Config::Category :$category = $!current-category
-) {
+method update-category-status ( PuzzleTable::Config::Category:D $category ) {
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
   my Array $cat-status = [ 0, 0, 0, 0];
@@ -409,7 +452,7 @@ method delete-container ( Str:D $cont, Str:D $root-dir --> Bool ) {
 
   if $!categories-config{$root-dir}{$container}:exists {
 
-note "$?LINE bug, no <categories>", Backtrace.new.nice unless $!categories-config{$root-dir}{$container}<categories>:exists;
+#note "$?LINE bug, no <categories>", Backtrace.new.nice unless $!categories-config{$root-dir}{$container}<categories>:exists;
 
     if $!categories-config{$root-dir}{$container}<categories>.elems == 0 {
       $!categories-config{$root-dir}{$container}:delete;
@@ -499,7 +542,7 @@ method import-collection ( Str:D $collection-path --> Str ) {
 
   if $collection-path.IO.d {
     $!current-category.import-collection($collection-path);
-    self.update-category-status;
+    self.update-category-status($!current-category);
   }
 
   else {
@@ -516,7 +559,7 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 
   if $puzzle-path.IO.r {
     $puzzle-id = $!current-category.add-puzzle($puzzle-path);
-    self.update-category-status;
+    self.update-category-status($!current-category);
   }
 
   $puzzle-id
@@ -524,18 +567,23 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
 
 #-------------------------------------------------------------------------------
 method move-puzzle (
-  Str:D $to-cat, Str:D $to-cont, Str:D $puzzle-id, Str:D $root-dir-to
+  PuzzleTable::Config::Category $c-from,
+  Str:D $to-cat, Str:D $to-cont, Str:D $root-dir-to,
+  Str:D $puzzle-id
 ) {
-  $to-cat .= tc;
+#  $to-cat .= tc;
+#note "$?LINE $to-cat, $to-cont, $root-dir-to, $puzzle-id";
 
   # Init the categories initialized
-  my PuzzleTable::Config::Category $c-from = $!current-category;
+#  my PuzzleTable::Config::Category $c-from = $!current-category;
+#note "$?LINE $c-from.category-name(), $c-from.container(), $c-from.root-dir()";
 #  my Str $root-dir-from = $!current-category.root-dir;
 #  $root-dir-to //= $root-dir-from;
 
   my PuzzleTable::Config::Category $c-to .= new(
     :category-name($to-cat), :container($to-cont), :root-dir($root-dir-to)
   );
+#snote "$?LINE $c-to.category-name(), $c-to.container(), $c-to.root-dir()";
 
   # Get path of puzzle where the puzzle is now
   my Str $puzzle-source = $c-from.get-puzzle-destination($puzzle-id);
@@ -547,7 +595,13 @@ method move-puzzle (
   my Str $puzzle-destination = $c-to.get-puzzle-destination($new-puzzle-id);
 
   # Rename the file to the new location
-  $puzzle-source.IO.rename( $puzzle-destination, :createonly);
+  if $*multiple-roots {
+    self.move-files( $puzzle-source, $puzzle-destination);
+  }
+
+  else {
+    $puzzle-source.IO.rename( $puzzle-destination, :createonly);
+  }
 
   # Get the puzzle config and remove it from source category config
   my Hash $puzzle-config = $c-from.get-puzzle( $puzzle-id, :delete);
@@ -556,8 +610,8 @@ method move-puzzle (
   $c-to.set-puzzle( $new-puzzle-id, $puzzle-config);
 
   # Update overall status info
-  self.update-category-status;
-  self.update-category-status(:category($c-to));
+  self.update-category-status($!current-category);
+  self.update-category-status($c-to);
 
   # Save categories
   $c-from.save-category-config;
@@ -565,18 +619,16 @@ method move-puzzle (
 }
 
 #-------------------------------------------------------------------------------
-method archive-puzzles (
-  Array:D $puzzle-ids, Str:D $archive-trashbin --> List
-) {
+method archive-puzzles ( Array:D $puzzle-ids --> List ) {
   my Str $message = '';
 
   # Returns [ success, archive-name]
   my @ap = $!current-category.archive-puzzles(
-    $puzzle-ids, $archive-trashbin
+    $puzzle-ids, $!config.get-puzzle-trash
   );
-  
+
   if ? @ap[0] {
-    self.update-category-status;
+    self.update-category-status($!current-category);
   }
 
   else {
@@ -587,26 +639,23 @@ method archive-puzzles (
 }
 
 #-------------------------------------------------------------------------------
-method restore-puzzles (
-  Str:D $archive-trashbin, Str:D $archive-name --> Str
-) {
+method restore-puzzles ( $archive-path --> Str ) {
   my Str $message = '';
+  my Str $archive-name = $archive-path.IO.basename;
 
-  my Str $category;
-  my Str $container;
-  ( $, $container, $category) = $archive-name.split(':');
+  #my Str $category;
+  #my Str $container;
+  # Path is something like <parent-dir>/<date-time>:<container>:<category>
+  my Str ( $, $container, $category) = $archive-name.split(':');
   $container = $container.tc ~ '_EX_'
     if ? $container and $container !~~ m/ '_EX_' $/;
 
   $category ~~ s/ '.tbz2' $//;
 
-
   # Restoring puzzles can be for another category or in the current one
   if $category eq $!current-category.category-name {
-    if $!current-category.restore-puzzles(
-      $archive-trashbin, $archive-name
-    ) {
-      self.update-category-status;
+    if $!current-category.restore-puzzles($archive-path) {
+      self.update-category-status($!current-category);
     }
 
     else {
@@ -621,7 +670,7 @@ method restore-puzzles (
     );
 
     $message = 'Archive not found or does not have the proper contents'
-      unless $cat.restore-puzzles( $archive-trashbin, $archive-name);
+      unless $cat.restore-puzzles($archive-path);
   }
 
   $message
@@ -629,10 +678,10 @@ method restore-puzzles (
 
 #-------------------------------------------------------------------------------
 method get-puzzle-image (
-  Str $category, Str $container, Str $root-dir is copy --> Str
+  Str $category, Str $container, Str $root-dir --> Str
 ) {
 
-  $root-dir //= $!current-category.root-dir;
+#  $root-dir //= $!current-category.root-dir;
   my PuzzleTable::Config::Category $cat .= new(
     :category-name($category), :$container, :$root-dir
   );
@@ -818,7 +867,7 @@ method run-palapeli ( Hash $puzzle --> Str ) {
     $!current-category.update-puzzle( $puzzle-id, %( :Progress($progress) ));
 
     # Update the category status
-    self.update-category-status;
+    self.update-category-status($!current-category);
   }
 
   $progress

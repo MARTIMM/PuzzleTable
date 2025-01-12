@@ -189,8 +189,7 @@ method remote-options (
   }
 
   $config.select-category(
-    $opt-category, $config.get-current-container,
-    :root-dir($config.get-current-root)
+    $opt-category, $config.get-current-container, $config.get-current-root
   );
   $!sidebar.set-category(
     $opt-category, $opt-container, :root-dir($config.get-current-root)
@@ -216,9 +215,8 @@ method remote-options (
   }
 
   if $o<restore>:exists {
-    my Str $archive-dir = $o<restore>.IO.parent.Str ~ '/';
-    my Str $archive-name = $o<restore>.IO.basename.Str;
-    my Str $message = $config.restore-puzzles( $archive-dir, $archive-name);
+#    my Str $archive-name = $o<restore>.IO.basename.Str;
+    my Str $message = $config.restore-puzzles($o<restore>);
     note "Error: $message" if ?$message;
   }
 
