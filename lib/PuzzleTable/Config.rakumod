@@ -28,7 +28,7 @@ our $options = [<
 
 has PuzzleTable::Config::Global $!global-settings handles( <
       get-password check-password set-password
-      is-locked lock unlock
+      is-locked lock unlock get-puzzle-trash
       get-palapeli-preference set-palapeli-preference
       get-palapeli-image-size set-palapeli-image-size
       get-palapeli-collection
@@ -36,7 +36,7 @@ has PuzzleTable::Config::Global $!global-settings handles( <
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
-      add-table-root get-current-root get-roots
+      add-table-root set-table-root get-current-root get-roots
       is-category-lockable set-category-lockable
       get-categories add-category delete-category move-category
       select-category find-container get-current-container
