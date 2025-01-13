@@ -639,7 +639,7 @@ method archive-puzzles ( Array:D $puzzle-ids --> List ) {
 }
 
 #-------------------------------------------------------------------------------
-method restore-puzzles ( $archive-path --> Str ) {
+method restore-puzzles ( $archive-path --> List ) {
   my Str $message = '';
   my Str $archive-name = $archive-path.IO.basename;
 
@@ -652,8 +652,11 @@ method restore-puzzles ( $archive-path --> Str ) {
 
   $category ~~ s/ '.tbz2' $//;
 
+note "$?LINE $container, $category, $!current-category.category-name()";
+
   # Restoring puzzles can be for another category or in the current one
   if $category eq $!current-category.category-name {
+note "$?LINE restore from $archive-path";
     if $!current-category.restore-puzzles($archive-path) {
       self.update-category-status($!current-category);
     }
@@ -668,12 +671,20 @@ method restore-puzzles ( $archive-path --> Str ) {
     my PuzzleTable::Config::Category $cat .= new(
       :category-name($category), :$container, :$root-dir
     );
+note "$?LINE restore from $archive-path";
+    if $cat.restore-puzzles($archive-path) {
+      self.add-category( $category, $container);
+      self.update-category-status($!current-category);
+      self.save-categories-config;
+    }
 
-    $message = 'Archive not found or does not have the proper contents'
-      unless $cat.restore-puzzles($archive-path);
+    else {
+      $message = 'Archive not found or does not have the proper contents';
+    }    
   }
 
-  $message
+note "$?LINE return list $message, $container, $category";
+  ( $message, $container, $category )
 }
 
 #-------------------------------------------------------------------------------
