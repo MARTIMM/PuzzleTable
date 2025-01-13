@@ -187,14 +187,16 @@ method archive-puzzles (
 
 #-------------------------------------------------------------------------------
 method restore-puzzles (
-  Str:D $archive-trashbin, Str:D $archive-name, Str:D $puzzle-root-path --> Hash
+  Str:D $archive-path, Str:D $puzzle-root-path --> Hash
 ) {
-  return Hash unless "$archive-trashbin$archive-name".IO.r;
+  return Hash unless $archive-path.IO.r;
+
+  my Str $archive-trashbin = $archive-path.IO.parent.Str;
 
   # Extract the data from the archive
   my Archive::Libarchive $archive .= new(
     operation => LibarchiveExtract,
-    file => "$archive-trashbin$archive-name",
+    file => "$archive-path",
     flags => ARCHIVE_EXTRACT_TIME +| ARCHIVE_EXTRACT_PERM +|
              ARCHIVE_EXTRACT_ACL +|  ARCHIVE_EXTRACT_FFLAGS
   );
