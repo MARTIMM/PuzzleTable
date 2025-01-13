@@ -216,8 +216,18 @@ method remote-options (
 
   if $o<restore>:exists {
 #    my Str $archive-name = $o<restore>.IO.basename.Str;
-    my Str $message = $config.restore-puzzles($o<restore>);
-    note "Error: $message" if ?$message;
+    my Str ( $message, $container, $category ) =
+      $config.restore-puzzles($o<restore>);
+
+    if ?$message {
+      note "Error: $message";
+    }
+
+    else {
+      $!sidebar.set-category(
+        $category, $container, :root-dir($config.get-current-root)
+      );
+    }
   }
 
   # Activate unless table is already displayed
