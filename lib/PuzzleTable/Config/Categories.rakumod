@@ -446,6 +446,28 @@ method add-container (
 }
 
 #-------------------------------------------------------------------------------
+method rename-container (
+  Str:D $cont-from, Str:D $cont-to, Str:D $root-dir --> Bool
+) {
+  my Bool $rename-ok = False;
+  my Str $container-from = $!current-category.set-container-name($cont-from);
+  my Str $container-to = $!current-category.set-container-name($cont-to);
+
+  if $!categories-config{$root-dir}{$container-from}:exists {
+    # Do not have to check, there can not be two containers with same name
+    $!categories-config{$root-dir}{$container-to} =
+      $!categories-config{$root-dir}{$container-from}:delete;
+
+    "$root-dir$container-from".IO.rename("$root-dir$container-to");
+
+    self.save-categories-config;
+    $rename-ok = True;
+  }
+
+  $rename-ok
+}
+
+#-------------------------------------------------------------------------------
 method delete-container ( Str:D $cont, Str:D $root-dir --> Bool ) {
   my Bool $delete-ok = False;
   my Str $container = $!current-category.set-container-name($cont);
@@ -652,11 +674,11 @@ method restore-puzzles ( $archive-path --> List ) {
 
   $category ~~ s/ '.tbz2' $//;
 
-note "$?LINE $container, $category, $!current-category.category-name()";
+#note "$?LINE $container, $category, $!current-category.category-name()";
 
   # Restoring puzzles can be for another category or in the current one
   if $category eq $!current-category.category-name {
-note "$?LINE restore from $archive-path";
+#note "$?LINE restore from $archive-path";
     if $!current-category.restore-puzzles($archive-path) {
       self.update-category-status($!current-category);
     }
@@ -671,7 +693,7 @@ note "$?LINE restore from $archive-path";
     my PuzzleTable::Config::Category $cat .= new(
       :category-name($category), :$container, :$root-dir
     );
-note "$?LINE restore from $archive-path";
+#note "$?LINE restore from $archive-path";
     if $cat.restore-puzzles($archive-path) {
       self.add-category( $category, $container);
       self.update-category-status($!current-category);
@@ -683,7 +705,7 @@ note "$?LINE restore from $archive-path";
     }    
   }
 
-note "$?LINE return list $message, $container, $category";
+#note "$?LINE return list $message, $container, $category";
   ( $message, $container, $category )
 }
 

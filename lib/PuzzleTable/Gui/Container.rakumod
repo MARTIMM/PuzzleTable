@@ -44,7 +44,7 @@ method container-add ( N-Object $parameter ) {
 
       # Show dropdown
       .add-content( 'Select a root', $roots-dd);
-   }
+    }
 
     # Show entry for input
     .add-content(
@@ -79,7 +79,85 @@ method do-container-add (
   }
 
   elsif not $!config.add-container( $container, :$root-dir) {
-    $dialog.set-status('Container already exists');
+    $dialog.set-status("Container $container already exists");
+  }
+
+  else {
+    $!sidebar.fill-sidebar;
+    $sts-ok = True;
+  }
+
+  $dialog.destroy-dialog if $sts-ok;
+}
+
+#-------------------------------------------------------------------------------
+method container-rename ( N-Object $parameter ) {
+
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :dialog-header('Rename Container Dialog')
+  ) {
+    my Str $current-root = $!config.get-current-root;
+
+    # Make a string list to be used in a combobox (dropdown)
+    my PuzzleTable::Gui::DropDown $container-dd .= new;
+    $container-dd.fill-containers(
+      $!config.get-current-container, $current-root, :skip-default
+    );
+
+    my PuzzleTable::Gui::DropDown $roots-dd;
+    if $*multiple-roots {
+      $roots-dd .= new;
+      $roots-dd.fill-roots($!config.get-current-root);
+
+      # Show dropdown
+      .add-content( 'Select a root', $roots-dd);
+
+      # Set a handler on the container list to change the category list
+      # when an item is selected.
+      $roots-dd.trap-root-changes( $container-dd, :skip-default);
+    }
+
+    # Show entry for input
+    .add-content( 'Select container to rename', $container-dd);
+
+    # Show entry for input
+    .add-content(
+      'Specify a new container name', my Gnome::Gtk4::Entry $entry .= new-entry
+    );
+
+    # Buttons to rename the container or cancel
+    .add-button(
+      self, 'do-container-rename', 'Rename',
+      :$dialog, :$container-dd, :$roots-dd, :$entry
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+
+    .show-dialog;
+  }
+}
+
+#-------------------------------------------------------------------------------
+method do-container-rename (
+  PuzzleTable::Gui::Dialog :$dialog, Gnome::Gtk4::Entry :$entry,
+  PuzzleTable::Gui::DropDown :$roots-dd,
+  PuzzleTable::Gui::DropDown :$container-dd
+) {
+  my Bool $sts-ok = False;
+  my Str $root-dir;
+  if $*multiple-roots {
+    $root-dir = $roots-dd.get-dropdown-text;
+  }
+
+  my Str $container = $entry.get-text.tc;
+  if ! $container {
+    $dialog.set-status('No new container name specified');
+  }
+
+  elsif not $!config.rename-container(
+    $container-dd.get-dropdown-text, $container, $root-dir
+  ) {
+    $dialog.set-status("Container $container already exists");
   }
 
   else {
