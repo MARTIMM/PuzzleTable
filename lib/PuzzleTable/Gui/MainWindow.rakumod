@@ -207,7 +207,9 @@ method remote-options (
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id);
     }
 
-    $!sidebar.fill-sidebar;
+    $!sidebar.set-category(
+      $opt-category, $opt-container, :root-dir($config.get-current-root)
+    );
   }
 
   if $o<pala-collection>:exists {
