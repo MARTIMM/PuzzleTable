@@ -441,7 +441,7 @@ method add-container (
 
     self.save-categories-config;
   }
-  
+
   $add-ok
 }
 
