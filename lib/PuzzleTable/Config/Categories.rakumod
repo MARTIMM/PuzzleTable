@@ -310,7 +310,7 @@ method get-current-root ( --> Str ) {
 #-------------------------------------------------------------------------------
 method get-category-status (
   Str:D $category-name, Str:D $container is copy, Str:D $root-dir,
-  
+  Bool :$recalculate = False
   --> Array
 ) {
 #  $category-name .= tc;
@@ -328,10 +328,10 @@ method get-category-status (
   my Hash $categories :=
      $!categories-config{$root-dir}{$container}<categories>;
 
-#note "$?LINE ", $categories{$category-name}.gist, "\n", $categories{$category-name}<status>:exists;
+#note "$?LINE $recalculate, ", $categories{$category-name}.gist, "\n", $categories{$category-name}<status>:exists;
 
 ##`{{
-  if $categories{$category-name}<status>:exists {
+  if !$recalculate and $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
 
     # maybe an update needed when all is 0

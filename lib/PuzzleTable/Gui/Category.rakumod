@@ -455,3 +455,8 @@ method do-category-lock (
   $dialog.destroy-dialog if $sts-ok;
 }
 
+#-------------------------------------------------------------------------------
+method file-refresh-sidebar ( N-Object $parameter ) {
+note "$?LINE";
+  $!sidebar.fill-sidebar(:recalculate);
+}
