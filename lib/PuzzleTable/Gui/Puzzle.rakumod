@@ -117,7 +117,10 @@ method do-move-puzzles (
   my Str $current-cat = $!config.get-current-category;
   my Str $dest-cat = $category-dd.get-dropdown-text;
   my Str $dest-cont = $container-dd.get-dropdown-text;
-  my Str $dest-root = $roots-dd.get-dropdown-text;
+  my Str $dest-root = $*multiple-roots
+                        ?? $roots-dd.get-dropdown-text
+                        !! $!config.get-current-root
+                        ;
 
   if $current-cat eq $dest-cat and
      $!config.get-current-container eq $dest-cont and
