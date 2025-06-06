@@ -202,11 +202,13 @@ method category-rename ( N-Object $parameter ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Select the root where old container is', $old-roots-dd);
+    .add-content( 'Select the root where old container is', $old-roots-dd)
+      if $*multiple-roots;
     .add-content( 'Select container where old category is', $old-container-dd);
     .add-content( 'Specify the category to move', $old-category-dd);
 
-    .add-content( 'Select the root where new container is', $new-roots-dd);
+    .add-content( 'Select the root where new container is', $new-roots-dd)
+      if $*multiple-roots;
     .add-content( 'Select container to move category to', $new-container-dd);
     .add-content( 'New category name', $new-cat-entry);
 
@@ -249,13 +251,19 @@ method do-category-rename (
 
   else {
     # Move members to other category and container
+    my Str $oroot = $*multiple-roots
+                      ?? $old-roots-dd.get-dropdown-text
+                      !! $!config.get-current-root;
+    my Str $nroot = $*multiple-roots
+                      ?? $new-roots-dd.get-dropdown-text
+                      !! $!config.get-current-root;
     my Str $message = $!config.move-category(
       my Str $ocat = $old-category-dd.get-dropdown-text,
       my Str $ocont = $old-container-dd.get-dropdown-text,
-      my Str $oroot = $old-roots-dd.get-dropdown-text,
+      $oroot,
       $new-category,
       my Str $ncont = $new-container-dd.get-dropdown-text,
-      my Str $nroot = $new-roots-dd.get-dropdown-text
+      $nroot
     );
 
     if $message {
@@ -342,10 +350,9 @@ method do-category-delete (
   my Str $category = $category-dd.get-dropdown-text;
   my Str $container = $container-dd.get-dropdown-text;
 
-  my Str $root-dir;
-  if $*multiple-roots {
-    $root-dir = $roots-dd.get-dropdown-text;
-  }
+  my Str $root-dir = $*multiple-roots
+          ?? $roots-dd.get-dropdown-text
+          !! $!config.get-current-root;
 
   if $!config.has-puzzles( $category, $container, $root-dir) {
     $dialog.set-status('Category still has puzzles');
@@ -444,7 +451,10 @@ method do-category-lock (
   $!config.set-category-lockable(
     $category-dd.get-dropdown-text,
     $container-dd.get-dropdown-text,
-    $roots-dd.get-dropdown-text,
+    ( $*multiple-roots
+      ?? $roots-dd.get-dropdown-text
+      !! $!config.get-current-root
+    ),
     $check-button.get-active.Bool
   );
 
