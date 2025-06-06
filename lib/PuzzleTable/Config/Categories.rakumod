@@ -187,13 +187,7 @@ method move-category (
     mkdir $dir-to, 0o700 unless $dir-to.IO.e;
 
     # Rename source category directory
-    if $*multiple-roots {
-      self.move-files( $dir-from, $dir-to);
-    }
-
-    else {
-      $dir-from.IO.rename( $dir-to, :createonly);
-    }
+    self.move-files( $dir-from, $dir-to);
   }
 
   elsif $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to}:exists
