@@ -231,11 +231,11 @@ method restore-puzzles (
     # Rename the archive path into the puzzle path, effectively adding the
     # puzzle data into a category.
     my Int $count = 0;
-    my Str $puzzle-path = "$puzzle-root-path/";
-    while "$puzzle-path/$count.fmt('p%03d')".IO.e { $count++; }
+#    my Str $puzzle-path = "$puzzle-root-path/";
+    while "$puzzle-root-path/$count.fmt('p%03d')".IO.e { $count++; }
     my Str $new-puzzle-id = $count.fmt('p%03d');
 
-    $pid.rename("$puzzle-path/$new-puzzle-id");
+    $pid.rename("$puzzle-root-path/$new-puzzle-id");
     $puzzles{$puzzle-id}<puzzle-id> = $new-puzzle-id;
   }
 
