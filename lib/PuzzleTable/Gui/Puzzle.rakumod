@@ -139,7 +139,8 @@ method do-move-puzzles (
 #note "$?LINE $i, $item-pos, $!main.table.puzzle-objects.get-string($item-pos)";
 
       $!config.move-puzzle(
-        $from-category, $dest-cat, $dest-cont, $dest-root, $!main.table.puzzle-objects.get-string($item-pos)
+        $from-category, $dest-cat, $dest-cont, $dest-root,
+        $!main.table.puzzle-objects.get-string($item-pos)
       );
     }
 
