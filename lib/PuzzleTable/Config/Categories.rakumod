@@ -626,7 +626,7 @@ method move-puzzle (
   $c-to.set-puzzle( $new-puzzle-id, $puzzle-config);
 
   # Update overall status info
-  self.update-category-status($!current-category);
+  self.update-category-status($c-from);
   self.update-category-status($c-to);
 
   # Save categories
