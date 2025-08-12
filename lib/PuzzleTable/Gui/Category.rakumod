@@ -174,7 +174,7 @@ method category-rename ( N-Object $parameter ) {
 
   # A dropdown to list containers. The current container is preselected.
   with my PuzzleTable::Gui::DropDown $new-container-dd .= new {
-    .fill-containers( '', $select-root-dir);
+    .fill-containers( $select-container, $select-root-dir);
 
     # Set a handler on the container list to change the category list
     # when an item is selected.
