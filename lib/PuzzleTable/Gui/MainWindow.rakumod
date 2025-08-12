@@ -283,14 +283,17 @@ method puzzle-table-display ( ) {
 
     my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
     $!application.set-menubar($menu-bar.bar);
+    .set-show-menubar(True);
+
     $config.set-css( .get-style-context, :css-class<main-puzzle-table>);
 
     .register-signal( self, 'quit-application', 'destroy');
-    .set-show-menubar(True);
     .set-title('Puzzle Table Display - Default');
     .set-size-request( 1700, 1000);
     .set-child($!top-grid);
     .set-visible(True);
+
+    .present;
   }
 
   $!sidebar.fill-sidebar;
