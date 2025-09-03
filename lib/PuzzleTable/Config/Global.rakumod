@@ -169,7 +169,6 @@ method set-password ( Str $old-password, Str $new-password --> Bool ) {
 #-------------------------------------------------------------------------------
 # Get the puzzle table locking state
 method is-locked ( --> Bool ) {
-#note "$?LINE locked: ", ? $!global-config<locked>.Bool;
   ? $!global-config<locked>.Bool;
 }
 
