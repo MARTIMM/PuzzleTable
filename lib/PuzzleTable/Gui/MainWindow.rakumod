@@ -101,7 +101,7 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 
   my Capture $o = get-options(| $PuzzleTable::Config::options);
 
-  # This option can be used multiple times
+  # This option is a comma separated list of paths
   my Str $root-tables = PUZZLE_TABLE_DATA;
   if $o<root-tables>:exists {
     $root-tables = $o<root-tables>;
