@@ -4397,7 +4397,7 @@ progressbar.osd {
   background-image: none;
   background-color: #002411;
   border-style: groove;
-  border-color: #00470e;
+  border-color: #005211;
   border-radius: 6px;
 }
 
@@ -4408,9 +4408,35 @@ progressbar.osd {
   border-bottom-width: 4px;
 
   background-image: none;
+  background-color: #4b1500;
+  border-style: groove;
+  border-color: #a94d01;
+  border-radius: 6px;
+}
+
+.pt-sidebar-expander-ptr3 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
+  background-color: #560156;
+  border-style: groove;
+  border-color: #d604c8;
+  border-radius: 6px;
+}
+
+.pt-sidebar-expander-ptr4 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
   background-color: #000524;
   border-style: groove;
-  border-color: #01004f;
+  border-color: #1815cf;
   border-radius: 6px;
 }
 
