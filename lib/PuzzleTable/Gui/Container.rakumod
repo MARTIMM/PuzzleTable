@@ -168,6 +168,55 @@ method do-container-rename (
   $dialog.destroy-dialog if $sts-ok;
 }
 
+#`{{
+#-------------------------------------------------------------------------------
+method container-move ( N-Object $parameter ) {
+
+  with my PuzzleTable::Gui::Dialog $dialog .= new(
+    :dialog-header('Move Container Dialog')
+  ) {
+    my Str $current-root = $!config.get-current-root;
+
+    # Make a string list to be used in a combobox (dropdown)
+    my PuzzleTable::Gui::DropDown $container-dd .= new;
+    $container-dd.fill-containers(
+      $!config.get-current-container, $current-root, :skip-default
+    );
+
+    my PuzzleTable::Gui::DropDown $roots-dd;
+    if $*multiple-roots {
+      $roots-dd .= new;
+      $roots-dd.fill-roots($!config.get-current-root);
+
+      # Show dropdown
+      .add-content( 'Select a root', $roots-dd);
+
+      # Set a handler on the container list to change the category list
+      # when an item is selected.
+      $roots-dd.trap-root-changes( $container-dd, :skip-default);
+    }
+
+    # Show entry for input
+    .add-content( 'Select container to rename', $container-dd);
+
+    # Show entry for input
+    .add-content(
+      'Specify a new container name', my Gnome::Gtk4::Entry $entry .= new-entry
+    );
+
+    # Buttons to rename the container or cancel
+    .add-button(
+      self, 'do-container-rename', 'Rename',
+      :$dialog, :$container-dd, :$roots-dd, :$entry
+    );
+
+    .add-button( $dialog, 'destroy-dialog', 'Cancel');
+
+    .show-dialog;
+  }
+}
+}}
+
 #-------------------------------------------------------------------------------
 method container-delete ( N-Object $parameter ) {
 
