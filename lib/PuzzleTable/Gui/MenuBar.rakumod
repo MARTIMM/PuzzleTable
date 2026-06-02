@@ -82,6 +82,7 @@ method make-menu (
     when 'Container' {
       self.bind-action( $menu, $menu-name, $!cont, 'Add');
       self.bind-action( $menu, $menu-name, $!cont, 'Rename');
+#      self.bind-action( $menu, $menu-name, $!cont, 'Move');
       self.bind-action( $menu, $menu-name, $!cont, 'Delete');
     }
 
