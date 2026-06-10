@@ -58,7 +58,7 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
   $cat-grid.clear-object;
 
   # Create new sidebar
-  my $row-count = 0;
+  my $row-count = 1;
 
   $cat-grid .= new-grid;
   $cat-grid.set-name('sidebar');
@@ -73,7 +73,18 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 
   my @roots = $!config.get-roots;
   for @roots -> $root-dir {
+
+    # Set a label at the start of all containers
+    with my Gnome::Gtk4::Label $le .= new-label {
+      .set-text($root-dir.IO.basename);
+      .set-hexpand(True);
+      .set-halign(GTK_ALIGN_START);
+      $!config.set-css( .get-style-context, :css-class<pt-sidebar>);
+    }
+    $cat-grid.attach( $le, 0, $row-count++, 5, 1);
+
 #note "\n$?LINE $root-dir";
+    # Process all containers and make expanders of each of them
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
 #note "$?LINE   $container";
@@ -85,6 +96,7 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
       my Int $cat-row-count = 0;
       my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
+      # In each expander the categories are placed
       my @categories = $!config.get-categories( $container, $root-dir);
       for @categories -> $category {
 #note "$?LINE     $category";
@@ -108,6 +120,7 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 
       $expander.set-child($category-grid);
       $expander.set-expanded($!config.is-expanded( $container, $root-dir));
+
       $cat-grid.attach( $expander, 0, $row-count, 5, 1);
 
       $row-count++;
@@ -181,7 +194,7 @@ method sidebar-expander (
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
     my Str $css-class = "pt-sidebar-expander-ptr$expander-color-count";
 #note "$?LINE $container, $css-class";
-
+#$root-dir.IO.basename
     $!config.set-css( .get-style-context, :$css-class);
 
     given my Gnome::Gtk4::Label $l .= new-label {
