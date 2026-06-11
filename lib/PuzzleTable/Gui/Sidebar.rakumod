@@ -164,11 +164,14 @@ method !category-button (
       .set-max-width-chars(25);
 #      .set-ellipsize(True);
 
+#        :css-class('pt-sidebar-category-label')
       $!config.set-css(
         .get-style-context,
-#        :css-class('pt-sidebar-category-label')
         :css-class("pt-sidebar-expander-ptr$expander-color-count")
-        :css-class('pt-sidebar-expander-button')
+      );
+
+      $!config.set-css(
+        .get-style-context, :css-class('pt-sidebar-expander-button')
       );
     }
 
