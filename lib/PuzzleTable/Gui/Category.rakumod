@@ -323,7 +323,7 @@ method category-delete ( N-Object $parameter ) {
   }
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :dialog-header('Rename Category dialog')
+    :dialog-header('Delete Category dialog')
   ) {
     .add-content( 'Select a root', $roots-dd) if $*multiple-roots;
     .add-content( 'Select container', $container-dd);
