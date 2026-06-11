@@ -83,11 +83,9 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
     }
     $cat-grid.attach( $le, 0, $row-count++, 5, 1);
 
-#note "\n$?LINE $root-dir";
     # Process all containers and make expanders of each of them
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
-#note "$?LINE   $container";
       if $prev-root-dir ne $root-dir {
         $prev-root-dir = $root-dir;
         $expander-color-count++;
@@ -99,9 +97,10 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
       # In each expander the categories are placed
       my @categories = $!config.get-categories( $container, $root-dir);
       for @categories -> $category {
-#note "$?LINE     $category";
         my Gnome::Gtk4::Button $category-button =
-          self!category-button( $category, $container, $root-dir);
+          self!category-button(
+            $category, $container, $root-dir, $expander-color-count
+          );
 
         $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
 
@@ -147,7 +146,8 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 
 #-------------------------------------------------------------------------------
 method !category-button (
-  Str:D $category, Str:D $container, Str:D $root-dir --> Gnome::Gtk4::Button
+  Str:D $category, Str:D $container, Str:D $root-dir, Int $expander-color-count
+  --> Gnome::Gtk4::Button
 ) {
 #note "$?LINE $category, $container, $root-dir";
 
@@ -160,13 +160,15 @@ method !category-button (
     given my Gnome::Gtk4::Label $l .= new-label {
       .set-text($category);
       .set-hexpand(True);
-      .set-halign(GTK_ALIGN_START);
+      .set-halign(GTK_ALIGN_FILL);
       .set-max-width-chars(25);
 #      .set-ellipsize(True);
 
       $!config.set-css(
         .get-style-context,
-        :css-class('pt-sidebar-category-label')
+#        :css-class('pt-sidebar-category-label')
+        :css-class("pt-sidebar-expander-ptr$expander-color-count")
+        :css-class('pt-sidebar-expander-button')
       );
     }
 

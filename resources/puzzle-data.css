@@ -4383,6 +4383,8 @@ progressbar.osd {
 
   background-image: none;
   background-color: #2e003d;
+  color: #c001ff;
+
   border-style: groove;
   border-color: #50006a;
   border-radius: 6px;
@@ -4396,6 +4398,8 @@ progressbar.osd {
 
   background-image: none;
   background-color: #002411;
+  color: #02ff35;
+
   border-style: groove;
   border-color: #005211;
   border-radius: 6px;
@@ -4409,6 +4413,8 @@ progressbar.osd {
 
   background-image: none;
   background-color: #4b1500;
+  color: #ff7504;
+
   border-style: groove;
   border-color: #a94d01;
   border-radius: 6px;
@@ -4422,6 +4428,8 @@ progressbar.osd {
 
   background-image: none;
   background-color: #560156;
+  color: #fc16ed;
+
   border-style: groove;
   border-color: #d604c8;
   border-radius: 6px;
@@ -4435,6 +4443,8 @@ progressbar.osd {
 
   background-image: none;
   background-color: #000524;
+  color: #726fff;
+
   border-style: groove;
   border-color: #1815cf;
   border-radius: 6px;
@@ -4448,6 +4458,8 @@ progressbar.osd {
 
   background-image: none;
   background-color: #3f4a01;
+  color: #fffb11;
+
   border-style: groove;
   border-color: #cbc803;
   border-radius: 6px;
@@ -4461,9 +4473,18 @@ progressbar.osd {
 
   background-image: none;
   background-color: #014a41;
+  color: #3bd1ff;
+
   border-style: groove;
   border-color: #039ccb;
   border-radius: 6px;
+}
+
+.pt-sidebar-expander-button {
+  border-top-width: px;
+  border-left-width: px;
+  border-right-width: px;
+  border-bottom-width: px;
 }
 
 /* The label in the expander */
