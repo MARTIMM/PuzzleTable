@@ -4382,8 +4382,8 @@ progressbar.osd {
   border-bottom-width: 4px;
 
   background-image: none;
-  background-color: #2e003d;
-  color: #c001ff;
+  background-color: #22002d;
+  color: #cd39ff;
 
   border-style: groove;
   border-color: #50006a;
@@ -4412,8 +4412,8 @@ progressbar.osd {
   border-bottom-width: 4px;
 
   background-image: none;
-  background-color: #4b1500;
-  color: #ff7504;
+  background-color: #451300;
+  color: #ff8827;
 
   border-style: groove;
   border-color: #a94d01;
@@ -4427,8 +4427,8 @@ progressbar.osd {
   border-bottom-width: 4px;
 
   background-image: none;
-  background-color: #560156;
-  color: #fc16ed;
+  background-color: #4d004d;
+  color: #fa33ed;
 
   border-style: groove;
   border-color: #d604c8;
@@ -4443,7 +4443,7 @@ progressbar.osd {
 
   background-image: none;
   background-color: #000524;
-  color: #726fff;
+  color: #7f7dff;
 
   border-style: groove;
   border-color: #1815cf;
@@ -4473,7 +4473,7 @@ progressbar.osd {
 
   background-image: none;
   background-color: #014a41;
-  color: #3bd1ff;
+  color: #4ed6ff;
 
   border-style: groove;
   border-color: #039ccb;
