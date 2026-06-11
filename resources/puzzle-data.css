@@ -4440,6 +4440,32 @@ progressbar.osd {
   border-radius: 6px;
 }
 
+.pt-sidebar-expander-ptr5 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
+  background-color: #3f4a01;
+  border-style: groove;
+  border-color: #cbc803;
+  border-radius: 6px;
+}
+
+.pt-sidebar-expander-ptr6 {
+  border-top-width: 4px;
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+
+  background-image: none;
+  background-color: #014a41;
+  border-style: groove;
+  border-color: #039ccb;
+  border-radius: 6px;
+}
+
 /* The label in the expander */
 .sidebar-expander-label {
   color: #83ff64;
