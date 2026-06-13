@@ -4481,10 +4481,10 @@ progressbar.osd {
 }
 
 .pt-sidebar-expander-button {
-  border-top-width: px;
-  border-left-width: px;
-  border-right-width: px;
-  border-bottom-width: px;
+  border-top-width: 0px;
+  border-left-width: 0px;
+  border-right-width: 0px;
+  border-bottom-width: 0px;
 }
 
 /* The label in the expander */
