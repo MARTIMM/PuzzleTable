@@ -80,7 +80,11 @@ method make-menu (
     }
 
     when 'Container' {
-      self.bind-action( $menu, $menu-name, $!cont, 'Add');
+      self.bind-action(
+        $menu, $menu-name, $!cont, 'Add',
+        :path(DATA_DIR ~ 'images/add-cont-64.png'),
+        :tooltip('Add a container')
+      );
       self.bind-action( $menu, $menu-name, $!cont, 'Rename');
 #      self.bind-action( $menu, $menu-name, $!cont, 'Move');
       self.bind-action( $menu, $menu-name, $!cont, 'Delete');
@@ -89,11 +93,12 @@ method make-menu (
     when 'Category' {
       self.bind-action(
         $menu, $menu-name, $!cat, 'Add',
-        :path(DATA_DIR ~ 'images/add-cat.png'), :tooltip('Add a new category')
+        :path(DATA_DIR ~ 'images/add-cat-64.png'),
+        :tooltip('Add a new category')
       );
       self.bind-action(
         $menu, $menu-name, $!cat, 'Rename',
-        :path(DATA_DIR ~ 'images/ren-cat.png'), :tooltip('Rename a category')
+        :path(DATA_DIR ~ 'images/ren-cat-64.png'), :tooltip('Rename a category')
       );
       self.bind-action( $menu, $menu-name, $!cat, 'Delete');
       self.bind-action( $menu, $menu-name, $!cat, 'Lock');
@@ -106,7 +111,7 @@ method make-menu (
       );
       self.bind-action(
         $menu, $menu-name, $!phandling, 'Archive',
-#        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Archive puzzles')
+        :path(DATA_DIR ~ 'images/archive-64.png'), :tooltip('Archive puzzles')
       );
     }
 
@@ -114,8 +119,8 @@ method make-menu (
       self.bind-action( $menu, $menu-name, $!set, 'Set Password');
       self.bind-action(
         $menu, $menu-name, $!set, 'Unlock Categories',
-        :shortcut
-#        :icon<changes-allow>, :tooltip('Unlock locked categories')
+#        :shortcut
+        :icon<changes-allow>, :tooltip('Unlock locked categories')
       );
       self.bind-action(
         $menu, $menu-name, $!set, 'Lock Categories',
