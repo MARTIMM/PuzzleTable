@@ -46,10 +46,11 @@
   "test-depends": [ ],
   "build-depends": [ ],
   "resources": [
-    "start-puzzle-64.png", "edit-puzzle-64.png", "puzzle-data.css",
+    "puzzle-data.css",
+    "shortcuts-window.ui", "io.github.martimm.puzzle-table.desktop",
+    "start-puzzle-64.png", "edit-puzzle-64.png",
     "add-cat-64.png", "ren-cat-64.png", "rem-cat-64.png", "move-64.png",
     "remove-64.png", "add-cont-64.png",
-    "icons8-padlock-64.png", "icons8-lock-64.png", 
-    "shortcuts-window.ui", "io.github.martimm.puzzle-table.desktop"
+    "icons8-padlock-64.png", "icons8-lock-64.png"
   ]
 }
