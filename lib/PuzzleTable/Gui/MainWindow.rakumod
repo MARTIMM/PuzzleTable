@@ -172,15 +172,15 @@ method remote-options (
     $config.unlock($o<unlock>);
   }
 
-  # Process category option. It is set to 'Default' otherwise.
-  my Str $opt-category = 'Default';
+  # Process container option. It is set to 'Default' otherwise.
   my Str $opt-container = 'Default';
-
   if $o<container>:exists {
     $opt-container = $o<container>;
     $config.add-container($opt-container);
   }
 
+  # Process category option. It is also set to 'Default' otherwise.
+  my Str $opt-category = 'Default';
   if $o<category>:exists {
     $opt-category = $o<category>;
     # Create category if does not exist. Keep lockable property of the category
