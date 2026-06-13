@@ -54,7 +54,7 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
   # Copy images to the data directory
   my Str $png-file;
   for <start-puzzle-64.png edit-puzzle-64.png
-       add-cat.png add-cont.png ren-cat.png rem-cat.png
+       add-cat-64.png add-cont.png ren-cat-64.png rem-cat-64.png
        move-64.png remove-64.png archive-64.png config-64.png
        icons8-padlock-64.png icons8-lock-64.png
       > -> $i {
