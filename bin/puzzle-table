@@ -12,9 +12,11 @@ use PuzzleTable::Gui::MainWindow;
 my $*verbose-output = False; #True;
 my $*multiple-roots = False;
 
+my $*main-window;
+
 #-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
 my PuzzleTable::Gui::MainWindow $puzzles .= new;
-$puzzles.go-ahead;
+#$puzzles.go-ahead;
 
 
