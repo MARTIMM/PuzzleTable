@@ -9,6 +9,10 @@ use PuzzleTable::Gui::Table;
 use PuzzleTable::Gui::Statusbar;
 use PuzzleTable::Gui::Shortcut;
 
+use GnomeTools::Gtk::Application;
+#use Gnome::Gtk::Application;
+use Gnome::Gio::Menu;
+
 use Gnome::Gio::Application:api<2>;
 use Gnome::Gio::T-ioenums:api<2>;
 use Gnome::Gio::ApplicationCommandLine:api<2>;
@@ -18,6 +22,7 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Box:api<2>;
 use Gnome::Gtk4::ApplicationWindow:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
+use Gnome::Gtk4::Widget:api<2>;
 
 use Gnome::Glib::N-Error;
 use Gnome::Glib::T-error;
@@ -32,8 +37,16 @@ use Getopt::Long;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
 
-has Gnome::Gtk4::Application $.application;
-has Gnome::Gtk4::ApplicationWindow $.application-window;
+#constant LocalOptions = [<version help|h>];
+#constant RemoteOptions = [ |<verbose|v> ];
+
+has GnomeTools::Gtk::Application $.application handles <add-action>;
+has Int $.exit-code = 0;
+
+
+
+#has Gnome::Gtk4::Application $.application;
+#has Gnome::Gtk4::ApplicationWindow $.application-window;
 has Gnome::Gtk4::Grid $!top-grid;
 has Gnome::Gtk4::Box $.toolbar;
 has Bool $!table-is-displayed = False;
@@ -44,11 +57,21 @@ has PuzzleTable::Gui::Statusbar $.statusbar;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
+  $*main-window = self;
 
-  $!application .= new-application(
-    APP_ID, G_APPLICATION_HANDLES_COMMAND_LINE
-  );
+  with $!application .= new(
+    :app-id(APP_ID), :app-flags(G_APPLICATION_HANDLES_COMMAND_LINE)
+  ) {
+    .set-activate( self, 'puzzle-table-display');
+#    .set-startup( self, 'app-startup');
+    .set-shutdown( self, 'app-shutdown');
+    .process-local-options( self, 'local-options');
+    .process-remote-options( self, 'remote-options');
 
+    $!exit-code = .run;
+  }
+
+#`{{
   # Load the gtk resource file and register resource to make data global to app
 #  my Gnome::Gio::Resource $r .= new(:load(%?RESOURCES<library.gresource>));
 #  $r.register;
@@ -72,15 +95,16 @@ submethod BUILD ( ) {
   my $e = CArray[N-Error].new(N-Error);
   $!application.register( N-Object, $e);
   die $e[0].message if ?$e[0];
+}}
 }
 
 #-------------------------------------------------------------------------------
-method app-startup ( ) {
+#method app-startup ( ) {
 #say 'startup';
-}
+#}
 
 #-------------------------------------------------------------------------------
-method local-options ( N-Object $n-variant-dict --> Int ) {
+method local-options ( --> Int ) {
 #say 'local opts';
 
 #  my PuzzleTable::Config $config .= instance;
@@ -118,7 +142,7 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 
   # Handle the simple options here which do not require the primary instance
   if $o<version> {
-    note "Version of puzzle table; $PuzzleTable::Type::version";
+    note "Version of puzzle table; $PuzzleTable::Types::version";
     $exit-code = 0;
   }
 
@@ -131,19 +155,13 @@ method local-options ( N-Object $n-variant-dict --> Int ) {
 }
 
 #-------------------------------------------------------------------------------
-method remote-options (
-  Gnome::Gio::ApplicationCommandLine() $command-line --> Int
-) {
-#say 'remote opts';
-
+method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   my Int $exit-code = 0;
 #  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
 #    :native-object($n-command-line)
 #  );
 
-  my Capture $o = get-options-from(
-    $command-line.get-arguments(Pointer), | $PuzzleTable::Config::options
-  );
+  my Capture $o = get-options-from( $args, | $PuzzleTable::Config::options);
   my @args = $o.list;
 
   my PuzzleTable::Config $config .= instance;
@@ -156,12 +174,11 @@ method remote-options (
   }
 }}
 
-#note "$?LINE $config.gist()";
 
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
-  $!table .= new-scrolledwindow(:main(self)) unless ?$!table;
-  $!sidebar .= new-scrolledwindow(:main(self)) unless $!sidebar;
+  $!table .= new-scrolledwindow unless ?$!table;
+  $!sidebar .= new-scrolledwindow unless $!sidebar;
 
   my Bool $lockable = False;
   if $o<lock>:exists {
@@ -232,12 +249,13 @@ method remote-options (
     }
   }
 
+#`{{
   # Activate unless table is already displayed
   $!application.activate unless $!table-is-displayed;
   $command-line.set-exit-status($exit-code);
   $command-line.done;
   $command-line.clear-object;
-
+}}
   $exit-code
 }
 
@@ -256,10 +274,16 @@ method app-shutdown ( ) {
 
 #-------------------------------------------------------------------------------
 method puzzle-table-display ( ) {
-#say 'puzzle start';
+say 'puzzle start';
 
+  $!application.set-window-content(
+    self.window-content, self.menu, :title('Puzzle Table Display - Default')
+  )
+}
+
+#-------------------------------------------------------------------------------
+method window-content ( --> Gnome::Gtk4::Widget ) {
   my PuzzleTable::Config $config .= instance;
-  $config.store-main-window(self);
 
   $!toolbar .= new-box( GTK_ORIENTATION_HORIZONTAL, 2);
 
@@ -275,11 +299,20 @@ method puzzle-table-display ( ) {
     .attach( $!sidebar, 0, 1, 1, 3);
     .attach( $!table, 1, 2, 1, 1);
     .attach( $!statusbar, 1, 3, 1, 1);
+
+    .set-size-request( 1000, 1000);
   }
 
+  $!sidebar.fill-sidebar;
+  $!table-is-displayed = True;
+
+  my PuzzleTable::Gui::Shortcut $shortcut .= new;
+  $shortcut.set-shortcut-keys;
+
+
+  $!top-grid;
+#`{{
   with $!application-window .= new-applicationwindow($!application) {
-    my PuzzleTable::Gui::Shortcut $shortcut .= new(:main(self));
-    $shortcut.set-shortcut-keys;
 
     my PuzzleTable::Gui::MenuBar $menu-bar .= new(:main(self));
     $!application.set-menubar($menu-bar.bar);
@@ -299,8 +332,17 @@ method puzzle-table-display ( ) {
   $!sidebar.fill-sidebar;
   $!table-is-displayed = True;
 #  Gnome::N::debug(:on);
+}}
 }
 
+#-------------------------------------------------------------------------------
+method menu ( --> GnomeTools::Gio::Menu ) {
+  my PuzzleTable::Gui::MenuBar $menu-bar .= new;
+
+  $menu-bar.make-menu
+}
+
+#`{{
 #-------------------------------------------------------------------------------
 method go-ahead ( ) {
   my Int $argc = 1 + @*ARGS.elems;
@@ -316,6 +358,7 @@ method go-ahead ( ) {
 
   $!application.run( $argc, $argv);
 }
+}}
 
 #-------------------------------------------------------------------------------
 method quit-application ( ) {

@@ -206,7 +206,7 @@ method run-palapeli (
   my Str $progress = $!config.run-palapeli($puzzle);
   $label-progress.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
-  $!config.get-main-window.sidebar.fill-sidebar;
+  $*main-window.sidebar.fill-sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -487,7 +487,7 @@ method run-palapeli (
   my Str $progress = $!config.run-palapeli($puzzle);
   $label-progress.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
-  $!main.sidebar.fill-sidebar;
+  $*main-window.sidebar.fill-sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -511,8 +511,8 @@ method selection-changed ( guint $position, guint $n-items ) {
     $msg ~= " $bitset.get-nth($i)";
   }
 
-  $!main.statusbar.remove-message;
-  $!main.statusbar.set-status($msg);
+  $*main-window.statusbar.remove-message;
+  $*main-window.statusbar.set-status($msg);
 }
 
 #-------------------------------------------------------------------------------
@@ -521,7 +521,7 @@ method edit-palapeli (
   Gnome::Gtk4::Label :$label-comment, Gnome::Gtk4::Label :$label-source
 ) {
   with my PuzzleTable::Gui::Dialog $dialog .= new(
-    :$!main, :dialog-header('Edit Puzzle Info Dialog')
+    :$*main-window, :dialog-header('Edit Puzzle Info Dialog')
   ) {
     .add-content( 'Title', my Gnome::Gtk4::Entry $comment .= new-entry);
     $comment.set-text($puzzle<Comment>);

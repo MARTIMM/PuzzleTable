@@ -21,15 +21,12 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Category:auth<github:MARTIMM>;
 
-has $!main is required;
 has PuzzleTable::Config $!config;
-has $!sidebar;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
   $!config .= instance;
-  $!sidebar = $!main.sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -125,7 +122,7 @@ method do-category-add (
     }
 
     else {
-      $!sidebar.fill-sidebar;
+      $*main-window.sidebar.fill-sidebar;
       $sts-ok = True;
     }
   }
@@ -271,11 +268,11 @@ method do-category-rename (
     }
 
     else {
-      $!sidebar.fill-sidebar;
+      $*main-window.sidebar.fill-sidebar;
 #      if $ocat eq $!config.get-current-category and
 #         $ocont eq $!config.get-current-container
 #      {
-        $!sidebar.select-category(
+        $*main-window.sidebar.select-category(
           :category($new-category), :container($ncont), :root-dir($nroot)
         );
 #      }
@@ -372,11 +369,11 @@ method do-category-delete (
       if $category eq $!config.get-current-category and
          $container eq $!config.get-current-container
       {
-        $!sidebar.select-category(
+        $*main-window.sidebar.select-category(
           :category('Default'), :container('Default'), :$root-dir
         );
       }
-      $!sidebar.fill-sidebar;
+      $*main-window.sidebar.fill-sidebar;
       $sts-ok = True;
     }
   }
@@ -459,7 +456,7 @@ method do-category-lock (
   );
 
   # Sidebar changes when a category is set lockable and table is locked
-  $!sidebar.fill-sidebar if $!config.is-locked;
+  $*main-window.sidebar.fill-sidebar if $!config.is-locked;
   $sts-ok = True;
 
   $dialog.destroy-dialog if $sts-ok;
@@ -468,5 +465,5 @@ method do-category-lock (
 #-------------------------------------------------------------------------------
 method file-refresh-sidebar ( N-Object $parameter ) {
 note "$?LINE";
-  $!sidebar.fill-sidebar(:recalculate);
+  $*main-window.sidebar.fill-sidebar(:recalculate);
 }

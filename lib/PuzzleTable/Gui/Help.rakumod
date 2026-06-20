@@ -23,14 +23,13 @@ use Gnome::N::X:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Help:auth<github:MARTIMM>;
 
-has $!main is required;
 has Gnome::Gtk4::AboutDialog $!about-dialog;
 
 has Str $!shortcuts-window-ui;
 has Gnome::Gtk4::ShortcutsWindow() $!shortcuts-window;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
   $!shortcuts-window-ui = %?RESOURCES<shortcuts-window.ui>.slurp;
 }
 

@@ -34,7 +34,10 @@ method new ( |c ) {
 }
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str :$dialog-header = '',  Str :$dialog-title = '', Bool :$no-statusbar = False ) {
+submethod BUILD (
+  Str :$dialog-header = '',  Str :$dialog-title = '',
+  Bool :$no-statusbar = False
+) {
   my PuzzleTable::Config $config .= instance;
   $!main-loop .= new-mainloop( N-Object, True);
 
@@ -88,7 +91,7 @@ submethod BUILD ( Str :$dialog-header = '',  Str :$dialog-title = '', Bool :$no-
 
   with self {
     $config.set-css( .get-style-context, :css-class<puzzle-dialog>);
-    .set-transient-for($config.get-main-window.application-window);
+    .set-transient-for($*main-window.application-window);
     .set-destroy-with-parent(True);
     .set-modal(True);
     .set-size-request( 400, 100);

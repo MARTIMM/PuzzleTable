@@ -25,19 +25,18 @@ use Gnome::N::X:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Puzzle:auth<github:MARTIMM>;
 
-has $!main is required;
 has PuzzleTable::Config $!config;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
   $!config .= instance;
 }
 
 #-------------------------------------------------------------------------------
 method puzzle-move ( N-Object $parameter ) {
-#  my Gnome::Gtk4::MultiSelection $multi-select = $!main.table.multi-select;
+#  my Gnome::Gtk4::MultiSelection $multi-select = $*main-window.table.multi-select;
   my Gnome::Gtk4::N-Bitset $bitset .=
-    new(:native-object($!main.table.multi-select.get-selection));
+    new(:native-object($*main-window.table.multi-select.get-selection));
 
   my Int $n = $bitset.get-size;
   unless ?$n {
@@ -136,29 +135,29 @@ method do-move-puzzles (
     my Int $n = $bitset.get-size;
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
-#note "$?LINE $i, $item-pos, $!main.table.puzzle-objects.get-string($item-pos)";
+#note "$?LINE $i, $item-pos, $*main-window.table.puzzle-objects.get-string($item-pos)";
 
       $!config.move-puzzle(
         $from-category, $dest-cat, $dest-cont, $dest-root,
-        $!main.table.puzzle-objects.get-string($item-pos)
+        $*main-window.table.puzzle-objects.get-string($item-pos)
       );
     }
 
 #note "$?LINE";
 
     # Update status bar to show number of puzzles
-    $!main.statusbar.set-status(
-      "Number of puzzles: " ~ $!main.table.puzzle-objects.get-n-items
+    $*main-window.statusbar.set-status(
+      "Number of puzzles: " ~ $*main-window.table.puzzle-objects.get-n-items
     );
 
     # Selecting the category again will redraw the puzzle table
-    $!main.sidebar.select-category(
+    $*main-window.sidebar.select-category(
       :category($dest-cat),
       :container($dest-cont),
       :root-dir($dest-root)
     );
 
-    $!main.sidebar.fill-sidebar;
+    $*main-window.sidebar.fill-sidebar;
 
     $sts-ok = True;
   }
@@ -170,7 +169,7 @@ method do-move-puzzles (
 method puzzle-archive ( N-Object $parameter ) {
 
   my Gnome::Gtk4::N-Bitset $bitset .=
-    new(:native-object($!main.table.multi-select.get-selection));
+    new(:native-object($*main-window.table.multi-select.get-selection));
 
   my Int $n = $bitset.get-size;
   unless ?$n {
@@ -217,21 +216,21 @@ method do-archive-puzzles (
     my Int $n = $bitset.get-size;
     for ^$n -> $i {
       my Int $item-pos = $bitset.get-nth($i);
-      $puzzle-ids.push: $!main.table.puzzle-objects.get-string($item-pos);
+      $puzzle-ids.push: $*main-window.table.puzzle-objects.get-string($item-pos);
     }
 
     # Archive the puzzles and remove from configuration
     $!config.archive-puzzles($puzzle-ids);
 
     # Update puzzle table
-    $!main.sidebar.select-category(
+    $*main-window.sidebar.select-category(
       :category($current-cat), :container($current-cont),
       :root-dir($current-root)
     );
 
     # Update status bar to show number of puzzles
-    $!main.statusbar.set-status(
-      "Number of puzzles: " ~ $!main.table.puzzle-objects.get-n-items
+    $*main-window.statusbar.set-status(
+      "Number of puzzles: " ~ $*main-window.table.puzzle-objects.get-n-items
     );
 
     $sts-ok = True;

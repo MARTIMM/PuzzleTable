@@ -38,8 +38,6 @@ unit class PuzzleTable::Gui::Table:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ScrolledWindow;
 
 
-
-has $!main is required;
 has PuzzleTable::Config $!config;
 
 has Gnome::Gtk4::StringList $.puzzle-objects;
@@ -54,7 +52,7 @@ has Gnome::Glib::N-MainContext $!main-context;
 has Hash $!puzzles-playing = %();
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
 
   $!main-context .= new-maincontext(
     :native-object(
@@ -170,8 +168,8 @@ multi method add-puzzle-to-table ( Hash $puzzle ) {
   $!current-table-objects{$puzzle-id} = $puzzle;
   $!puzzle-objects.append($puzzle-id);
 
-  $!main.statusbar.remove-message;
-  $!main.statusbar.set-status(
+  $*main-window.statusbar.remove-message;
+  $*main-window.statusbar.set-status(
     "Number of puzzles: " ~ $!puzzle-objects.get-n-items
   );
 
@@ -224,6 +222,6 @@ method selection-changed ( guint $position, guint $n-items ) {
     $msg ~= " $bitset.get-nth($i)";
   }
 
-  $!main.statusbar.remove-message;
-  $!main.statusbar.set-status($msg);
+  $*main-window.statusbar.remove-message;
+  $*main-window.statusbar.set-status($msg);
 }

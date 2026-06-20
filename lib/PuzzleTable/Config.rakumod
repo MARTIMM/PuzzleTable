@@ -16,9 +16,6 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Config:auth<github:MARTIMM>;
 
-# PuzzleTable::Gui::MainWindow
-has $!main-window;
-
 has Gnome::Gtk4::CssProvider $!css-provider;
 
 our $options = [<
@@ -112,14 +109,4 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
     $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
   );
   $style-context.add-class($css-class);
-}
-
-#-------------------------------------------------------------------------------
-method store-main-window ( $main ) {
-  $!main-window = $main;
-}
-
-#-------------------------------------------------------------------------------
-method get-main-window ( --> Mu ) {
-  $!main-window
 }

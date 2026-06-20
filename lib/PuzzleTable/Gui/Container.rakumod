@@ -20,15 +20,12 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Container:auth<github:MARTIMM>;
 
-has $!main is required;
-has $!sidebar;
 has PuzzleTable::Config $!config;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
   $!config .= instance;
-  $!sidebar = $!main.sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -83,7 +80,7 @@ method do-container-add (
   }
 
   else {
-    $!sidebar.fill-sidebar;
+    $*main-window.sidebar.fill-sidebar;
     $sts-ok = True;
   }
 
@@ -161,7 +158,7 @@ method do-container-rename (
   }
 
   else {
-    $!sidebar.fill-sidebar;
+    $*main-window.sidebar.fill-sidebar;
     $sts-ok = True;
   }
 
@@ -280,7 +277,7 @@ method do-container-delete (
   }
 
   else {
-    $!sidebar.fill-sidebar;
+    $*main-window.sidebar.fill-sidebar;
     $sts-ok = True;
   }
 

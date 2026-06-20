@@ -30,12 +30,11 @@ use Gnome::N::N-Object:api<2>;
 unit class PuzzleTable::Gui::Sidebar:auth<github:MARTIMM>;
 also is Gnome::Gtk4::ScrolledWindow;
 
-has $!main is required;
 has PuzzleTable::Config $!config;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
   $!config .= instance;
 
 #  self.set-halign(GTK_ALIGN_FILL);
@@ -73,7 +72,6 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 
   my @roots = $!config.get-roots;
   for @roots -> $root-dir {
-
     # Set a label at the start of all containers
     with my Gnome::Gtk4::Label $le .= new-label {
       .set-text($root-dir.IO.basename);
@@ -288,17 +286,17 @@ method select-category (
   my $root-text =
     (?$root-dir and $*multiple-roots) ?? "Root path $root-dir, " !! '';
   my Str $title = "Puzzle Table Display: {$root-text}Container $container, Category $category";
-  $!main.application-window.set-title($title) if ?$!main.application-window;
+  $*main-window.application.call-appwindow-method( 'set-title', $title);
 
   # Clear the puzzle table before showing the puzzles of this category
-  $!main.table.clear-table;
+  $*main-window.table.clear-table;
 
   # Get the puzzles and send them to the table
   $!config.select-category( $category, $container, $root-dir);
   my Seq $puzzles = $!config.get-puzzles;
 
   # Fill the puzzle table with new puzzles
-  $!main.table.add-puzzles-to-table($puzzles);
+  $*main-window.table.add-puzzles-to-table($puzzles);
 }
 
 #-------------------------------------------------------------------------------

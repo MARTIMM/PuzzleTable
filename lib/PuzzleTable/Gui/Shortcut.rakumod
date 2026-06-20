@@ -25,17 +25,18 @@ use Gnome::N::N-Object:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Shortcut:auth<github:MARTIMM>;
 
-has $!main is required;
 has PuzzleTable::Gui::Category $!cat;
 has Gnome::Gtk4::ShortcutController $!controller;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main ) {
-  $!cat .= new(:$!main);
+submethod BUILD ( ) {
+  $!cat .= new;
 
   $!controller .= new-shortcutcontroller;
   $!controller.set-scope(GTK_SHORTCUT_SCOPE_GLOBAL);
-  $!main.application-window.add-controller($!controller);
+  $*main-window.application.call-appwindow-method(
+    'add-controller', $!controller
+  );
 }
 
 #-------------------------------------------------------------------------------
@@ -46,7 +47,6 @@ method set-shortcut-keys ( ) {
   my Gnome::Gtk4::KeyvalTrigger $trigger .= parse-string($shortcut-string);
   unless $trigger.is-valid {
     my PuzzleTable::Gui::MessageDialog $message .= new(
-      :$!main,
       :message("Invalid shortcut string: $shortcut-string"),
       :no-statusbar
     );
@@ -61,7 +61,7 @@ method set-shortcut-keys ( ) {
   # And an action which will stop the application
   my Gnome::Gtk4::CallbackAction $action .= new-callbackaction(
     sub ( N-Object $no-widget, N-Object $, gpointer $ ) {
-      $!main.quit-application;
+      $*main-window.quit-application;
     },
     gpointer,
     N-Object
@@ -75,12 +75,13 @@ method set-shortcut-keys ( ) {
 
 #-------------------------------------------------------------------------------
 method set-shortcut-key ( Str $shortcut-string, $object, $method --> Bool ) {
+#`{{
   my PuzzleTable::Gui::MessageDialog $message;
   my Bool $set-key = False;
 
   if ! $object.^can($method) {
     $message .= new(
-      :$!main, :no-statusbar,
+      :$*main-window, :no-statusbar,
       :message("Invalid shortcut string: $shortcut-string"),
     );
 
@@ -91,7 +92,7 @@ method set-shortcut-key ( Str $shortcut-string, $object, $method --> Bool ) {
   my Gnome::Gtk4::KeyvalTrigger $trigger .= parse-string($shortcut-string);
   unless $trigger.is-valid {
     $message .= new(
-      :$!main, :no-statusbar,
+      :no-statusbar,
       :message("Invalid shortcut string: $shortcut-string"),
     );
 
@@ -101,7 +102,7 @@ method set-shortcut-key ( Str $shortcut-string, $object, $method --> Bool ) {
   # And an action which will stop the application
   my Gnome::Gtk4::CallbackAction $action .= new-callbackaction(
     sub ( N-Object $no-widget, N-Object $, gpointer $ ) {
-      $!main.quit-application;
+      $*main-window.quit-application;
     },
     gpointer,
     N-Object
@@ -113,6 +114,8 @@ method set-shortcut-key ( Str $shortcut-string, $object, $method --> Bool ) {
   $!controller.add-shortcut($shortcut);
   
   $set-key
+}}
+  False
 }
 
 =finish
@@ -126,7 +129,7 @@ method bind-action (
   my Gnome::Gtk4::KeyvalTrigger $trigger .= parse-string($shortcut-string);
   unless $trigger.is-valid {
     my PuzzleTable::Gui::MessageDialog $message .= new(
-      :$!main, :message("There are no puzzles selected"), :no-statusbar
+      :message("There are no puzzles selected"), :no-statusbar
     );
 
     $message.show;

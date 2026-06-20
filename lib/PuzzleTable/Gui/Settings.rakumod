@@ -18,17 +18,11 @@ use Gnome::N::X:api<2>;
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Settings:auth<github:MARTIMM>;
 
-has $!main is required;
 has PuzzleTable::Config $!config;
-has PuzzleTable::Gui::Table $!table;
-#has PuzzleTable::Gui::Statusbar $!statusbar;
-has PuzzleTable::Gui::Sidebar $!sidebar;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main ) {
+submethod BUILD ( ) {
   $!config .= instance;
-  $!table = $!main.table;
-  $!sidebar = $!main.sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -55,7 +49,7 @@ method settings-unlock-categories ( N-Object $parameter ) {
 
     else {
       $!config.unlock(Str);
-      $!sidebar.fill-sidebar;
+      $*main-window.sidebar.fill-sidebar;
     }
   }
 }
@@ -64,7 +58,7 @@ method settings-unlock-categories ( N-Object $parameter ) {
 method settings-lock-categories ( N-Object $parameter ) {
 #  say 'lock';
   $!config.lock;
-  $!sidebar.fill-sidebar;
+  $*main-window.sidebar.fill-sidebar;
 }
 
 #-------------------------------------------------------------------------------
@@ -213,7 +207,7 @@ method do-password-unlock-check-button (
   else {
     $sts-ok = True;
     $!config.unlock($pw);
-    $!sidebar.fill-sidebar;
+    $*main-window.sidebar.fill-sidebar;
   }
 
   $dialog.destroy-dialog if $sts-ok;
