@@ -2,6 +2,93 @@
 use v6.d;
 use NativeCall;
 
+use GnomeTools::Gio::Menu;
+
+use PuzzleTable::Types;
+use PuzzleTable::Config;
+use PuzzleTable::Gui::Container;
+use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Puzzle;
+#use PuzzleTable::Gui::Sidebar;
+use PuzzleTable::Gui::Settings;
+use PuzzleTable::Gui::IconButton;
+use PuzzleTable::Gui::Help;
+
+#use Gnome::N::GlibToRakuTypes:api<2>;
+use Gnome::N::N-Object:api<2>;
+
+#-------------------------------------------------------------------------------
+unit class PuzzleTable::Gui::MenuBar:auth<github:MARTIMM>;
+
+has PuzzleTable::Gui::Puzzle $!phandling;
+has PuzzleTable::Gui::Category $!cat;
+has PuzzleTable::Gui::Container $!cont;
+has PuzzleTable::Gui::Settings $!set;
+has PuzzleTable::Gui::Help $!help;
+
+#-------------------------------------------------------------------------------
+submethod BUILD ( ) {
+  $!phandling .= new;
+  $!set .= new;
+  $!help .= new;
+  $!cat .= new;
+  $!cont .= new;
+}
+
+#-------------------------------------------------------------------------------
+method make-menu ( --> GnomeTools::Gio::Menu ) {
+  my GnomeTools::Gio::Menu $bar .= new;
+
+  my GnomeTools::Gio::Menu $file-menu .= new( :parent-menu($bar), :name<File>);
+  $file-menu.item( 'Quit', self, 'file-quit');
+
+  my GnomeTools::Gio::Menu $container-menu .= new(
+    :parent-menu($bar), :name<Container>
+  );
+  $container-menu.item( 'Add', $!cont, 'container-add');
+  $container-menu.item( 'Rename', $!cont, 'container-rename');
+  $container-menu.item( 'Delete', $!cont, 'container-delete');
+
+  my GnomeTools::Gio::Menu $category-menu .= new(
+    :parent-menu($bar), :name<Category>
+  );
+  $category-menu.item( 'Add', $!cat, 'categoryr-add');
+  $category-menu.item( 'Rename', $!cat, 'categoryr-rename');
+  $category-menu.item( 'Delete', $!cat, 'categoryr-delete');
+  $category-menu.item( 'Lock', $!cat, 'categoryr-lock');
+
+  my GnomeTools::Gio::Menu $puzzle-menu .= new(
+    :parent-menu($bar), :name<Puzzle>
+  );
+  $puzzle-menu.item( 'Move', $!phandling, 'puzzle-move');
+  $puzzle-menu.item( 'Archive', $!phandling, 'puzzle-archive');
+
+  my GnomeTools::Gio::Menu $settings-menu .= new(
+    :parent-menu($bar), :name<Settings>
+  );
+  $settings-menu.item( 'Set Password', $!set, 'settings-set-password-');
+  $settings-menu.item(
+    'Unlock Categories', $!set, 'settings-unlock-categories'
+  );
+  $settings-menu.item( 'Lock Categories', $!set, 'settings-lock-categories');
+
+  my GnomeTools::Gio::Menu $help-menu .= new( :parent-menu($bar), :name<Help>);
+  $help-menu.item( 'About', $!help, 'help-about');
+  $help-menu.item(
+    'Show Shortcuts Window', $!help, 'help-show-shortcuts-window'
+  );
+
+  $bar
+}
+
+#-------------------------------------------------------------------------------
+method file-quit ( N-Object $parameter ) {
+  say 'file quit';
+  $*main-window.quit;
+}
+
+=finish
+
 use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Container;
@@ -27,8 +114,6 @@ use Gnome::N::N-Object:api<2>;
 unit class PuzzleTable::Gui::MenuBar:auth<github:MARTIMM>;
 
 has Gnome::Gio::Menu $.bar;
-has $!application is required;
-has $!main is required;
 
 has Array $!menus;
 has PuzzleTable::Gui::Puzzle $!phandling;
@@ -38,13 +123,12 @@ has PuzzleTable::Gui::Settings $!set;
 has PuzzleTable::Gui::Help $!help;
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( :$!main ) {
-  $!application = $!main.application;
-  $!phandling .= new(:$!main);
-  $!set .= new(:$!main);
-  $!help .= new(:$!main);
-  $!cat .= new(:$!main);
-  $!cont .= new(:$!main);
+submethod BUILD ( ) {
+  $!phandling .= new;
+  $!set .= new;
+  $!help .= new;
+  $!cat .= new;
+  $!cont .= new;
 
   $!bar .= new-menu;
   $!menus = [
@@ -63,8 +147,6 @@ method make-menu (
 ) {
   my Gnome::Gio::Menu $menu .= new-menu;
   $!bar.append-submenu( $shortcut ?? "_$menu-name" !! "$menu-name", $menu);
-
-#  my PuzzleTable::Config $config = $!main.config;
 
   with $menu-name {
     when 'File' {
@@ -92,12 +174,12 @@ method make-menu (
 
     when 'Category' {
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Add',
+        $menu, $menu-name, $!cat, '_Add',
         :path(DATA_DIR ~ 'images/add-cat-64.png'),
-        :tooltip('Add a new category')
+        :tooltip('Add a new category'),
       );
       self.bind-action(
-        $menu, $menu-name, $!cat, 'Rename',
+        $menu, $menu-name, $!cat, '_Rename',
         :path(DATA_DIR ~ 'images/ren-cat-64.png'), :tooltip('Rename a category')
       );
       self.bind-action( $menu, $menu-name, $!cat, 'Delete');
@@ -120,11 +202,10 @@ method make-menu (
       self.bind-action(
         $menu, $menu-name, $!set, 'Unlock Categories',
 #        :shortcut
-        :icon<changes-allow>, :tooltip('Unlock locked categories')
+#        :icon<changes-allow>, :tooltip('Unlock locked categories')
       );
       self.bind-action(
         $menu, $menu-name, $!set, 'Lock Categories',
-        :shortcut
       );
     }
 
@@ -142,27 +223,31 @@ method make-menu (
 #-------------------------------------------------------------------------------
 method bind-action (
   Gnome::Gio::Menu $menu, Str $menu-name, Mu $object, Str $entry-name,
-  Str :$icon, Str :$path, Str :$tooltip, Bool :$shortcut = False
+  Str :$icon, Str :$path, Str :$tooltip #, Bool :$shortcut = False
 ) {
   my PuzzleTable::Config $config .= instance;
 
   # Make a method and action name
   my Str $method = [~] $menu-name, ' ', $entry-name;
   $method .= lc;
+  $method ~~ s/ \s '_' / /; # remove optional _ given by entry-name
   $method ~~ s:g/ \s+ /-/;
 
   my Str $action-name = 'app.' ~ $method;
-#note "$?LINE $menu-name, '$entry-name', $method, $action-name";
+note "$?LINE $menu-name, '$entry-name', $method, $action-name";
 
   # Make a menu entry
+#  my Gnome::Gio::MenuItem $menu-item .= new-menuitem(
+#    $shortcut ?? "_$entry-name" !! $entry-name, $action-name
+#  );
   my Gnome::Gio::MenuItem $menu-item .= new-menuitem(
-    $shortcut ?? "_$entry-name" !! $entry-name, $action-name
+    $entry-name, $action-name
   );
   $menu.append-item($menu-item);
 
   # Use the method name
   my Gnome::Gio::SimpleAction $action .= new-simpleaction( $method, Pointer);
-  $!application.add-action($action);
+  $*main-window.add-action($action);
   $action.register-signal( $object, $method, 'activate');
 
   if ?$icon {
@@ -172,7 +257,7 @@ method bind-action (
 
     $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
 
-    $!main.toolbar.append($toolbar-button);
+    $*main-window.toolbar.append($toolbar-button);
   }
 
   elsif ?$path {
@@ -182,12 +267,12 @@ method bind-action (
 
     $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
 
-    $!main.toolbar.append($toolbar-button);
+    $*main-window.toolbar.append($toolbar-button);
   }
 }
 
 #-------------------------------------------------------------------------------
 method file-quit ( N-Object $parameter ) {
   say 'file quit';
-  $!application.quit;
+  $*main-window.quit;
 }
