@@ -33,6 +33,8 @@ submethod BUILD ( ) {
   $!help .= new;
   $!cat .= new;
   $!cont .= new;
+
+note "$?LINE $!cat.gist(), $!cont.gist()";
 }
 
 #-------------------------------------------------------------------------------
@@ -84,7 +86,7 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
 #-------------------------------------------------------------------------------
 method file-quit ( N-Object $parameter ) {
   say 'file quit';
-  $*main-window.quit;
+  $*main-window.application.quit;
 }
 
 =finish

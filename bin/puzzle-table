@@ -3,6 +3,7 @@
 use v6.d;
 
 #use lib "/home/marcel/Languages/Raku/Projects/gnome-api2/gnome-api2/gnome-native/lib";
+use lib '/home/marcel/Languages/Raku/Projects/GnomeTools/lib';
 
 use PuzzleTable::Gui::MainWindow;
 
