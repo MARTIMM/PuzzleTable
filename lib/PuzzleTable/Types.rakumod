@@ -3,7 +3,7 @@ use v6.d;
 #-------------------------------------------------------------------------------
 unit package PuzzleTable::Types:auth<github:MARTIMM>;
 
-our $version = Version.new(v0.5.3);
+our $version = Version.new(v0.8.0);
 
 #-------------------------------------------------------------------------------
 constant APP_ID is export = 'io.github.martimm.puzzle-table';
