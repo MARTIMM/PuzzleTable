@@ -34,7 +34,6 @@ submethod BUILD ( ) {
   $!cat .= new;
   $!cont .= new;
 
-note "$?LINE $!cat.gist(), $!cont.gist()";
 }
 
 #-------------------------------------------------------------------------------
@@ -54,10 +53,10 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   my GnomeTools::Gio::Menu $category-menu .= new(
     :parent-menu($bar), :name<Category>
   );
-  $category-menu.item( 'Add', $!cat, 'categoryr-add');
-  $category-menu.item( 'Rename', $!cat, 'categoryr-rename');
-  $category-menu.item( 'Delete', $!cat, 'categoryr-delete');
-  $category-menu.item( 'Lock', $!cat, 'categoryr-lock');
+  $category-menu.item( 'Add', $!cat, 'category-add');
+  $category-menu.item( 'Rename', $!cat, 'category-rename');
+  $category-menu.item( 'Delete', $!cat, 'category-delete');
+  $category-menu.item( 'Lock', $!cat, 'category-lock');
 
   my GnomeTools::Gio::Menu $puzzle-menu .= new(
     :parent-menu($bar), :name<Puzzle>
@@ -68,7 +67,7 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   my GnomeTools::Gio::Menu $settings-menu .= new(
     :parent-menu($bar), :name<Settings>
   );
-  $settings-menu.item( 'Set Password', $!set, 'settings-set-password-');
+  $settings-menu.item( 'Set Password', $!set, 'settings-set-password');
   $settings-menu.item(
     'Unlock Categories', $!set, 'settings-unlock-categories'
   );
