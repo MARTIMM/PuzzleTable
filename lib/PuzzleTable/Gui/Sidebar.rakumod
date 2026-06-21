@@ -155,10 +155,11 @@ method !category-button (
       :css-class('pt-sidebar-container-button')
     );
 
-    given my Gnome::Gtk4::Label $l .= new-label {
+    with my Gnome::Gtk4::Label $l .= new-label {
       .set-text($category);
+#      .set-halign(GTK_ALIGN_START);
+#      .set-justify(GTK_JUSTIFY_LEFT);
       .set-hexpand(True);
-      .set-halign(GTK_ALIGN_FILL);
       .set-max-width-chars(25);
 #      .set-ellipsize(True);
 
@@ -167,16 +168,16 @@ method !category-button (
         .get-style-context,
         :css-class("pt-sidebar-expander-ptr$expander-color-count")
       );
-
-      $!config.set-css(
-        .get-style-context, :css-class('pt-sidebar-expander-button')
-      );
     }
 
     .set-child($l);
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
     .set-has-tooltip(True);
+
+    $!config.set-css(
+      .get-style-context, :css-class('pt-sidebar-expander-button')
+    );
 
     .register-signal(
       self, 'show-tooltip', 'query-tooltip', :$category, :$container, :$root-dir
@@ -286,7 +287,8 @@ method select-category (
   my $root-text =
     (?$root-dir and $*multiple-roots) ?? "Root path $root-dir, " !! '';
   my Str $title = "Puzzle Table Display: {$root-text}Container $container, Category $category";
-  $*main-window.application.call-appwindow-method( 'set-title', $title);
+  $*main-window.application.application-window.set-title($title)
+    if ?$*main-window.application.application-window;
 
   # Clear the puzzle table before showing the puzzles of this category
   $*main-window.table.clear-table;
