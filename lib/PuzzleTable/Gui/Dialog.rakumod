@@ -91,7 +91,7 @@ submethod BUILD (
 
   with self {
     $config.set-css( .get-style-context, :css-class<puzzle-dialog>);
-    .set-transient-for($*main-window.application-window);
+    .set-transient-for($*main-window.application.application-window);
     .set-destroy-with-parent(True);
     .set-modal(True);
     .set-size-request( 400, 100);
