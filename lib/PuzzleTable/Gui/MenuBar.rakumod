@@ -42,6 +42,7 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
 
   my GnomeTools::Gio::Menu $file-menu .= new( :parent-menu($bar), :name<File>);
   $file-menu.item( 'Quit', self, 'file-quit');
+  self.set-toolbar-icon( :icon<view-refresh>, :tooltip('Refresh sidebar'));
 
   my GnomeTools::Gio::Menu $container-menu .= new(
     :parent-menu($bar), :name<Container>
@@ -80,6 +81,29 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   );
 
   $bar
+}
+
+#-------------------------------------------------------------------------------
+method set-toolbar-icon ( Str :$icon, Str :$path, Str :$tooltip ) {
+  if ?$icon {
+    my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
+      :$icon, :$action-name
+    );
+
+    $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
+
+    $*main-window.toolbar.append($toolbar-button);
+  }
+
+  elsif ?$path {
+    my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
+      :$path, :$action-name
+    );
+
+    $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
+
+    $*main-window.toolbar.append($toolbar-button);
+  }
 }
 
 #-------------------------------------------------------------------------------
