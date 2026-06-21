@@ -34,9 +34,7 @@ submethod BUILD ( ) {
 
   $!controller .= new-shortcutcontroller;
   $!controller.set-scope(GTK_SHORTCUT_SCOPE_GLOBAL);
-  $*main-window.application.call-appwindow-method(
-    'add-controller', $!controller
-  );
+  $*main-window.application.application-window.add-controller($!controller);
 }
 
 #-------------------------------------------------------------------------------
