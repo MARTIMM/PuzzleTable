@@ -4376,11 +4376,12 @@ progressbar.osd {
    another data table root
 */
 .pt-sidebar-expander-ptr0 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-
+*/
   background-image: none;
   background-color: #22002d;
   color: #cd39ff;
