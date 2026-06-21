@@ -277,7 +277,8 @@ method puzzle-table-display ( ) {
 say 'puzzle start';
 
   $!application.set-window-content(
-    self.window-content, self.menu, :title('Puzzle Table Display - Default')
+    self, 'window-content',
+    self, 'menu',
   )
 }
 
@@ -289,6 +290,8 @@ method window-content ( --> Gnome::Gtk4::Widget ) {
 
   with $!top-grid .= new-grid {
     $config.set-css( .get-style-context, :css-class<main-view>);
+
+    .set-hexpand(False);
 
     .set-margin-top(10);
     .set-margin-bottom(10);
@@ -309,8 +312,8 @@ method window-content ( --> Gnome::Gtk4::Widget ) {
   my PuzzleTable::Gui::Shortcut $shortcut .= new;
   $shortcut.set-shortcut-keys;
 
-
   $!top-grid;
+
 #`{{
   with $!application-window .= new-applicationwindow($!application) {
 
