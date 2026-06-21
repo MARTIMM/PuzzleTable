@@ -69,7 +69,10 @@
       * [ ] --root-table=\<path>,\<path>,…. This points to the directory where the table data and trash archive is stored. This can be set multiple times and defaults to the path set by the --root-global option.
 
 ---
-* 2924-- 0.8.0
+* 2026 06 21 0.8.1
+  * Make use of **GnomeTools::Gtk::Application** and **GnomeTools::Gio::Menu**.
+
+* 2024-- 0.8.0
   * Start changes toward multiple puzzle table roots
 
 * 2024-08-25 0.7.0
