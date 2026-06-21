@@ -71,9 +71,9 @@ method set-shortcut-keys ( ) {
   $!controller.add-shortcut($shortcut);
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method set-shortcut-key ( Str $shortcut-string, $object, $method --> Bool ) {
-#`{{
   my PuzzleTable::Gui::MessageDialog $message;
   my Bool $set-key = False;
 
@@ -112,9 +112,9 @@ method set-shortcut-key ( Str $shortcut-string, $object, $method --> Bool ) {
   $!controller.add-shortcut($shortcut);
   
   $set-key
-}}
   False
 }
+}}
 
 =finish
 #-------------------------------------------------------------------------------
