@@ -4381,104 +4381,110 @@ progressbar.osd {
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-*/
-  background-image: none;
-  background-color: #22002d;
-  color: #cd39ff;
 
   border-style: groove;
   border-color: #50006a;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #22002d;
+  color: #cd39ff;
 }
 
 .pt-sidebar-expander-ptr1 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-
-  background-image: none;
-  background-color: #002411;
-  color: #02ff35;
 
   border-style: groove;
   border-color: #005211;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #002411;
+  color: #02ff35;
 }
 
 .pt-sidebar-expander-ptr2 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-
-  background-image: none;
-  background-color: #451300;
-  color: #ff8827;
 
   border-style: groove;
   border-color: #a94d01;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #451300;
+  color: #ff8827;
 }
 
 .pt-sidebar-expander-ptr3 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-
-  background-image: none;
-  background-color: #4d004d;
-  color: #fa33ed;
 
   border-style: groove;
   border-color: #d604c8;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #4d004d;
+  color: #fa33ed;
 }
 
 .pt-sidebar-expander-ptr4 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-
-  background-image: none;
-  background-color: #000524;
-  color: #7f7dff;
 
   border-style: groove;
   border-color: #1815cf;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #000524;
+  color: #7f7dff;
 }
 
 .pt-sidebar-expander-ptr5 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
-
-  background-image: none;
-  background-color: #3f4a01;
-  color: #fffb11;
 
   border-style: groove;
   border-color: #cbc803;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #3f4a01;
+  color: #fffb11;
 }
 
 .pt-sidebar-expander-ptr6 {
+/*
   border-top-width: 4px;
   border-left-width: 4px;
   border-right-width: 4px;
   border-bottom-width: 4px;
 
-  background-image: none;
-  background-color: #014a41;
-  color: #4ed6ff;
-
   border-style: groove;
   border-color: #039ccb;
   border-radius: 6px;
+*/
+  background-image: none;
+  background-color: #014a41;
+  color: #4ed6ff;
 }
 
 .pt-sidebar-expander-button {
