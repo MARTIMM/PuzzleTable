@@ -13,6 +13,7 @@ use PuzzleTable::Gui::Puzzle;
 use PuzzleTable::Gui::Settings;
 use PuzzleTable::Gui::IconButton;
 use PuzzleTable::Gui::Help;
+use PuzzleTable::Gui::IconButton;
 
 #use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -41,29 +42,51 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   my GnomeTools::Gio::Menu $bar .= new;
 
   my GnomeTools::Gio::Menu $file-menu .= new( :parent-menu($bar), :name<File>);
-  $file-menu.item( 'Quit', self, 'file-quit');
-  self.set-toolbar-icon( :icon<view-refresh>, :tooltip('Refresh sidebar'));
+  my Str $actionname = $file-menu.item( 'Quit', self, 'file-quit');
+  self.set-toolbar-icon(
+    :icon<application-exit>, :tooltip('Quit application'), :$actionname
+  );
 
   my GnomeTools::Gio::Menu $container-menu .= new(
-    :parent-menu($bar), :name<Container>
+    :parent-menu($bar), :name<Container>, :$actionname
   );
-  $container-menu.item( 'Add', $!cont, 'container-add');
+  $actionname = $container-menu.item( 'Add', $!cont, 'container-add');
+  self.set-toolbar-icon(
+    :path(DATA_DIR ~ 'images/add-cont-64.png'),
+    :tooltip('Add a container'), :$actionname
+  );
   $container-menu.item( 'Rename', $!cont, 'container-rename');
   $container-menu.item( 'Delete', $!cont, 'container-delete');
 
   my GnomeTools::Gio::Menu $category-menu .= new(
     :parent-menu($bar), :name<Category>
   );
-  $category-menu.item( 'Add', $!cat, 'category-add');
-  $category-menu.item( 'Rename', $!cat, 'category-rename');
+  $actionname = $category-menu.item( 'Add', $!cat, 'category-add');
+  self.set-toolbar-icon(
+    :path(DATA_DIR ~ 'images/add-cat-64.png'),
+    :tooltip('Add a new category'), :$actionname
+  );
+  $actionname = $category-menu.item( 'Rename', $!cat, 'category-rename');
+  self.set-toolbar-icon(
+    :path(DATA_DIR ~ 'images/ren-cat-64.png'),
+    :tooltip('Rename a category'), :$actionname
+  );
   $category-menu.item( 'Delete', $!cat, 'category-delete');
   $category-menu.item( 'Lock', $!cat, 'category-lock');
 
   my GnomeTools::Gio::Menu $puzzle-menu .= new(
     :parent-menu($bar), :name<Puzzle>
   );
-  $puzzle-menu.item( 'Move', $!phandling, 'puzzle-move');
-  $puzzle-menu.item( 'Archive', $!phandling, 'puzzle-archive');
+  $actionname = $puzzle-menu.item( 'Move', $!phandling, 'puzzle-move');
+  self.set-toolbar-icon(
+    :path(DATA_DIR ~ 'images/move-64.png'),
+    :tooltip('Move puzzles'), :$actionname
+  );
+  $actionname = $puzzle-menu.item( 'Archive', $!phandling, 'puzzle-archive');
+  self.set-toolbar-icon(
+    :path(DATA_DIR ~ 'images/archive-64.png'),
+    :tooltip('Archive puzzles'), :$actionname
+  );
 
   my GnomeTools::Gio::Menu $settings-menu .= new(
     :parent-menu($bar), :name<Settings>
@@ -75,7 +98,10 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   $settings-menu.item( 'Lock Categories', $!set, 'settings-lock-categories');
 
   my GnomeTools::Gio::Menu $help-menu .= new( :parent-menu($bar), :name<Help>);
-  $help-menu.item( 'About', $!help, 'help-about');
+  $actionname = $help-menu.item( 'About', $!help, 'help-about');
+  self.set-toolbar-icon(
+    :icon<help-about>, :tooltip('About info'), :$actionname
+  );
   $help-menu.item(
     'Show Shortcuts Window', $!help, 'help-show-shortcuts-window'
   );
@@ -84,10 +110,14 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-toolbar-icon ( Str :$icon, Str :$path, Str :$tooltip ) {
-  if ?$icon {
+method set-toolbar-icon (
+  Str :$icon, Str :$path, Str :$tooltip, Str :$actionname
+) {
+
+  if ?$icon and ?$actionname {
+note "$?LINE $icon, $actionname";
     my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
-      :$icon, :$action-name
+      :$icon, :$actionname
     );
 
     $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
@@ -95,9 +125,10 @@ method set-toolbar-icon ( Str :$icon, Str :$path, Str :$tooltip ) {
     $*main-window.toolbar.append($toolbar-button);
   }
 
-  elsif ?$path {
+  elsif ?$path and ?$actionname {
+note "$?LINE $path, $actionname";
     my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
-      :$path, :$action-name
+      :$path, :$actionname
     );
 
     $toolbar-button.set-tooltip-text($tooltip) if ?$tooltip;
