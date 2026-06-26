@@ -113,9 +113,8 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
 method set-toolbar-icon (
   Str :$icon, Str :$path, Str :$tooltip, Str :$actionname
 ) {
-
   if ?$icon and ?$actionname {
-note "$?LINE $icon, $actionname";
+#note "$?LINE $icon, $actionname";
     my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
       :$icon, :$actionname
     );
@@ -126,7 +125,7 @@ note "$?LINE $icon, $actionname";
   }
 
   elsif ?$path and ?$actionname {
-note "$?LINE $path, $actionname";
+#note "$?LINE $path, $actionname";
     my PuzzleTable::Gui::IconButton $toolbar-button .= new-button(
       :$path, :$actionname
     );
