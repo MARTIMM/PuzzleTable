@@ -10,8 +10,8 @@ use PuzzleTable::Gui::MainWindow;
 %*ENV<IGNORE_GNOME_DEPRECATION_MESSAGES> = 1;
 
 # Show messages on terminal window if True
-my $*verbose-output = False; #True;
-my $*multiple-roots = False;
+my Bool $*verbose-output = False;
+my Bool $*multiple-roots = False;
 
 my $*main-window;
 
