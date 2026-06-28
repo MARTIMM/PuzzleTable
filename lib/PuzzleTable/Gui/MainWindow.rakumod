@@ -125,6 +125,9 @@ method local-options ( --> Int ) {
 
   my Capture $o = get-options(| $PuzzleTable::Config::options);
 
+  # Test verbosity option
+  $*verbose-output = ?$o<v>;
+
   # This option is a comma separated list of paths
   my Str $root-tables = PUZZLE_TABLE_DATA;
   if $o<root-tables>:exists {
