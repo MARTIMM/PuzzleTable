@@ -5,6 +5,7 @@ use v6.d;
 #use lib "/home/marcel/Languages/Raku/Projects/gnome-api2/gnome-api2/gnome-native/lib";
 #use lib '/home/marcel/Languages/Raku/Projects/GnomeTools/lib';
 
+#use PuzzleTable::Config;
 use PuzzleTable::Gui::MainWindow;
 
 %*ENV<IGNORE_GNOME_DEPRECATION_MESSAGES> = 1;
@@ -14,7 +15,7 @@ my Bool $*verbose-output = False;
 my Bool $*multiple-roots = False;
 
 # Logfile when verbosity is in order
-my Str $*log-file = '/tmp/puzzle-table.log';
+my IO::Path $*log-file = '/tmp/puzzle-table.log'.IO;
 
 # Main window is set in the Application startup. After that it is usable
 # to change title on the application window or set actions in the Application.
@@ -23,11 +24,39 @@ my Str $*log-file = '/tmp/puzzle-table.log';
 #   .application; Gnome::Gtk4::Application
 #   .application.application-window; Gnome::Gtk4::ApplicationWindow
 #   .table; The puzzle table selection visible of a container/category.
-my $*main-window;
+my PuzzleTable::Gui::MainWindow $*main-window = Nil;
+
+#-------------------------------------------------------------------------------
+# TODO An error caused by thread not able to see dynamic variable, Error;
+#^CUnhandled exception in code scheduled on thread 4
+#Dynamic variable $*main-window not found
+#  in block  at bin/puzzle-table line 36
+
+# Save when an interrupt arrives
+signal(SIGINT).tap( sub ( $s ) {
+  # Ignore the signal for the time being.
+  note "Sinal ignored: $s";
+
+#`{{
+    # Just to prevent it comes too quick
+    sleep 2;
+
+note $*main-window.gist;
+note $*verbose-output;
+    # We need the main window to exist, otherwise there is no
+    # need to save anything
+    if ? $*main-window {
+      my PuzzleTable::Config $config .= instance;
+note $config.gist;
+      $config.save-categories-config;
+    }
+
+    exit 0;
+}}
+  }
+);
 
 #-------------------------------------------------------------------------------
 # Show puzzle table. return only when finished
 my PuzzleTable::Gui::MainWindow $puzzles .= new;
 #$puzzles.go-ahead;
-
-
