@@ -254,13 +254,12 @@ method do-category-rename (
     my Str $nroot = $*multiple-roots
                       ?? $new-roots-dd.get-dropdown-text
                       !! $!config.get-current-root;
+
+    my Str $ocat = $old-category-dd.get-dropdown-text;
+    my Str $ocont = $old-container-dd.get-dropdown-text;
+    my Str $ncont = $new-container-dd.get-dropdown-text;
     my Str $message = $!config.move-category(
-      my Str $ocat = $old-category-dd.get-dropdown-text,
-      my Str $ocont = $old-container-dd.get-dropdown-text,
-      $oroot,
-      $new-category,
-      my Str $ncont = $new-container-dd.get-dropdown-text,
-      $nroot
+      $ocat, $ocont, $oroot, $new-category, $ncont, $nroot
     );
 
     if $message {
