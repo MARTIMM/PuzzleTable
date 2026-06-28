@@ -13,6 +13,16 @@ use PuzzleTable::Gui::MainWindow;
 my Bool $*verbose-output = False;
 my Bool $*multiple-roots = False;
 
+# Logfile when verbosity is in order
+my Str $*log-file = '/tmp/puzzle-table.log';
+
+# Main window is set in the Application startup. After that it is usable
+# to change title on the application window or set actions in the Application.
+#   .sidebar; Selection of containers and categories
+#   .toolbar; Button row below menu
+#   .application; Gnome::Gtk4::Application
+#   .application.application-window; Gnome::Gtk4::ApplicationWindow
+#   .table; The puzzle table selection visible of a container/category.
 my $*main-window;
 
 #-------------------------------------------------------------------------------
