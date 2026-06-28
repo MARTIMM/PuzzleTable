@@ -53,6 +53,8 @@ submethod BUILD ( ) {
 method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 #note "$?LINE fill sidebar";
 
+  my $t0 = now;
+
   # Get the child from the scrollbar which is a grid and clear it.
   my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
   $cat-grid.clear-object;
@@ -141,6 +143,11 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
     my Str $root-dir = @roots[0];
     self.select-category( :category<Default>, :container<Default>, :$root-dir);
   }
+
+  $*log-file.spurt(
+    "Time needed to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
