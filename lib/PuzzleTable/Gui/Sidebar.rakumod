@@ -79,8 +79,7 @@ Construction of the sidebar:
 
 #  my Gnome::Gtk4::Label $l;
   my Array $totals = [ 0, 0, 0, 0];
-  my Str $prev-root-dir = '';
-  my Int $expander-color-count = -1; # used to change color of expanders in css
+  my Int $expander-color-count = 0; # used to change color of expanders in css
   my Str $container;
 
   my @roots = $!config.get-roots;
@@ -97,11 +96,8 @@ Construction of the sidebar:
     # Process all containers and make expanders of each of them
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
-      if $prev-root-dir ne $root-dir {
-        $prev-root-dir = $root-dir;
-        $expander-color-count++;
-      }
 
+      # Fill a grid with category rows in $container and $root-dir
       my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
         $container, $root-dir, $expander-color-count, $totals
       );
@@ -118,6 +114,8 @@ Construction of the sidebar:
 
       $row-count++;
     }
+
+    $expander-color-count++;
   }
 
   # Display gathered information in a tooltip
