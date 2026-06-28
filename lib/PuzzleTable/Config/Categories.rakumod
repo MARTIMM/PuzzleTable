@@ -22,6 +22,9 @@ submethod BUILD ( Str:D :$root-dir, :$!config ) {
 
 #-------------------------------------------------------------------------------
 method load-category-config ( Str:D $root-dir is copy ) {
+
+  my $t0 = now;
+
   $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
 #note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
 
@@ -48,6 +51,12 @@ method load-category-config ( Str:D $root-dir is copy ) {
 #for $!categories-config.keys -> $root-dir {
 #note "\n$?LINE $root-dir\n$!categories-config{$root-dir}.gist()";
 #}
+
+  $*log-file.spurt(
+    "Time needed to load configuration for $root-dir: " ~
+    "{(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
@@ -117,6 +126,8 @@ method add-category (
   }
 
   else {
+    my $t0 = now;
+
     # Default containers and categories aren't lockable
     $lockable = False
       if $container eq 'Default_EX_' or $category-name eq 'Default';
@@ -129,6 +140,12 @@ method add-category (
     );
     self.update-category-status($category);
     self.save-categories-config;
+
+    $*log-file.spurt(
+      "Time needed to add category $category-name: " ~
+      "{(now - $t0).fmt('%.1f sec.')}.\n",
+      :append
+    ) if $*verbose-output;
   }
 
   $message
@@ -177,6 +194,8 @@ method move-category (
   if $categories-from<categories>{$cat-from}:exists and 
      $categories-to<categories>{$cat-to}:!exists
   {
+    my $t0 = now;
+
     $categories-to<categories>{$cat-to} =
       $categories-from<categories>{$cat-from}:delete;
 
@@ -190,6 +209,12 @@ method move-category (
 
     # Rename source category directory
     self.move-files( $dir-from, $dir-to);
+
+    $*log-file.spurt(
+      "Time needed to move category $cat-from: " ~
+      "{(now - $t0).fmt('%.1f sec.')}.\n",
+      :append
+    ) if $*verbose-output;
   }
 
   elsif $categories-to<categories>{$cat-to}:exists
@@ -241,6 +266,8 @@ method delete-category (
       }
 
       else {
+        my $t0 = now;
+
         # Remove the category from the container
         $conts{$container}<categories>{$category}:delete;
 
@@ -249,6 +276,12 @@ method delete-category (
         "$root-dir$container/$category".IO.rmdir;
 
         self.save-categories-config;
+
+        $*log-file.spurt(
+          "Time needed to delete category $category: " ~
+          "{(now - $t0).fmt('%.1f sec.')}.\n",
+          :append
+        ) if $*verbose-output;
       }
     }
 
@@ -304,12 +337,22 @@ method get-current-root ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
+# TODO $recalculate is not used ==> method not called with True for it
+# ==> only update-category-status() called.
 method get-category-status (
   Str:D $category-name, Str:D $container is copy, Str:D $root-dir,
   Bool :$recalculate = False
   --> Array
 ) {
-#  $category-name .= tc;
+#`{{
+  $*log-file.spurt(
+    "Get category status for " ~
+    "$category-name, $container, $root-dir.IO.basename().\n",
+    :append
+  ) if $*verbose-output;
+}}
+
+  #  $category-name .= tc;
   $container = $!current-category.set-container-name($container);
 #  $root-dir //= $!current-category.root-dir;
 #note "$?LINE $root-dir $container $category-name";
@@ -330,6 +373,8 @@ method get-category-status (
   if !$recalculate and $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
 
+#`{{
+# TODO maybe not
     # maybe an update needed when all is 0
     if $cat-status.sum == 0 {
       my PuzzleTable::Config::Category $category .= new(
@@ -339,6 +384,7 @@ method get-category-status (
       self.update-category-status($category);
       $cat-status = $categories{$category-name}<status>;
     }
+}}
   }
 
   else {
@@ -368,7 +414,14 @@ method get-category-status (
     }
 
     $categories{$category-name}<status> = $cat-status;
-    self.save-categories-config;
+
+    $*log-file.spurt(
+      "get status for $category-name: " ~ $cat-status.gist ~ ".\n",
+      :append
+    ) if $*verbose-output;
+
+    # Only save when program stops
+    # self.save-categories-config;
   }
 
   $cat-status
@@ -382,7 +435,12 @@ method update-category-status ( PuzzleTable::Config::Category:D $category ) {
 
   for $category.get-puzzle-ids -> $puzzle-id {
     my Hash $puzzle-config = $category.get-puzzle($puzzle-id);
-
+#`{{
+    $*log-file.spurt(
+      "Puzzle info $puzzle-id: $puzzle-config.gist()\n",
+      :append
+    ) if $*verbose-output;
+  }}
     # Test for old version data
     my Num() $progress;
     if $puzzle-config<Progress> ~~ Hash {
@@ -413,9 +471,9 @@ method update-category-status ( PuzzleTable::Config::Category:D $category ) {
   }
 
   $*log-file.spurt(
-    "new status for $category-name: " ~ $cat-status.gist ~ ".\n",
+    "Status update for category $category-name: " ~ $cat-status.gist ~ ".\n",
     :append
-  );
+  ) if $*verbose-output;
 
   # Only save when program stops
   #self.save-categories-config;
@@ -435,11 +493,19 @@ method add-container (
   $root-dir //= $!current-category.root-dir;
 
   if $!categories-config{$root-dir}{$container}:!exists {
+    my $t0 = now;
+
     $!categories-config{$root-dir}{$container} = %(:categories(%()));
     mkdir "$root-dir$container", 0o700 unless "$root-dir$container".IO.e;
     $add-ok = True;
 
     self.save-categories-config;
+
+    $*log-file.spurt(
+      "Time needed to add container $container: " ~
+      "{(now - $t0).fmt('%.1f sec.')}.\n",
+      :append
+    ) if $*verbose-output;
   }
 
   $add-ok
@@ -454,6 +520,8 @@ method rename-container (
   my Str $container-to = $!current-category.set-container-name($cont-to);
 
   if $!categories-config{$root-dir}{$container-from}:exists {
+    my $t0 = now;
+
     # Do not have to check, there can not be two containers with same name
     $!categories-config{$root-dir}{$container-to} =
       $!categories-config{$root-dir}{$container-from}:delete;
@@ -462,6 +530,12 @@ method rename-container (
 
     self.save-categories-config;
     $rename-ok = True;
+
+    $*log-file.spurt(
+      "Time needed to rename container $cont-from: " ~
+      "{(now - $t0).fmt('%.1f sec.')}.\n",
+      :append
+    ) if $*verbose-output;
   }
 
   $rename-ok
@@ -477,10 +551,18 @@ method delete-container ( Str:D $cont, Str:D $root-dir --> Bool ) {
 #note "$?LINE bug, no <categories>", Backtrace.new.nice unless $!categories-config{$root-dir}{$container}<categories>:exists;
 
     if $!categories-config{$root-dir}{$container}<categories>.elems == 0 {
+      my $t0 = now;
+
       $!categories-config{$root-dir}{$container}:delete;
       self.save-categories-config;
       rmdir "$root-dir$container";
       $delete-ok = True;
+
+      $*log-file.spurt(
+        "Time needed to add container $container: " ~
+        "{(now - $t0).fmt('%.1f sec.')}.\n",
+        :append
+      ) if $*verbose-output;
     }
   }
 
@@ -588,8 +670,16 @@ method add-puzzle ( Str:D $puzzle-path --> Str ) {
   my Str $root-dir = $!current-category.root-dir;
 
   if $puzzle-path.IO.r {
+    my $t0 = now;
+
     $puzzle-id = $!current-category.add-puzzle($puzzle-path);
     self.update-category-status($!current-category);
+
+    $*log-file.spurt(
+      "Time needed to add puzzle $puzzle-path: " ~
+      "{(now - $t0).fmt('%.1f sec.')}.\n",
+      :append
+    ) if $*verbose-output;
   }
 
   $puzzle-id
@@ -601,6 +691,8 @@ method move-puzzle (
   Str:D $to-cat, Str:D $to-cont, Str:D $root-dir-to,
   Str:D $puzzle-id
 ) {
+  my $t0 = now;
+
 #  $to-cat .= tc;
 #note "$?LINE $to-cat, $to-cont, $root-dir-to, $puzzle-id";
 
@@ -646,10 +738,18 @@ method move-puzzle (
   # Save categories
   $c-from.save-category-config;
   $c-to.save-category-config;
+
+  $*log-file.spurt(
+    "Time needed to move puzzle $puzzle-id: " ~
+    "{(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
 method archive-puzzles ( Array:D $puzzle-ids --> List ) {
+  my $t0 = now;
+
   my Str $message = '';
 
   # Returns [ success, archive-name]
@@ -665,11 +765,19 @@ method archive-puzzles ( Array:D $puzzle-ids --> List ) {
     $message = 'One of the puzzle ids is wrong and/or puzzle store not found';
   }
 
+  $*log-file.spurt(
+    "Time needed to archive puzzles $puzzle-ids.gist(): " ~
+    "{(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
+
   ( $message, @ap[1])
 }
 
 #-------------------------------------------------------------------------------
 method restore-puzzles ( $archive-path --> List ) {
+  my $t0 = now;
+
   my Str $message = '';
   my Str $archive-name = $archive-path.IO.basename;
 
@@ -712,6 +820,12 @@ method restore-puzzles ( $archive-path --> List ) {
       $message = 'Archive not found or does not have the proper contents';
     }    
   }
+
+  $*log-file.spurt(
+    "Time needed to restore puzzles: " ~
+    "{(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 
 #note "$?LINE return list $message, $container, $category";
   ( $message, $container, $category )
@@ -847,6 +961,8 @@ method get-palapeli-collection ( --> Str ) {
 #-------------------------------------------------------------------------------
 # This puzzle hash must have the extra fields added by get-puzzles
 method run-palapeli ( Hash $puzzle --> Str ) {
+  # TODO might use it to store time spend on puzzle
+  my $t0 = now;
 
   # Set the environment values if any
   $!config.set-palapeli-env;
@@ -910,6 +1026,12 @@ method run-palapeli ( Hash $puzzle --> Str ) {
     # Update the category status
     self.update-category-status($!current-category);
   }
+
+  $*log-file.spurt(
+    "Time spend on puzzle $puzzle-id: " ~
+    "{(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 
   $progress
 }
