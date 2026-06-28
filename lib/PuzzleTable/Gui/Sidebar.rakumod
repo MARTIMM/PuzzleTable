@@ -109,9 +109,9 @@ Construction of the sidebar:
       with $expander {
         .set-child($category-grid);
         .set-expanded($!config.is-expanded( $container, $root-dir));
-        $cat-grid.attach( $expander, 0, $row-count, 5, 1);
       }
 
+      $cat-grid.attach( $expander, 0, $row-count, 5, 1);
       $row-count++;
     }
 
