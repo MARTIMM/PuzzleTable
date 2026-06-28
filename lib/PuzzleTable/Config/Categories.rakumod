@@ -53,8 +53,7 @@ method load-category-config ( Str:D $root-dir is copy ) {
 #}
 
   $*log-file.spurt(
-    "Time needed to load configuration for $root-dir: " ~
-    "{(now - $t0).fmt('%.1f sec.')}.\n",
+    "Time to load $root-dir config: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append
   ) if $*verbose-output;
 }
