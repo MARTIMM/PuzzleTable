@@ -461,8 +461,11 @@ method do-category-lock (
   $dialog.destroy-dialog if $sts-ok;
 }
 
+#`{{ There is no one to use it
 #-------------------------------------------------------------------------------
 method file-refresh-sidebar ( N-Object $parameter ) {
 note "$?LINE";
   $*main-window.sidebar.fill-sidebar(:recalculate);
 }
+}}
+
