@@ -69,6 +69,12 @@
       * [ ] --root-table=\<path>,\<path>,…. This points to the directory where the table data and trash archive is stored. This can be set multiple times and defaults to the path set by the --root-global option.
 
 ---
+* 2026 06 28 0.8.2
+  * Inhibit use of `Control-C`.
+  * Add logging to file `/tmp/puzzle-table.log` when `-v` or `--verbose` is used.
+  * Add timing code and log to logfile. Done to find out where time is spent.
+  * Do not always save category data to file. Done at least at the end.
+
 * 2026 06 21 0.8.1
   * Make use of **GnomeTools::Gtk::Application** and **GnomeTools::Gio::Menu**.
 
