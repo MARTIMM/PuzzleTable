@@ -52,7 +52,7 @@ method load-category-config ( Str:D $root-dir is copy ) {
 
 #-------------------------------------------------------------------------------
 # Method to add another root where table data is found. It is created when
-# it not exists. Also the default container and category is created (both
+# it does not exist. Also the default container and category is created (both
 # called Default).
 method add-table-root ( Str $root-dir ) {
   self.load-category-config($root-dir);
@@ -91,8 +91,10 @@ method save-categories-config ( ) {
     );
   }
 
-  note "Time needed to save categories: ",
-       (now - $t0).fmt('%.1f sec.') if $*verbose-output;
+  $*log-file.spurt(
+    "Time needed to save all categories: {(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
@@ -169,14 +171,14 @@ method move-category (
 #  $cat-to .= tc;
   $cont-from = $!current-category.set-container-name($cont-from);
   $cont-to = $!current-category.set-container-name($cont-to);
-#  my Str $root-dir-from = $!current-category.root-dir;
-#  my Str $root-dir-to = $!current-category.root-dir;
+  my Hash $categories-from = $!categories-config{$root-dir-from}{$cont-from};
+  my Hash $categories-to = $!categories-config{$root-dir-to}{$cont-to};
 
-  if $!categories-config{$root-dir-from}{$cont-from}<categories>{$cat-from}:exists and 
-     $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to}:!exists
+  if $categories-from<categories>{$cat-from}:exists and 
+     $categories-to<categories>{$cat-to}:!exists
   {
-    $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to} =
-      $!categories-config{$root-dir-from}{$cont-from}<categories>{$cat-from}:delete;
+    $categories-to<categories>{$cat-to} =
+      $categories-from<categories>{$cat-from}:delete;
 
     self.save-categories-config;
 
@@ -190,12 +192,12 @@ method move-category (
     self.move-files( $dir-from, $dir-to);
   }
 
-  elsif $!categories-config{$root-dir-to}{$cont-to}<categories>{$cat-to}:exists
+  elsif $categories-to<categories>{$cat-to}:exists
   {
     $message = 'Destination already exists';
   }
 
-  elsif $!categories-config{$root-dir-from}{$cont-from}<categories>{$cat-from}:!exists {
+  elsif $categories-from<categories>{$cat-from}:!exists {
     $message = 'Source does not exist';
   }
 
@@ -512,13 +514,20 @@ method is-expanded ( Str:D $container is copy, Str $root-dir --> Bool ) {
 }
 
 #-------------------------------------------------------------------------------
+# Expand or close the container.
 method set-expand (
   Str:D $container is copy, Str $root-dir, Bool $expanded --> Str
 ) {
   my Str $message = '';
   $container = $!current-category.set-container-name($container);
-#  my Str $root-dir = $!current-category.root-dir;
 
+  # No need to test. All actions come from button presses on an
+  # existing expander. Saving the expand state is also unnecessary
+  # because when the program finishes is will be saved.
+  $!categories-config{$root-dir}{$container}<expanded> = $expanded;
+
+
+#`{{
   if $!categories-config{$root-dir}{$container}:exists {
     $!categories-config{$root-dir}{$container}<expanded> = $expanded;
     self.save-categories-config;
@@ -527,6 +536,7 @@ method set-expand (
   else {
     $message = 'Container does not exist';
   }
+}}
 
   $message
 }

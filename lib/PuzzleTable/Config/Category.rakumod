@@ -80,7 +80,11 @@ method save-category-config ( ) {
     $!config-path.IO.spurt(save-yaml($!category-config));
 
   #  note "Done saving puzzle category $!category-name.";
-    note "Time needed to save category $!category-name: {(now - $t0).fmt('%.1f sec')}." if $*verbose-output;
+    $*log-file.spurt(
+      "Time needed to save category $!category-name: " ~
+      (now - $t0).fmt('%.1f sec') ~ ".\n",
+      :append
+    ) if $*verbose-output;
   }
 }
 

@@ -128,6 +128,9 @@ method local-options ( --> Int ) {
   # Test verbosity option
   $*verbose-output = ?$o<v>;
 
+  # Clear logfile if verbose is True
+  $*log-file.spurt('');
+
   # This option is a comma separated list of paths
   my Str $root-tables = PUZZLE_TABLE_DATA;
   if $o<root-tables>:exists {

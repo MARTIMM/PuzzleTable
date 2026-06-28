@@ -70,11 +70,13 @@ method save-global-config ( ) {
 
   my $t0 = now;
 
-  # Save categories config
+  # Save global config
   "$!root-dir/global-config.yaml".IO.spurt(save-yaml($!global-config));
 
-  note "Time needed to save categories: {(now - $t0).fmt('%.1f sec')}."
-       if $*verbose-output;
+  $*log-file.spurt(
+    "Time needed to save global config: {(now - $t0).fmt('%.1f sec')}.\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
