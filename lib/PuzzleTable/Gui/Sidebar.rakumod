@@ -51,7 +51,17 @@ submethod BUILD ( ) {
 #-------------------------------------------------------------------------------
 # TODO $recalculate is not used ==> sidebar-status() not called with True for it
 method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
-#note "$?LINE fill sidebar";
+#`{{
+Construction of the sidebar:
+
+  The view is a ScrolledWindow with a grid as its child
+    The grid has a row for each puzzle root
+      a label for the puzzle root
+      an expander widget for each container
+        expander holds a grid of 5 columns for the categories in the container
+          on each row a category
+          each row has a button and 4 numbers
+}}
 
   my $t0 = now;
 
@@ -67,7 +77,7 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
   $cat-grid.set-size-request( 200, 100);
   $!config.set-css( $cat-grid.get-style-context, :css-class<pt-sidebar>);
 
-  my Gnome::Gtk4::Label $l;
+#  my Gnome::Gtk4::Label $l;
   my Array $totals = [ 0, 0, 0, 0];
   my Str $prev-root-dir = '';
   my Int $expander-color-count = -1; # used to change color of expanders in css
@@ -114,7 +124,7 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
         $cat-row-count++;
       }
 
-      my Gnome::Gtk4::Expander $expander = self.sidebar-expander(
+      my Gnome::Gtk4::Expander $expander = self.sidebar-category-expander(
         $container, $root-dir, $expander-color-count
       );
 
@@ -145,7 +155,7 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
   }
 
   $*log-file.spurt(
-    "Time needed to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
+    "Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append
   ) if $*verbose-output;
 }
@@ -199,7 +209,39 @@ method !category-button (
 }
 
 #-------------------------------------------------------------------------------
-method sidebar-expander (
+method sidebar-root-expander ( Str $root-dir --> Gnome::Gtk4::Expander ) {
+  with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
+    given my Gnome::Gtk4::Label $l .= new-label {
+      .set-text($root-dir);
+      .set-hexpand(True);
+      .set-halign(GTK_ALIGN_START);
+      $!config.set-css(
+        .get-style-context, :css-class<sidebar-expander-label>
+      );
+    }
+
+    .set-label-widget($l);
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_FILL);
+
+    .register-signal( self, 'expand-root', 'activate', :$root-dir);
+  }
+
+  $expander
+}
+
+#-------------------------------------------------------------------------------
+method expand-root (
+  Gnome::Gtk4::Expander() :_native-object($expander), Str :$root-dir
+) {
+#  $!config.set-expand(
+#    $container, $root-dir, $expander.get-expanded ?? False !! True
+#  );
+note "$?LINE expand root $root-dir";
+}
+
+#-------------------------------------------------------------------------------
+method sidebar-category-expander (
   Str $container, Str $root-dir, Int $expander-color-count
   --> Gnome::Gtk4::Expander
 ) {
@@ -222,14 +264,14 @@ method sidebar-expander (
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
 
-    .register-signal( self, 'expand', 'activate', :$container, :$root-dir);
+    .register-signal( self, 'expand-container', 'activate', :$container, :$root-dir);
   }
   
   $expander
 }
 
 #-------------------------------------------------------------------------------
-method expand (
+method expand-container (
   Gnome::Gtk4::Expander() :_native-object($expander), Str :$container,
   Str :$root-dir
 ) {
@@ -317,3 +359,21 @@ method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
   self.fill-sidebar;
   self.select-category( :$category, :$container, :$root-dir);
 }
+
+#-------------------------------------------------------------------------------
+method update-sidebar ( Str:D $container, Str:D $root-dir ) {
+  my $t0 = now;
+
+note "$?LINE $container, $root-dir";
+
+  # Get the child from the scrollbar which is a grid.
+  my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
+
+
+
+  $*log-file.spurt(
+    "Time to update sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
+}
+
