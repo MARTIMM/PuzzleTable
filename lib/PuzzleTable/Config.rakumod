@@ -19,7 +19,7 @@ unit class PuzzleTable::Config:auth<github:MARTIMM>;
 has Gnome::Gtk4::CssProvider $!css-provider;
 
 our $options = [<
-  category=s container=s pala-collection=s puzzles lock h help version verbose
+  category=s container=s pala-collection=s puzzles lock h|help version v|verbose
   restore=s unlock=s root-global=s root-tables=s
 >];
 
@@ -75,14 +75,6 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
   }
 
   $*multiple-roots = @tables.elems > 1;
-
-# TODO sometimes: Segmentation fault (core dumped)
-  # Save when an interrupt arrives
-  signal(SIGINT).tap( {
-      self.save-categories-config;
-      exit 0;
-    }
-  );
 }
 
 #-------------------------------------------------------------------------------
