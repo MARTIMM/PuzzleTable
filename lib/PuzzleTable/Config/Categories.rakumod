@@ -412,9 +412,13 @@ method update-category-status ( PuzzleTable::Config::Category:D $category ) {
     $!categories-config{$root-dir}{$category-name}<status> = $cat-status;
   }
 
-#note "$?LINE new status ", $cat-status.gist();
+  $*log-file.spurt(
+    "new status for $category-name: " ~ $cat-status.gist ~ ".\n",
+    :append
+  );
 
-  self.save-categories-config;
+  # Only save when program stops
+  #self.save-categories-config;
 }
 
 #-------------------------------------------------------------------------------
