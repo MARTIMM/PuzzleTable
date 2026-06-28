@@ -49,6 +49,7 @@ submethod BUILD ( ) {
 }
 
 #-------------------------------------------------------------------------------
+# TODO $recalculate is not used ==> sidebar-status() not called with True for it
 method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 #note "$?LINE fill sidebar";
 
