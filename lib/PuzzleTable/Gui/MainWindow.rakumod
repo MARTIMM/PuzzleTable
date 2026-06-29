@@ -131,20 +131,25 @@ method local-options ( --> Int ) {
   # Clear logfile if verbose is True
   $*log-file.spurt('');
 
+#`{{TODO info must come from global-config.yaml
   # This option is a comma separated list of paths
   my Str $root-tables = PUZZLE_TABLE_DATA;
   if $o<root-tables>:exists {
     $root-tables = $o<root-tables>;
   }
+}}
 
   # Prepare initialization of the config module
-  my PuzzleTable::Config $config;
   my Str $root-global = GLOBAL_CONFIG;
   if $o<root-global>:exists {
     $root-global = $o<root-global>;
   }
 
-  $config .= instance( $root-global, $root-tables);
+#note "$?LINE $root-global, $root-tables, $o.gist()";
+  # First time will initialize $config using the arguments
+  my PuzzleTable::Config $config;
+#  $config .= instance( $root-global, $root-tables);
+  $config .= instance($root-global);
 
   # Handle the simple options here which do not require the primary instance
   if $o<version> {
