@@ -27,6 +27,7 @@ method load-category-config ( Str:D $root-dir is copy ) {
 
   $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
 #note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
+$*log-file.spurt( "$?LINE $root-dir\n", :append);
 
   if $!config-paths{$root-dir}:!exists {
     $!config-paths{$root-dir} = "$root-dir/categories.yaml";
@@ -41,6 +42,7 @@ method load-category-config ( Str:D $root-dir is copy ) {
         %(:!lockable);
     }
   }
+$*log-file.spurt( "$?LINE $!categories-config{$root-dir}.keys.gist()\n", :append);
 
   # Always select the default category in the default container of
   # the current root directory
@@ -575,6 +577,7 @@ method get-containers ( Str $root-dir --> List ) {
 #  $root-dir //= $!current-category.root-dir;
   my @containers = ();
 #  for $!categories-config.keys.sort -> $root-dir {
+$*log-file.spurt( "$?LINE $root-dir: $locked\n", :append);
     for $!categories-config{$root-dir}.keys.sort -> $container {
       # Containers have an _EX_ extension which is removed
       # Don't include in list if lockable and table is locked
@@ -642,7 +645,7 @@ method has-lockable-categories (
       last
     }
   }
-
+#$*log-file.spurt( "$?LINE lockable cats: $lockable-categeries\n", :append);
   $lockable-categeries
 }
 
