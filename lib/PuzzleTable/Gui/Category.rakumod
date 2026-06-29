@@ -123,6 +123,7 @@ method do-category-add (
 
     else {
       $*main-window.sidebar.fill-sidebar;
+      $*main-window.sidebar.update-sidebar( $container, $root-dir);
       $sts-ok = True;
     }
   }
