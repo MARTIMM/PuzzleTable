@@ -14,7 +14,7 @@ has Hash $.global-config;
 
 has Str $!root-dir;
 has Str $!puzzle-trash;
-has Hash $.categories-config;
+#has Hash $.categories-config;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$!root-dir ) {
@@ -58,6 +58,12 @@ submethod BUILD ( Str:D :$!root-dir ) {
     # Default width and height of displayed puzzle image
     $!global-config<puzzle-image-width> = 300;
     $!global-config<puzzle-image-height> = 300;
+
+    given $!global-config<root-directories> {
+      .<path> = PUZZLE_TABLE_DATA;
+      .<name> = "All your puzzles";
+      .<expanded> = True;
+    }
   }
 
   # Always lock at start
@@ -186,7 +192,10 @@ method lock ( ) {
 method unlock ( Str $password --> Bool ) {
   my Bool $ok = self.check-password($password);
   $!global-config<locked> = False if $ok;
-  self.save-global-config;
+# NOTE no need to save it. It is always reset to True and unlock() is needed
+# to unlock the categories
+#  self.save-global-config;
+
   $ok
 }
 
@@ -194,3 +203,35 @@ method unlock ( Str $password --> Bool ) {
 method get-puzzle-trash ( --> Str ) {
   $!puzzle-trash
 }
+
+#-------------------------------------------------------------------------------
+method get-nbr-roots ( --> Int ) {
+  $!global-config<root-directories>.elems
+}
+
+#-------------------------------------------------------------------------------
+method get-root-title ( UInt $entry --> Str ) {
+  $entry = 0 if $entry >= $!global-config<root-directories>.elems;
+  $!global-config<root-directories>[$entry]<title>
+}
+
+#-------------------------------------------------------------------------------
+method get-root-path ( UInt $entry --> Str ) {
+  $entry = 0 if $entry >= $!global-config<root-directories>.elems;
+  $!global-config<root-directories>[$entry]<path>
+}
+
+#-------------------------------------------------------------------------------
+method is-root-expanded ( UInt $entry --> Bool ) {
+  $entry = 0 if $entry >= $!global-config<root-directories>.elems;
+  $!global-config<root-directories>[$entry]<expanded>
+}
+
+#-------------------------------------------------------------------------------
+method set-root-expanded ( UInt $entry, Bool $expanded ) {
+  $entry = 0 if $entry >= $!global-config<root-directories>.elems;
+  $!global-config<root-directories>[$entry]<expanded> = $expanded;
+  
+  self.save-global-config;
+}
+

@@ -30,6 +30,8 @@ has PuzzleTable::Config::Global $!global-settings handles( <
       get-palapeli-image-size set-palapeli-image-size
       get-palapeli-collection
       set-palapeli-env unset-palapeli-env get-palapeli-exec
+      get-nbr-roots get-root-title get-root-path is-root-expanded
+      set-root-expanded
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
@@ -46,7 +48,9 @@ has PuzzleTable::Config::Categories $!categories handles( <
     >);
 
 #-------------------------------------------------------------------------------
-submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
+#TODO $root-tables must come from global-config
+#submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
+submethod BUILD ( Str:D :$root-global ) {
 
   # Copy images to the data directory
   my Str $png-file;
@@ -68,21 +72,37 @@ submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
   # Load the global and default categories configuraton
   # from the puzzle data directory
   $!global-settings .= new(:root-dir($root-global));
+  my $nbr-roots = $!global-settings.get-nbr-roots;
+  $!categories .= new(
+    :root-dir($!global-settings.get-root-path(0)),
+    :config(self)
+  );
+  for 1 ..^$nbr-roots -> $i {
+    $!categories.add-table-root($!global-settings.get-root-path($i));
+  }
+
+  $*multiple-roots = ?$nbr-roots > 1;
+note "$?LINE $*multiple-roots, $!global-settings.get-nbr-roots()";
+
+#`{{
   my @tables = $root-tables.split(/\s* \, \s*/);
   $!categories .= new( :root-dir(@tables[0]), :config(self));
   for @tables[1..*-1] -> $table {
     $!categories.add-table-root($table);
   }
-
   $*multiple-roots = @tables.elems > 1;
+}}
+
 }
 
 #-------------------------------------------------------------------------------
 my PuzzleTable::Config $instance;
 multi method instance (
-  Str:D $root-global, Str:D $root-tables --> PuzzleTable::Config
+#  Str:D $root-global, Str:D $root-tables --> PuzzleTable::Config
+  Str:D $root-global --> PuzzleTable::Config
 ) {
-  $instance = self.bless( :$root-global, :$root-tables);
+#  $instance = self.bless( :$root-global, :$root-tables);
+  $instance = self.bless(:$root-global);
 
   $instance
 }
