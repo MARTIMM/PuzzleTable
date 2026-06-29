@@ -12,7 +12,7 @@ use PuzzleTable::Gui::MainWindow;
 
 # Show messages on terminal window if True
 my Bool $*verbose-output = False;
-my Bool $*multiple-roots = False;
+my Bool $*multiple-roots = False; #TODO remove this var
 
 # Logfile when verbosity is in order
 my IO::Path $*log-file = '/tmp/puzzle-table.log'.IO;
