@@ -68,10 +68,10 @@ Construction of the sidebar:
   # Get the child from the scrollbar which is a grid
 # and clear it.
   my Gnome::Gtk4::Grid() $top-grid = self.get-child;
-$top-grid.clear-object;
+$top-grid.clear-object if ?$top-grid;
 
   # Create new sidebar
-  my $top-row-count = 0;
+  #my $top-row-count = 0;
 
   $top-grid .= new-grid;
   $top-grid.set-name('sidebar');
@@ -83,8 +83,11 @@ $top-grid.clear-object;
   my Int $expander-color-count = 0; # used to change color of expanders in css
   my Str $container;
 
-  my @roots = $!config.get-roots;
-  for @roots -> $root-dir {
+#  my @roots = $!config.get-roots;
+#  for @roots -> $root-dir {
+  my $nbr-roots = $!config.get-nbr-roots;
+  for ^$nbr-roots -> $root-nbr {
+    my Str $root-dir = $!config.get-root-path($root-nbr);
 #`{{
     # Set a label at the start of all containers
     with my Gnome::Gtk4::Label $le .= new-label {
@@ -96,17 +99,19 @@ $top-grid.clear-object;
     $cat-grid.attach( $le, 0, $row-count++, 5, 1);
 }}
     my $row-count = 0;
-    my Gnome::Gtk4::Grid() $cat-grid .= new-grid;
+    my Gnome::Gtk4::Grid $container-grid .= new-grid;
     my Gnome::Gtk4::Expander $root-expander =
-      self.sidebar-root-expander($root-dir);
-
-    with $root-expander {
-      .set-child($cat-grid);
-  #    .set-expanded($!config.is-expanded( $container, $root-dir));
-    }
+#      self.sidebar-root-expander($root-dir);
+      self.sidebar-root-expander( $root-nbr, $root-dir);
+    $root-expander.set-child($container-grid);
+#    with $root-expander {
+#      .set-child($cat-grid);
+#      .set-expanded($!config.is-expanded( $container, $root-dir));
+#    }
 
     # Process all containers and make expanders of each of them
     my @containers = $!config.get-containers($root-dir);
+$*log-file.spurt( "$?LINE $root-dir, @containers.gist()\n", :append);
     for @containers -> $container {
 
       # Fill a grid with category rows in $container and $root-dir
@@ -123,13 +128,13 @@ $top-grid.clear-object;
         .set-expanded($!config.is-expanded( $container, $root-dir));
       }
 
-      $cat-grid.attach( $cat-expander, 0, $row-count, 5, 1);
+      $container-grid.attach( $cat-expander, 0, $row-count, 5, 1);
       $row-count++;
     }
 
     $expander-color-count++;
 
-    $top-grid.attach( $root-expander, 0, $top-row-count++, 1, 1);
+    $top-grid.attach( $root-expander, 0, $root-nbr, 1, 1);
   }
 
   # Display gathered information in a tooltip
@@ -145,7 +150,8 @@ $top-grid.clear-object;
 
   self.set-child($top-grid);
   if $init {
-    my Str $root-dir = @roots[0];
+#    my Str $root-dir = @roots[0];
+    my Str $root-dir = $!config.get-root-path(0);
     self.select-category( :category<Default>, :container<Default>, :$root-dir);
   }
 
@@ -234,10 +240,12 @@ method !category-button (
 }
 
 #-------------------------------------------------------------------------------
-method sidebar-root-expander ( Str $root-dir --> Gnome::Gtk4::Expander ) {
+method sidebar-root-expander (
+  Int $root-nbr, Str $root-dir --> Gnome::Gtk4::Expander
+) {
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
     given my Gnome::Gtk4::Label $l .= new-label {
-      .set-text($root-dir.IO.basename);
+      .set-text($!config.get-root-title($root-nbr));
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
       $!config.set-css(
@@ -249,7 +257,9 @@ method sidebar-root-expander ( Str $root-dir --> Gnome::Gtk4::Expander ) {
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
 
-    .register-signal( self, 'expand-root', 'activate', :$root-dir);
+    .set-expanded($!config.is-root-expanded($root-nbr));
+
+    .register-signal( self, 'expand-root', 'activate', :$root-nbr);
   }
 
   $expander
@@ -257,12 +267,15 @@ method sidebar-root-expander ( Str $root-dir --> Gnome::Gtk4::Expander ) {
 
 #-------------------------------------------------------------------------------
 method expand-root (
-  Gnome::Gtk4::Expander() :_native-object($expander), Str :$root-dir
+  Gnome::Gtk4::Expander() :_native-object($expander), Int :$root-nbr
 ) {
+  $!config.set-root-expanded(
+    $root-nbr, $expander.get-expanded ?? False !! True
+  );
 #  $!config.set-expand(
 #    $container, $root-dir, $expander.get-expanded ?? False !! True
 #  );
-note "$?LINE expand root $root-dir";
+#note "$?LINE expand root $root-dir";
 }
 
 #-------------------------------------------------------------------------------
@@ -289,14 +302,14 @@ method sidebar-category-expander (
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
 
-    .register-signal( self, 'expand-container', 'activate', :$container, :$root-dir);
+    .register-signal( self, 'expand-category-container', 'activate', :$container, :$root-dir);
   }
   
   $expander
 }
 
 #-------------------------------------------------------------------------------
-method expand-container (
+method expand-category-container (
   Gnome::Gtk4::Expander() :_native-object($expander), Str :$container,
   Str :$root-dir
 ) {
