@@ -55,64 +55,49 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 Construction of the sidebar:
 
   The view is a ScrolledWindow with a grid as its child
-    The grid has a row for each puzzle root
-      a label for the puzzle root
-      an expander widget for each container
-        expander holds a grid of 5 columns for the categories in the container
-          on each row a category
-          each row has a button and 4 numbers
+    The grid has rows for expanders holding a puzzle root. At the start, there
+    is only one at '~/.config/io.github.martimm.puzzle-table/'.
+    Each expander has a grid.
+      The grid has rows for expanders holding category containers
+      Each grid row has 5 columns for each category in the container
+        a button to show the puzzles in the category
+        and 4 numbers; nbr puzzles, nbr unplayed, nbr unfinished, nbr finished
 }}
 
   my $t0 = now;
 
-  # Get the child from the scrollbar which is a grid
-# and clear it.
-  my Gnome::Gtk4::Grid() $top-grid = self.get-child;
-$top-grid.clear-object if ?$top-grid;
-
-  # Create new sidebar
-  #my $top-row-count = 0;
-
-  $top-grid .= new-grid;
-  $top-grid.set-name('sidebar');
-  $top-grid.set-size-request( 200, 100);
-  $!config.set-css( $top-grid.get-style-context, :css-class<pt-sidebar>);
-
 #  my Gnome::Gtk4::Label $l;
   my Array $totals = [ 0, 0, 0, 0];
   my Int $expander-color-count = 0; # used to change color of expanders in css
-  my Str $container;
+#  my Str $container;
+
+  # Create a new sidebar grid
+  my Gnome::Gtk4::Grid() $sidebar-grid .= new-grid;
+  $sidebar-grid.set-name('sidebar');
+  $sidebar-grid.set-size-request( 200, 100);
+  $!config.set-css( $sidebar-grid.get-style-context, :css-class<pt-sidebar>);
+
 
 #  my @roots = $!config.get-roots;
 #  for @roots -> $root-dir {
+
+  # Loop through all puzzle root directories
   my $nbr-roots = $!config.get-nbr-roots;
   for ^$nbr-roots -> $root-nbr {
     my Str $root-dir = $!config.get-root-path($root-nbr);
-#`{{
-    # Set a label at the start of all containers
-    with my Gnome::Gtk4::Label $le .= new-label {
-      .set-text($root-dir.IO.basename);
-      .set-hexpand(True);
-      .set-halign(GTK_ALIGN_START);
-      $!config.set-css( .get-style-context, :css-class<pt-sidebar>);
-    }
-    $cat-grid.attach( $le, 0, $row-count++, 5, 1);
-}}
+
     my $row-count = 0;
     my Gnome::Gtk4::Grid $container-grid .= new-grid;
-    my Gnome::Gtk4::Expander $root-expander =
-#      self.sidebar-root-expander($root-dir);
-      self.sidebar-root-expander( $root-nbr, $root-dir);
-    $root-expander.set-child($container-grid);
-#    with $root-expander {
-#      .set-child($cat-grid);
-#      .set-expanded($!config.is-expanded( $container, $root-dir));
-#    }
 
-    # Process all containers and make expanders of each of them
+    # Make the puzzle root expander and set the $container-grid as its child
+    my Gnome::Gtk4::Expander $root-expander =
+      self.sidebar-root-expander( $root-nbr, $root-dir, $container-grid);
+
+    # Loop through all containers and make expanders for each of them
     my @containers = $!config.get-containers($root-dir);
-$*log-file.spurt( "$?LINE $root-dir, @containers.gist()\n", :append);
+#$*log-file.spurt( "$?LINE $root-dir.IO.basename(), $root-nbr, n: @containers.elems()\n", :append);
     for @containers -> $container {
+#$*log-file.spurt( "$?LINE $container\n", :append);
 
       # Fill a grid with category rows in $container and $root-dir
       my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
@@ -120,13 +105,13 @@ $*log-file.spurt( "$?LINE $root-dir, @containers.gist()\n", :append);
       );
 
       my Gnome::Gtk4::Expander $cat-expander = self.sidebar-category-expander(
-        $container, $root-dir, $expander-color-count
+        $container, $root-dir, $expander-color-count, $category-grid
       );
 
-      with $cat-expander {
-        .set-child($category-grid);
-        .set-expanded($!config.is-expanded( $container, $root-dir));
-      }
+#      with $cat-expander {
+#        .set-child($category-grid);
+#        .set-expanded($!config.is-expanded( $container, $root-dir));
+#      }
 
       $container-grid.attach( $cat-expander, 0, $row-count, 5, 1);
       $row-count++;
@@ -134,11 +119,11 @@ $*log-file.spurt( "$?LINE $root-dir, @containers.gist()\n", :append);
 
     $expander-color-count++;
 
-    $top-grid.attach( $root-expander, 0, $root-nbr, 1, 1);
+    $sidebar-grid.attach( $root-expander, 0, $root-nbr, 1, 1);
   }
 
   # Display gathered information in a tooltip
-  $top-grid.set-tooltip-text(Q:qq:to/EOTT/);
+  $sidebar-grid.set-tooltip-text(Q:qq:to/EOTT/);
     Number of puzzles
     Untouched puzzles
     Unfinished puzzles
@@ -148,7 +133,9 @@ $*log-file.spurt( "$?LINE $root-dir, @containers.gist()\n", :append);
     [ $totals.join(', ') ]
     EOTT
 
-  self.set-child($top-grid);
+  # The scroll window widget will alway cleanup the child if there was
+  # a grid installed before
+  self.set-child($sidebar-grid);
   if $init {
 #    my Str $root-dir = @roots[0];
     my Str $root-dir = $!config.get-root-path(0);
@@ -159,6 +146,14 @@ $*log-file.spurt( "$?LINE $root-dir, @containers.gist()\n", :append);
     "Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append
   ) if $*verbose-output;
+
+#`{{ Debugging
+my Hash $cc = $!config.categories.categories-config;
+$*log-file.spurt( "\n\n$?LINE config;\n$cc{"/mnt/E4-8-TB/.Old/Puzzles/Root3/LD1 with Lora/"}.gist()\n", :append);
+
+$*log-file.spurt( "\n\n$?LINE config;\n$!config.categories.get-containers("/mnt/E4-8-TB/.Old/Puzzles/Root3/LD1 with Lora/").gist()\n", :append);
+exit;
+}}
 }
 
 #-------------------------------------------------------------------------------
@@ -196,7 +191,7 @@ method !category-button (
   Str:D $category, Str:D $container, Str:D $root-dir, Int $expander-color-count
   --> Gnome::Gtk4::Button
 ) {
-#note "$?LINE $category, $container, $root-dir";
+#note "$?LINE $category, $category, $container, $root-dir";
 
   with my Gnome::Gtk4::Button $cat-button .= new-button {
     $!config.set-css(
@@ -241,7 +236,8 @@ method !category-button (
 
 #-------------------------------------------------------------------------------
 method sidebar-root-expander (
-  Int $root-nbr, Str $root-dir --> Gnome::Gtk4::Expander
+  Int $root-nbr, Str $root-dir, Gnome::Gtk4::Grid $container-grid
+  --> Gnome::Gtk4::Expander
 ) {
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
     given my Gnome::Gtk4::Label $l .= new-label {
@@ -258,6 +254,7 @@ method sidebar-root-expander (
     .set-halign(GTK_ALIGN_FILL);
 
     .set-expanded($!config.is-root-expanded($root-nbr));
+    .set-child($container-grid);
 
     .register-signal( self, 'expand-root', 'activate', :$root-nbr);
   }
@@ -280,7 +277,8 @@ method expand-root (
 
 #-------------------------------------------------------------------------------
 method sidebar-category-expander (
-  Str $container, Str $root-dir, Int $expander-color-count
+  Str $container, Str $root-dir, Int $expander-color-count,
+  Gnome::Gtk4::Grid $category-grid
   --> Gnome::Gtk4::Expander
 ) {
   with my Gnome::Gtk4::Expander $expander .= new-expander(Str) {
@@ -301,6 +299,9 @@ method sidebar-category-expander (
     .set-label-widget($l);
     .set-hexpand(True);
     .set-halign(GTK_ALIGN_FILL);
+
+    .set-child($category-grid);
+    .set-expanded($!config.is-expanded( $container, $root-dir));
 
     .register-signal( self, 'expand-category-container', 'activate', :$container, :$root-dir);
   }
@@ -371,6 +372,8 @@ method show-tooltip (
 method select-category (
   Str:D :$category, Str:D :$container, Str:D :$root-dir
 ) {
+$*log-file.spurt( "$?LINE $category, $container, $root-dir.IO.basename()\n", :append);
+
 #  $!current-category = $category;
   my $root-text =
     (?$root-dir and $*multiple-roots) ?? "Root path $root-dir, " !! '';
@@ -393,8 +396,8 @@ method select-category (
 # Method to handle a category selection
 method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
 
-  # Fill the sidebar in case there is a new entry
-  self.fill-sidebar;
+#  # Fill the sidebar in case there is a new entry
+#  self.fill-sidebar;
   self.select-category( :$category, :$container, :$root-dir);
 }
 
