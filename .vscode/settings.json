@@ -1,0 +1,5 @@
+{
+  "editor.inlineSuggest.showToolbar": "onHover",
+  "editor.inlineSuggest.suppressSuggestions": false,
+  "editor.quickSuggestionsDelay": 10
+}
