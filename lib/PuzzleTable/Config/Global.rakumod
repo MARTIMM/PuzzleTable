@@ -184,7 +184,9 @@ method is-locked ( --> Bool ) {
 # Set the puzzle table locking state
 method lock ( ) {
   $!global-config<locked> = True;
-  self.save-global-config;
+# NOTE no need to save it. It is always reset to True and unlock()
+# is alwas needed to unlock the categories.
+#  self.save-global-config;
 }
 
 #-------------------------------------------------------------------------------
@@ -192,8 +194,8 @@ method lock ( ) {
 method unlock ( Str $password --> Bool ) {
   my Bool $ok = self.check-password($password);
   $!global-config<locked> = False if $ok;
-# NOTE no need to save it. It is always reset to True and unlock() is needed
-# to unlock the categories
+# NOTE no need to save it. It is always reset to True and unlock()
+# is alwas needed to unlock the categories.
 #  self.save-global-config;
 
   $ok
