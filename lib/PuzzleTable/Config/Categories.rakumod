@@ -25,9 +25,9 @@ method load-category-config ( Str:D $root-dir is copy ) {
 
   my $t0 = now;
 
-  $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
+#  $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
 #note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
-$*log-file.spurt( "$?LINE $root-dir\n", :append);
+#$*log-file.spurt( "$?LINE $root-dir\n", :append);
 
   if $!config-paths{$root-dir}:!exists {
     $!config-paths{$root-dir} = "$root-dir/categories.yaml";
@@ -42,7 +42,7 @@ $*log-file.spurt( "$?LINE $root-dir\n", :append);
         %(:!lockable);
     }
   }
-$*log-file.spurt( "$?LINE $!categories-config{$root-dir}.keys.gist()\n", :append);
+#$*log-file.spurt( "$?LINE $!categories-config{$root-dir}.elems()\n", :append);
 
   # Always select the default category in the default container of
   # the current root directory
@@ -163,7 +163,7 @@ method select-category (
 #note "$?LINE $category-name, $container, $root-dir";
 
   $!categories-config{$root-dir}{$container}<categories> = %()
-      if $!categories-config{$root-dir}{$container}<categories>:!exists;
+    if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
   my Hash $cats = $!categories-config{$root-dir}{$container}<categories>;
   if $cats{$category-name}:exists {
@@ -202,8 +202,8 @@ method move-category (
 
     self.save-categories-config;
 
-    my Str $dir-from = "$root-dir-from$cont-from/$cat-from";
-    my Str $dir-to = "$root-dir-to$cont-to/$cat-to";
+    my Str $dir-from = "$root-dir-from/$cont-from/$cat-from";
+    my Str $dir-to = "$root-dir-to/$cont-to/$cat-to";
 
     # Create destination category dir if it doesn't exist
     mkdir $dir-to, 0o700 unless $dir-to.IO.e;
@@ -273,8 +273,8 @@ method delete-category (
         $conts{$container}<categories>{$category}:delete;
 
         # Remove the files and directory, should be empty
-        .unlink for dir("$root-dir$container/$category");
-        "$root-dir$container/$category".IO.rmdir;
+        .unlink for dir("$root-dir/$container/$category");
+        "$root-dir/$container/$category".IO.rmdir;
 
         self.save-categories-config;
 
@@ -497,7 +497,7 @@ method add-container (
     my $t0 = now;
 
     $!categories-config{$root-dir}{$container} = %(:categories(%()));
-    mkdir "$root-dir$container", 0o700 unless "$root-dir$container".IO.e;
+    mkdir "$root-dir/$container", 0o700 unless "$root-dir/$container".IO.e;
     $add-ok = True;
 
     self.save-categories-config;
@@ -527,7 +527,7 @@ method rename-container (
     $!categories-config{$root-dir}{$container-to} =
       $!categories-config{$root-dir}{$container-from}:delete;
 
-    "$root-dir$container-from".IO.rename("$root-dir$container-to");
+    "$root-dir/$container-from".IO.rename("$root-dir/$container-to");
 
     self.save-categories-config;
     $rename-ok = True;
@@ -556,7 +556,7 @@ method delete-container ( Str:D $cont, Str:D $root-dir --> Bool ) {
 
       $!categories-config{$root-dir}{$container}:delete;
       self.save-categories-config;
-      rmdir "$root-dir$container";
+      rmdir "$root-dir/$container";
       $delete-ok = True;
 
       $*log-file.spurt(
@@ -847,7 +847,7 @@ method get-puzzle-image (
   return Str unless ?$puzzle-id;
 
   # Return path to image
-  $root-dir ~ "{$container}_EX_/$category/$puzzle-id/image400.jpg"
+  "$root-dir/{$container}_EX_/$category/$puzzle-id/image400.jpg"
 }
 
 #-------------------------------------------------------------------------------
