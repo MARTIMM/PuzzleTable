@@ -185,12 +185,6 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   }
 }}
 
-
-  # We need the table and category management here already
-  $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
-  $!table .= new-scrolledwindow unless ?$!table;
-  $!sidebar .= new-scrolledwindow unless $!sidebar;
-
   my Bool $lockable = False;
   if $o<lock>:exists {
     $lockable = $o<lock>;
@@ -199,6 +193,12 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   if $o<unlock>:exists {
     $config.unlock($o<unlock>);
   }
+
+
+  # We need the table and category management here already
+  $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
+  $!table .= new-scrolledwindow unless ?$!table;
+  $!sidebar .= new-scrolledwindow unless $!sidebar;
 
   # Process container option. It is set to 'Default' otherwise.
   my Str $opt-container = 'Default';
@@ -317,7 +317,7 @@ method window-content ( --> Gnome::Gtk4::Widget ) {
     .set-size-request( 1000, 1000);
   }
 
-  $!sidebar.fill-sidebar;
+#  $!sidebar.fill-sidebar;
   $!table-is-displayed = True;
 
   my PuzzleTable::Gui::Shortcut $shortcut .= new;
