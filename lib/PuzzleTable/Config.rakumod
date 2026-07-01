@@ -81,8 +81,7 @@ submethod BUILD ( Str:D :$root-global ) {
     $!categories.add-table-root($!global-settings.get-root-path($i));
   }
 
-  $*multiple-roots = ?$nbr-roots > 1;
-note "$?LINE $*multiple-roots, $!global-settings.get-nbr-roots()";
+  $*multiple-roots = $nbr-roots > 1;
 
 #`{{
   my @tables = $root-tables.split(/\s* \, \s*/);
