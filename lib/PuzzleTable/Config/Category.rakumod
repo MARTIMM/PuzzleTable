@@ -23,7 +23,7 @@ submethod BUILD (
 #  $!category-name .= tc;
   $!container = self.set-container-name($!container);
 
-  $!config-dir = "$!root-dir$!container/$!category-name";
+  $!config-dir = "$!root-dir/$!container/$!category-name";
 #note "\n$?LINE $!config-dir\n", Backtrace.new.nice unless $!config-dir.IO.e;
 #note "$?LINE mkdir '$!config-dir'" unless $!config-dir.IO.e;
 #note "$?LINE Second call for pt2\n", Backtrace.new.nice if ! $!config-dir.IO.e and $!config-dir ~~ m/'/pt2/'/;
