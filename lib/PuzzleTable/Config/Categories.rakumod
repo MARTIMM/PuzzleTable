@@ -25,10 +25,6 @@ method load-category-config ( Str:D $root-dir is copy ) {
 
   my $t0 = now;
 
-#  $root-dir ~= '/' unless $root-dir ~~ m/ \/ $/;
-#note "\n$?LINE $root-dir, ", $!config-paths{$root-dir}:exists;
-#$*log-file.spurt( "$?LINE $root-dir\n", :append);
-
   if $!config-paths{$root-dir}:!exists {
     $!config-paths{$root-dir} = "$root-dir/categories.yaml";
 
@@ -42,17 +38,12 @@ method load-category-config ( Str:D $root-dir is copy ) {
         %(:!lockable);
     }
   }
-#$*log-file.spurt( "$?LINE $!categories-config{$root-dir}.elems()\n", :append);
 
   # Always select the default category in the default container of
   # the current root directory
   $!current-category .= new(
     :category-name<Default>, :container<Default>, :$root-dir
   );
-
-#for $!categories-config.keys -> $root-dir {
-#note "\n$?LINE $root-dir\n$!categories-config{$root-dir}.gist()";
-#}
 
   $*log-file.spurt(
     "Time to load $root-dir config: {(now - $t0).fmt('%.1f sec.')}.\n",
@@ -117,7 +108,7 @@ method add-category (
   $category-name = $category-name.tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
-#note "$?LINE $root-dir";
+
   $!categories-config{$root-dir}{$container}<categories> = %()
       if $!categories-config{$root-dir}{$container}<categories>:!exists;
 
@@ -133,8 +124,6 @@ method add-category (
     $lockable = False
       if $container eq 'Default_EX_' or $category-name eq 'Default';
     $cats{$category-name}<lockable> = $lockable;
-#note "$?LINE mkdir '$root-dir$container/$category-name'";
-#    mkdir "$root-dir$container/$category-name", 0o700;
 
     my PuzzleTable::Config::Category $category .= new(
       :$category-name, :$container, :$root-dir
@@ -157,10 +146,8 @@ method select-category (
   Str:D $category-name, Str:D $container is copy, Str:D $root-dir --> Str
 ) {
   my Str $message = '';
-#  $category-name .= tc;
+
   $container = $!current-category.set-container-name($container);
-#  $root-dir //= $!current-category.root-dir;
-#note "$?LINE $category-name, $container, $root-dir";
 
   $!categories-config{$root-dir}{$container}<categories> = %()
     if $!categories-config{$root-dir}{$container}<categories>:!exists;
@@ -185,8 +172,6 @@ method move-category (
 ) {
   my Str $message = '';
 
-#  $cat-from .= tc;
-#  $cat-to .= tc;
   $cont-from = $!current-category.set-container-name($cont-from);
   $cont-to = $!current-category.set-container-name($cont-to);
   my Hash $categories-from = $!categories-config{$root-dir-from}{$cont-from};
@@ -255,7 +240,6 @@ method delete-category (
 ) {
   my Str $message = '';
 
-#  $category .= tc;
   $container = $!current-category.set-container-name($container);
   $root-dir //= $!current-category.root-dir;
 
@@ -345,18 +329,8 @@ method get-category-status (
   Bool :$recalculate = False
   --> Array
 ) {
-#`{{
-  $*log-file.spurt(
-    "Get category status for " ~
-    "$category-name, $container, $root-dir.IO.basename().\n",
-    :append
-  ) if $*verbose-output;
-}}
-
   #  $category-name .= tc;
   $container = $!current-category.set-container-name($container);
-#  $root-dir //= $!current-category.root-dir;
-#note "$?LINE $root-dir $container $category-name";
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
   my Array $cat-status = [ 0, 0, 0, 0];
@@ -367,10 +341,6 @@ method get-category-status (
 
   my Hash $categories :=
      $!categories-config{$root-dir}{$container}<categories>;
-
-#note "$?LINE $recalculate, ", $categories{$category-name}.gist, "\n", $categories{$category-name}<status>:exists;
-
-##`{{
   if !$recalculate and $categories{$category-name}<status>:exists {
     $cat-status = $categories{$category-name}<status>;
 
@@ -389,7 +359,6 @@ method get-category-status (
   }
 
   else {
-#}}
     my PuzzleTable::Config::Category $category .= new(
       :$category-name, :$container, :$root-dir
     );
@@ -436,12 +405,7 @@ method update-category-status ( PuzzleTable::Config::Category:D $category ) {
 
   for $category.get-puzzle-ids -> $puzzle-id {
     my Hash $puzzle-config = $category.get-puzzle($puzzle-id);
-#`{{
-    $*log-file.spurt(
-      "Puzzle info $puzzle-id: $puzzle-config.gist()\n",
-      :append
-    ) if $*verbose-output;
-  }}
+
     # Test for old version data
     my Num() $progress;
     if $puzzle-config<Progress> ~~ Hash {
@@ -476,7 +440,7 @@ method update-category-status ( PuzzleTable::Config::Category:D $category ) {
     :append
   ) if $*verbose-output;
 
-  # Only save when program stops
+  # NOTE Only save when program stops
   #self.save-categories-config;
 }
 
@@ -574,17 +538,14 @@ method delete-container ( Str:D $cont, Str:D $root-dir --> Bool ) {
 method get-containers ( Str $root-dir --> List ) {
 
   my Bool $locked = $!config.is-locked;
-#  $root-dir //= $!current-category.root-dir;
+
   my @containers = ();
-#  for $!categories-config.keys.sort -> $root-dir {
-$*log-file.spurt( "$?LINE $root-dir: $locked\n", :append);
-    for $!categories-config{$root-dir}.keys.sort -> $container {
-      # Containers have an _EX_ extension which is removed
-      # Don't include in list if lockable and table is locked
-      @containers.push: (S/ '_EX_' $// with $container) unless
-        self.has-lockable-categories( $container, $root-dir).Bool and $locked;
-    }
-#  }
+  for $!categories-config{$root-dir}.keys.sort -> $container {
+    # Containers have an _EX_ extension which is removed
+    # Don't include in list if lockable and table is locked
+    @containers.push: (S/ '_EX_' $// with $container) unless
+      self.has-lockable-categories( $container, $root-dir).Bool and $locked;
+  }
 
   @containers
 }
@@ -636,7 +597,6 @@ method has-lockable-categories (
 ) {
   my Bool $lockable-categeries = False;
   $container = $!current-category.set-container-name($container);
-#  my Str $root-dir = $!current-category.root-dir;
 
   for $!categories-config{$root-dir}{$container}<categories>.keys -> $category
   {
@@ -645,7 +605,7 @@ method has-lockable-categories (
       last
     }
   }
-#$*log-file.spurt( "$?LINE lockable cats: $lockable-categeries\n", :append);
+
   $lockable-categeries
 }
 
@@ -695,19 +655,9 @@ method move-puzzle (
 ) {
   my $t0 = now;
 
-#  $to-cat .= tc;
-#note "$?LINE $to-cat, $to-cont, $root-dir-to, $puzzle-id";
-
-  # Init the categories initialized
-#  my PuzzleTable::Config::Category $c-from = $!current-category;
-#note "$?LINE $c-from.category-name(), $c-from.container(), $c-from.root-dir()";
-#  my Str $root-dir-from = $!current-category.root-dir;
-#  $root-dir-to //= $root-dir-from;
-
   my PuzzleTable::Config::Category $c-to .= new(
     :category-name($to-cat), :container($to-cont), :root-dir($root-dir-to)
   );
-#snote "$?LINE $c-to.category-name(), $c-to.container(), $c-to.root-dir()";
 
   # Get path of puzzle where the puzzle is now
   my Str $puzzle-source = $c-from.get-puzzle-destination($puzzle-id);
@@ -783,8 +733,6 @@ method restore-puzzles ( $archive-path --> List ) {
   my Str $message = '';
   my Str $archive-name = $archive-path.IO.basename;
 
-  #my Str $category;
-  #my Str $container;
   # Path is something like <parent-dir>/<date-time>:<container>:<category>
   my Str ( $, $container, $category) = $archive-name.split(':');
   $container = $container.tc ~ '_EX_'
@@ -792,11 +740,8 @@ method restore-puzzles ( $archive-path --> List ) {
 
   $category ~~ s/ '.tbz2' $//;
 
-#note "$?LINE $container, $category, $!current-category.category-name()";
-
   # Restoring puzzles can be for another category or in the current one
   if $category eq $!current-category.category-name {
-#note "$?LINE restore from $archive-path";
     if $!current-category.restore-puzzles($archive-path) {
       self.update-category-status($!current-category);
     }
@@ -811,7 +756,7 @@ method restore-puzzles ( $archive-path --> List ) {
     my PuzzleTable::Config::Category $cat .= new(
       :category-name($category), :$container, :$root-dir
     );
-#note "$?LINE restore from $archive-path";
+
     if $cat.restore-puzzles($archive-path) {
       self.add-category( $category, $container);
       self.update-category-status($!current-category);
@@ -829,7 +774,6 @@ method restore-puzzles ( $archive-path --> List ) {
     :append
   ) if $*verbose-output;
 
-#note "$?LINE return list $message, $container, $category";
   ( $message, $container, $category )
 }
 
@@ -871,6 +815,7 @@ method get-puzzles ( --> Seq ) {
   my Array $cat-puzzle-data = [];
 
   for $!current-category.get-puzzle-ids -> $puzzle-id {
+
     my Hash $puzzle-config = $!current-category.get-puzzle($puzzle-id);
 
     # Add extra info so it can be used to modify the data later, e.g. progress.
@@ -902,24 +847,11 @@ method get-puzzles ( --> Seq ) {
 method has-puzzles (
   Str:D $category, Str:D $container, Str:D $root-dir --> Bool
 ) {
-  my Bool $hp = False;
+  my PuzzleTable::Config::Category $cat .= new(
+    :category-name($category), :$container, :$root-dir
+  );
   
-#  $category .= tc;
-#  $container = $!current-category.set-container-name($container);
-#  if $category eq $!current-category.category-name {
-#    $hp = $!current-category.get-puzzle-ids.elems.Bool;
-#  }
-
-#  else {
-#    $root-dir //= $!current-category.root-dir;
-    my PuzzleTable::Config::Category $cat .= new(
-      :category-name($category), :$container, :$root-dir
-    );
-    
-    $hp = $cat.get-puzzle-ids.elems.Bool;
-#  }
-
-  $hp
+  $cat.get-puzzle-ids.elems.Bool
 }
 
 #`{{
@@ -1043,39 +975,6 @@ method update-puzzle ( Hash $puzzle ) {
   $!current-category.update-puzzle( $puzzle<PuzzleID>, $puzzle);
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method get-password ( --> Str ) {
-  $!categories-config<password> // ''
-}
-
-#-------------------------------------------------------------------------------
-method check-password ( Str $password --> Bool ) {
-  my Bool $ok = True;
-  $ok = ( sha256-hex($password) eq $!categories-config<password> ).Bool
-    if ? $!categories-config<password>;
-
-  $ok
-}
-
-#-------------------------------------------------------------------------------
-method set-password ( Str $old-password, Str $new-password --> Bool ) {
-  my Bool $is-set = False;
-
-  # Return fault when old one is empty while there should be one given.
-  return $is-set if $old-password eq '' and ?self.get-password;
-
-  # Check if old password matches before a new one is set
-  $is-set = self.check-password($old-password);
-  if $is-set {
-    $!categories-config<password> = sha256-hex($new-password);
-    self.save-categories-config;
-  }
-
-  $is-set
-}
-}}
-
 #-------------------------------------------------------------------------------
 # Get the category lockable state. Returns undefined when container/category
 # is not found.
@@ -1119,27 +1018,3 @@ method set-category-lockable (
 
   $is-set
 }
-
-#`{{
-#-------------------------------------------------------------------------------
-# Get the puzzle table locking state
-method is-locked ( --> Bool ) {
-  ? $!categories-config<locked>.Bool;
-}
-
-#-------------------------------------------------------------------------------
-# Set the puzzle table locking state
-method lock ( ) {
-  $!categories-config<locked> = True;
-  self.save-categories-config;
-}
-
-#-------------------------------------------------------------------------------
-# Reset the puzzle table locking state
-method unlock ( Str $password --> Bool ) {
-  my Bool $ok = self.check-password($password);
-  $!categories-config<locked> = False if $ok;
-  self.save-categories-config;
-  $ok
-}
-}}
