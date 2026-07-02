@@ -115,7 +115,7 @@ method local-options ( --> Int ) {
   # All faulty and wrong arguments thrown by Getopt::Long are caught here.
   CATCH {
     default {
-      .message.note;
+      .note;
       self.usage;
 
       $exit-code = 1;
