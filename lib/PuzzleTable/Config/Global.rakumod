@@ -11,6 +11,7 @@ use PuzzleTable::Config::Category;
 unit class PuzzleTable::Config::Global:auth<github:MARTIMM>;
 
 has Hash $.global-config;
+has Hash $!puzzle-dirextories;
 
 has Str $!root-dir;
 has Str $!puzzle-trash;
@@ -18,6 +19,8 @@ has Str $!puzzle-trash;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( Str:D :$!root-dir ) {
+
+  my $t0 = now;
 
   $!puzzle-trash = "$!root-dir/puzzle-trash/";
   mkdir( $!puzzle-trash, 0o700) unless $!puzzle-trash.IO.e;
@@ -61,13 +64,32 @@ submethod BUILD ( Str:D :$!root-dir ) {
 
     given $!global-config<root-directories> {
       .<path> = PUZZLE_TABLE_DATA;
-      .<name> = "All your puzzles";
+      .<title> = "All your puzzles";
       .<expanded> = True;
     }
   }
 
+  $!puzzle-dirextories = %(
+    :by-dir(%()),
+    :by-title(%())
+  );
+
+  for @($!global-config<root-directories>) -> $entry {
+    $!puzzle-dirextories<by-dir>{$entry<path>} = $entry;
+    $!puzzle-dirextories<by-title>{$entry<title>} = $entry;
+#    $!puzzle-dirextories<by-title>{$v<title>{$k.IO.basename}} = $k;
+  }
+
   # Always lock at start
   $!global-config<locked> = True;
+
+$*log-file.spurt("$?LINE $!puzzle-dirextories<by-dir>.keys()\n", :append);
+$*log-file.spurt("$?LINE $!puzzle-dirextories<by-title>.keys()\n", :append);
+
+  $*log-file.spurt(
+    "Time load root config: {(now - $t0).fmt('%.1f sec.')}.\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
@@ -215,6 +237,10 @@ method get-nbr-roots ( --> Int ) {
 method get-root-title ( UInt $entry --> Str ) {
   $entry = 0 if $entry >= $!global-config<root-directories>.elems;
   $!global-config<root-directories>[$entry]<title>
+}
+
+#-------------------------------------------------------------------------------
+method find-root-title ( Str $path --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
