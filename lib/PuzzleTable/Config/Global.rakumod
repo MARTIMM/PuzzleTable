@@ -74,17 +74,19 @@ submethod BUILD ( Str:D :$!root-dir ) {
     :by-title(%())
   );
 
+  my Int $root-count = 0;
   for @($!global-config<root-directories>) -> $entry {
+    $entry<root-count> = $root-count++;
+    $entry<basename> = $entry<path>.IO.basename;
     $!puzzle-dirextories<by-dir>{$entry<path>} = $entry;
     $!puzzle-dirextories<by-title>{$entry<title>} = $entry;
-#    $!puzzle-dirextories<by-title>{$v<title>{$k.IO.basename}} = $k;
   }
 
   # Always lock at start
   $!global-config<locked> = True;
 
-$*log-file.spurt("$?LINE $!puzzle-dirextories<by-dir>.keys()\n", :append);
-$*log-file.spurt("$?LINE $!puzzle-dirextories<by-title>.keys()\n", :append);
+#$*log-file.spurt("$?LINE $!puzzle-dirextories<by-dir>.keys()\n", :append);
+#$*log-file.spurt("$?LINE $!puzzle-dirextories<by-title>.keys()\n", :append);
 
   $*log-file.spurt(
     "Time load root config: {(now - $t0).fmt('%.1f sec.')}.\n",
@@ -234,19 +236,30 @@ method get-nbr-roots ( --> Int ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-root-title ( UInt $entry --> Str ) {
+multi method get-root-title ( UInt $entry --> Str ) {
   $entry = 0 if $entry >= $!global-config<root-directories>.elems;
   $!global-config<root-directories>[$entry]<title>
 }
 
 #-------------------------------------------------------------------------------
-method find-root-title ( Str $path --> Str ) {
+multi method get-root-title ( Str $path --> Str ) {
+  $!puzzle-dirextories<by-dir>{$path}<title>
 }
 
 #-------------------------------------------------------------------------------
-method get-root-path ( UInt $entry --> Str ) {
+method get-root-nbr ( Str $title --> Int ) {
+  $!puzzle-dirextories<by-title>{$title}<root-count>;
+}
+
+#-------------------------------------------------------------------------------
+multi method get-root-path ( UInt $entry --> Str ) {
   $entry = 0 if $entry >= $!global-config<root-directories>.elems;
   $!global-config<root-directories>[$entry]<path>
+}
+
+#-------------------------------------------------------------------------------
+multi method get-root-path ( Str $title --> Str ) {
+  $!puzzle-dirextories<by-title>{$title}<path>
 }
 
 #-------------------------------------------------------------------------------
@@ -261,5 +274,10 @@ method set-root-expanded ( UInt $entry, Bool $expanded ) {
   $!global-config<root-directories>[$entry]<expanded> = $expanded;
   
   self.save-global-config;
+}
+
+#-------------------------------------------------------------------------------
+method get-titles ( --> Seq ) {
+  $!puzzle-dirextories<by-title>.keys.sort
 }
 
