@@ -30,8 +30,9 @@ has PuzzleTable::Config::Global $!global-settings handles( <
       get-palapeli-image-size set-palapeli-image-size
       get-palapeli-collection
       set-palapeli-env unset-palapeli-env get-palapeli-exec
-      get-nbr-roots get-root-title get-root-path is-root-expanded
-      set-root-expanded
+      get-nbr-roots get-root-title get-root-path get-root-nbr
+      get-titles
+      is-root-expanded set-root-expanded
     >);
 
 has PuzzleTable::Config::Categories $!categories handles( <
