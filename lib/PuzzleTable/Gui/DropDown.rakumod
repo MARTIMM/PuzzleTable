@@ -73,7 +73,10 @@ method fill-containers (
 method fill-roots ( Str:D $select-root ) {
 #note "$?LINE $select-root";
 
-  self.set-selection( $!config.get-roots, $select-root);
+  # Get titles of root dirs and translate $select-root path into a title
+  self.set-selection(
+    $!config.get-titles, $!config.get-root-title($select-root)
+  );
 }
 
 #-------------------------------------------------------------------------------
@@ -182,7 +185,7 @@ method select-containers (
 ) {
 #note "$?LINE $roots.get-dropdown-text(), ", self.get-dropdown-text;
 #note "$?LINE ", ?$categories ?? $containers.get-dropdown-text !! '-';
-  my $root-dir = self.get-dropdown-text;
+  my $root-dir = $!config.get-root-path(self.get-dropdown-text);
   $containers.fill-containers( '', $root-dir, :$skip-default);
 
   # no need to check because drop down is filled with existing data
