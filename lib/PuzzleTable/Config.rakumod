@@ -20,7 +20,7 @@ has Gnome::Gtk4::CssProvider $!css-provider;
 
 our $options = [<
   category=s container=s pala-collection=s puzzles lock h|help version v|verbose
-  restore=s unlock=s root-global=s root-tables=s
+  restore=s unlock=s root-global=s root-tables=s q|quit
 >];
 
 has PuzzleTable::Config::Global $!global-settings handles( <
