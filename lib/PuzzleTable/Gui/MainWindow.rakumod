@@ -115,7 +115,9 @@ method local-options ( --> Int ) {
   # All faulty and wrong arguments thrown by Getopt::Long are caught here.
   CATCH {
     default {
-      .note;
+      $*log-file.spurt( .message, :append);
+      $*log-file.spurt( Backtrace.new.nice, :append);
+
       self.usage;
 
       $exit-code = 1;
@@ -162,6 +164,11 @@ method local-options ( --> Int ) {
     $exit-code = 0;
   }
 
+  # Quit application when there is something wrong
+  if $o<q> {
+    $!application.quit;
+  }
+
   $exit-code
 }
 
@@ -171,6 +178,18 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
 #  my Gnome::Gio::ApplicationCommandLine $command-line .= new(
 #    :native-object($n-command-line)
 #  );
+
+  # Whenever a crash happens, it is caught here.
+  CATCH {
+    default {
+      $*log-file.spurt( .message, :append);
+      $*log-file.spurt( Backtrace.new.nice, :append);
+      $!application.quit;
+
+#      $exit-code = 1;
+#      return $exit-code;
+    }
+  }
 
   my Capture $o = get-options-from( $args, | $PuzzleTable::Config::options);
   my @args = $o.list;
@@ -259,6 +278,7 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
       );
     }
   }
+note $?LINE;
 
 #`{{
   # Activate unless table is already displayed
