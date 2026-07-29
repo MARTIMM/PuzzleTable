@@ -32,10 +32,16 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 has PuzzleTable::Config $!config;
 
+has Array $!totals;
+has Bool $!done-totals;
+has Gnome::Gtk4::Grid() $!sidebar-grid;
+
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( ) {
   $!config .= instance;
+
+$*log-file.spurt( "$?LINE BUILD sidebar.\n", :append);
 
 #  self.set-halign(GTK_ALIGN_FILL);
   self.set-valign(GTK_ALIGN_FILL);
@@ -66,25 +72,24 @@ Construction of the sidebar:
 
   my $t0 = now;
 
+  $!totals = [ 0, 0, 0, 0];
+  $!done-totals = False;
+
 #  my Gnome::Gtk4::Label $l;
-  my Array $totals = [ 0, 0, 0, 0];
   my Int $expander-color-count = 0; # used to change color of expanders in css
 #  my Str $container;
 
   # Create a new sidebar grid
-  my Gnome::Gtk4::Grid() $sidebar-grid .= new-grid;
-  $sidebar-grid.set-name('sidebar');
-  $sidebar-grid.set-size-request( 200, 100);
-  $!config.set-css( $sidebar-grid.get-style-context, :css-class<pt-sidebar>);
-
-
-#  my @roots = $!config.get-roots;
-#  for @roots -> $root-dir {
+  $!sidebar-grid .= new-grid;
+  $!sidebar-grid.set-name('sidebar');
+  $!sidebar-grid.set-size-request( 200, 100);
+  $!config.set-css( $!sidebar-grid.get-style-context, :css-class<pt-sidebar>);
 
   # Loop through all puzzle root directories
   my $nbr-roots = $!config.get-nbr-roots;
   for ^$nbr-roots -> $root-nbr {
     my Str $root-dir = $!config.get-root-path($root-nbr);
+note "$?LINE $nbr-roots, $root-nbr, $root-dir";
 
     my $row-count = 0;
     my Gnome::Gtk4::Grid $container-grid .= new-grid;
@@ -98,7 +103,7 @@ Construction of the sidebar:
     for @containers -> $container {
       # Fill a grid with category rows in $container and $root-dir
       my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
-        $container, $root-dir, $expander-color-count, $totals
+        $container, $root-dir, $expander-color-count
       );
 
       my Gnome::Gtk4::Expander $cat-expander = self.sidebar-category-expander(
@@ -111,23 +116,31 @@ Construction of the sidebar:
 
     $expander-color-count++;
 
-    $sidebar-grid.attach( $root-expander, 0, $root-nbr, 1, 1);
+    $!sidebar-grid.attach( $root-expander, 0, $root-nbr, 1, 1);
   }
 
   # Display gathered information in a tooltip
-  $sidebar-grid.set-tooltip-text(Q:qq:to/EOTT/);
+  $!done-totals = True;
+  $!sidebar-grid.set-tooltip-text(Q:qq:to/EOTT/);
     Number of puzzles
     Untouched puzzles
     Unfinished puzzles
     Finished puzzles
 
     Totals
-    [ $totals.join(', ') ]
+    [ $!totals.join(', ') ]
     EOTT
 
-  # The scroll window widget will alway cleanup the child if there was
+  # The scroll window widget will always cleanup the child if there was
   # a grid installed before
-  self.set-child($sidebar-grid);
+  self.set-child($!sidebar-grid);
+#note "$?LINE $!sidebar-grid.gist(), ", self.get-child.gist;
+my Gnome::Gtk4::Grid() $sg = self.get-child;
+note "$?LINE ", $sg.gist;
+note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
+my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
+note "$?LINE ", $ex.gist;
+
   if $init {
 #    my Str $root-dir = @roots[0];
     my Str $root-dir = $!config.get-root-path(0);
@@ -142,7 +155,7 @@ Construction of the sidebar:
 
 #-------------------------------------------------------------------------------
 method set-category-grid (
-  Str $container, Str $root-dir, Int $expander-color-count, Array $totals
+  Str $container, Str $root-dir, Int $expander-color-count
   --> Gnome::Gtk4::Grid
 ) {
   my Int $cat-row-count = 0;
@@ -160,13 +173,13 @@ method set-category-grid (
     # Get information of each subcategory
     self.sidebar-status(
       $category, $container, $root-dir, $category-grid,
-      $cat-row-count, $totals
+      $cat-row-count
       #, :$recalculate
     );
 
     $cat-row-count++;
   }
-  
+
   $category-grid
 }
 
@@ -306,7 +319,7 @@ method expand-category-container (
 #-------------------------------------------------------------------------------
 method sidebar-status (
   Str:D $category, Str:D $container, Str:D $root-dir,
-  Gnome::Gtk4::Grid $grid, Int $row-count, Array $totals,
+  Gnome::Gtk4::Grid $grid, Int $row-count,
   Bool :$recalculate = False,
 ) {
   my Gnome::Gtk4::Label $l;
@@ -317,20 +330,20 @@ method sidebar-status (
 
   $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
-  $totals[0] += $cat-status[0];
+  $!totals[0] += $cat-status[0] unless $!done-totals;
 
   $l .= new-label; $l.set-text($cat-status[1].fmt('%3d'));
   $grid.attach( $l, 2, $row-count, 1, 1);
-  $totals[1] += $cat-status[1];
+  $!totals[1] += $cat-status[1] unless $!done-totals;
 
   $l .= new-label; $l.set-text($cat-status[2].fmt('%3d'));
   $grid.attach( $l, 3, $row-count, 1, 1);
-  $totals[2] += $cat-status[2];
+  $!totals[2] += $cat-status[2] unless $!done-totals;
 
   $l .= new-label; $l.set-text($cat-status[3].fmt('%3d'));
   $l.set-margin-end(10);
   $grid.attach( $l, 4, $row-count, 1, 1);
-  $totals[3] += $cat-status[3];
+  $!totals[3] += $cat-status[3] unless $!done-totals;
 }
 
 #-------------------------------------------------------------------------------
@@ -383,15 +396,45 @@ method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
   self.select-category( :$category, :$container, :$root-dir);
 }
 
+##`{{
 #-------------------------------------------------------------------------------
-method update-sidebar ( Str:D $container, Str:D $root-dir ) {
+method update-sidebar ( Str:D $container, Str:D $root-title ) {
   my $t0 = now;
 
-  # Get the child from the scrollbar which is a grid.
-  my Gnome::Gtk4::Grid() $cat-grid = self.get-child;
+  # Get the child from the scrolled window which is a grid holding expanders
+  # for the root directories.
+#  $!sidebar-grid = self.get-child;
+note "$?LINE ", $!sidebar-grid.gist;
+note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
+  # Get the expander of the particular root
+  my Int $row-count = $!config.get-root-nbr($root-title);
+  my Gnome::Gtk4::Expander() $root-expander =
+    $!sidebar-grid.get-child-at( 0, $row-count);
+
+  # Find the container where the categories need to be updated.
+note "$?LINE $row-count, $root-title, ", $root-expander.gist;
+  my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
+  my $c-count = 0;
+  my Str $root-dir = $!config.get-root-path($root-title);
+  my @containers = $!config.get-containers($root-dir);
+  for @containers -> $c {
+    if $c eq $container {
+      my Gnome::Gtk4::Expander() $container-expander =
+        $container-grid.get-child-at( 0, $c-count);
+      my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
+        $container, $root-dir, $row-count
+      );
+      $container-expander.set-child($category-grid);
+
+      last;
+    }
+
+    $c-count++;
+  }
 
   $*log-file.spurt(
     "Time to update sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append
   ) if $*verbose-output;
 }
+#}}
