@@ -48,20 +48,19 @@ method category-add ( N-Object $parameter ) {
     );
 
     my PuzzleTable::Gui::DropDown $roots-dd;
-    if $*multiple-roots {
-      $roots-dd .= new;
-      $roots-dd.fill-roots($!config.get-current-root);
+    $roots-dd .= new;
+    $roots-dd.fill-roots($!config.get-current-root);
 
-      # Show dropdown
-      .add-content( 'Select a root', $roots-dd);
+    # Show dropdown
+    .add-content( 'Select a root', $roots-dd);
 
-      # Set a handler on the container list to change the category list
-      # when an item is selected.
-      $roots-dd.trap-root-changes($container-dd);
-    }
+    # Set a handler on the container list to change the category list
+    # when an item is selected.
+    $roots-dd.trap-root-changes($container-dd);
 
     # Show dropdown
     .add-content( 'Select a container', $container-dd);
+
     # Show entry for input
     my Gnome::Gtk4::Entry $entry .= new-entry;
     $entry.set-text($!config.get-current-category);
@@ -105,11 +104,8 @@ method do-category-add (
   }
 
   else {
-    my Str $root-dir;
-    if $*multiple-roots {
-      $root-dir = $roots-dd.get-dropdown-text;
-    }
-
+    my Str $root-title = $roots-dd.get-dropdown-text;
+    my Str $root-dir = $!config.get-root-path($root-title);
     my Str $container = $container-dd.get-dropdown-text;
 
     # Add category to list. Message gets defined if something is wrong.
@@ -122,8 +118,7 @@ method do-category-add (
     }
 
     else {
-      $*main-window.sidebar.fill-sidebar;
-      $*main-window.sidebar.update-sidebar( $container, $root-dir);
+      $*main-window.sidebar.update-sidebar( $container, $root-title);
       $sts-ok = True;
     }
   }
@@ -180,33 +175,29 @@ method category-rename ( N-Object $parameter ) {
   }
 
   my PuzzleTable::Gui::DropDown ( $old-roots-dd, $new-roots-dd);
-  if $*multiple-roots {
-    $old-roots-dd .= new;
-    $old-roots-dd.fill-roots($!config.get-current-root);
+  $old-roots-dd .= new;
+  $old-roots-dd.fill-roots($!config.get-current-root);
 
-    # Set a handler on the container list to change the category list
-    # when an item is selected.
-    $old-roots-dd.trap-root-changes($old-container-dd);
+  # Set a handler on the container list to change the category list
+  # when an item is selected.
+  $old-roots-dd.trap-root-changes($old-container-dd);
 
-    $new-roots-dd .= new;
-    $new-roots-dd.fill-roots($!config.get-current-root);
+  $new-roots-dd .= new;
+  $new-roots-dd.fill-roots($!config.get-current-root);
 
-    # Set a handler on the container list to change the category list
-    # when an item is selected.
-    $new-roots-dd.trap-root-changes($new-container-dd);
-  }
+  # Set a handler on the container list to change the category list
+  # when an item is selected.
+  $new-roots-dd.trap-root-changes($new-container-dd);
 
   # Build the dialog
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Rename Category dialog')
   ) {
-    .add-content( 'Select the root where old container is', $old-roots-dd)
-      if $*multiple-roots;
+    .add-content( 'Select the root where old container is', $old-roots-dd);
     .add-content( 'Select container where old category is', $old-container-dd);
     .add-content( 'Specify the category to move', $old-category-dd);
 
-    .add-content( 'Select the root where new container is', $new-roots-dd)
-      if $*multiple-roots;
+    .add-content( 'Select the root where new container is', $new-roots-dd);
     .add-content( 'Select container to move category to', $new-container-dd);
     .add-content( 'New category name', $new-cat-entry);
 
@@ -249,13 +240,8 @@ method do-category-rename (
 
   else {
     # Move members to other category and container
-    my Str $oroot = $*multiple-roots
-                      ?? $old-roots-dd.get-dropdown-text
-                      !! $!config.get-current-root;
-    my Str $nroot = $*multiple-roots
-                      ?? $new-roots-dd.get-dropdown-text
-                      !! $!config.get-current-root;
-
+    my Str $oroot = $old-roots-dd.get-dropdown-text;
+    my Str $nroot = $new-roots-dd.get-dropdown-text;
     my Str $ocat = $old-category-dd.get-dropdown-text;
     my Str $ocont = $old-container-dd.get-dropdown-text;
     my Str $ncont = $new-container-dd.get-dropdown-text;
@@ -268,7 +254,11 @@ method do-category-rename (
     }
 
     else {
-      $*main-window.sidebar.fill-sidebar;
+      $*main-window.sidebar.update-sidebar( $ncont, $nroot);
+      $*main-window.sidebar.update-sidebar( $ocont, $oroot)
+        if $ncont ne $ocont or $nroot ne $oroot;
+
+#      $*main-window.sidebar.fill-sidebar;
 #      if $ocat eq $!config.get-current-category and
 #         $ocont eq $!config.get-current-container
 #      {
@@ -310,19 +300,17 @@ method category-delete ( N-Object $parameter ) {
   }
 
   my PuzzleTable::Gui::DropDown $roots-dd;
-  if $*multiple-roots {
-    $roots-dd .= new;
-    $roots-dd.fill-roots($select-root);
+  $roots-dd .= new;
+  $roots-dd.fill-roots($select-root);
 
-    # Set a handler on the container list to change the category list
-    # when an item is selected.
-    $roots-dd.trap-root-changes($container-dd, :categories($category-dd));
-  }
+  # Set a handler on the container list to change the category list
+  # when an item is selected.
+  $roots-dd.trap-root-changes($container-dd, :categories($category-dd));
 
   with my PuzzleTable::Gui::Dialog $dialog .= new(
     :dialog-header('Delete Category dialog')
   ) {
-    .add-content( 'Select a root', $roots-dd) if $*multiple-roots;
+    .add-content( 'Select a root', $roots-dd);
     .add-content( 'Select container', $container-dd);
     .add-content( 'Select category to delete', $category-dd);
 
@@ -347,9 +335,11 @@ method do-category-delete (
   my Str $category = $category-dd.get-dropdown-text;
   my Str $container = $container-dd.get-dropdown-text;
 
-  my Str $root-dir = $*multiple-roots
-          ?? $roots-dd.get-dropdown-text
-          !! $!config.get-current-root;
+#  my Str $root-dir = $*multiple-roots
+#          ?? $roots-dd.get-dropdown-text
+#          !! $!config.get-current-root;
+  my Str $root-title = $roots-dd.get-dropdown-text;
+  my Str $root-dir = $!config.get-root-path($root-title);
 
   if $!config.has-puzzles( $category, $container, $root-dir) {
     $dialog.set-status('Category still has puzzles');
