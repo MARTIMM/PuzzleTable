@@ -242,11 +242,13 @@ method do-category-rename (
     # Move members to other category and container
     my Str $oroot = $old-roots-dd.get-dropdown-text;
     my Str $nroot = $new-roots-dd.get-dropdown-text;
+    my Str $oroot-path = $!config.get-root-path($oroot);
+    my Str $nroot-path = $!config.get-root-path($nroot);
     my Str $ocat = $old-category-dd.get-dropdown-text;
     my Str $ocont = $old-container-dd.get-dropdown-text;
     my Str $ncont = $new-container-dd.get-dropdown-text;
     my Str $message = $!config.move-category(
-      $ocat, $ocont, $oroot, $new-category, $ncont, $nroot
+      $ocat, $ocont, $oroot-path, $new-category, $ncont, $nroot-path
     );
 
     if $message {
