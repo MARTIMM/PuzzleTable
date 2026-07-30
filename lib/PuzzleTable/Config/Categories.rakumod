@@ -85,8 +85,16 @@ method save-categories-config ( ) {
 
   my $t0 = now;
 
+#`{{
+  $*log-file.spurt(
+    "\nCurrent roots: $!categories-config.keys().\n",
+    :append
+  ) if $*verbose-output;
+}}
   # Save categories config
   for $!categories-config.keys -> $root-dir {
+#note "$?LINE $root-dir";
+
     $!config-paths{$root-dir}.IO.spurt(
       save-yaml($!categories-config{$root-dir})
     );
@@ -96,6 +104,13 @@ method save-categories-config ( ) {
     "Time to save all categories: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append
   ) if $*verbose-output;
+
+#`{{
+  $*log-file.spurt(
+    "Current roots: $!categories-config.keys().\n",
+    :append
+  ) if $*verbose-output;
+}}
 }
 
 #-------------------------------------------------------------------------------
@@ -181,6 +196,8 @@ method move-category (
      $categories-to<categories>{$cat-to}:!exists
   {
     my $t0 = now;
+note "$?LINE from: $cat-from, $cont-from, $root-dir-from";
+note "$?LINE to: $cat-to, $cont-to, $root-dir-to";
 
     $categories-to<categories>{$cat-to} =
       $categories-from<categories>{$cat-from}:delete;

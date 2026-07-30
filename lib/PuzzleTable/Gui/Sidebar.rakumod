@@ -370,6 +370,13 @@ method select-category (
   Str:D :$category, Str:D :$container, Str:D :$root-dir
 ) {
 #  $!current-category = $category;
+#`{{
+  $*log-file.spurt(
+    "end update, Current roots: $!config.get-roots()\n",
+    :append
+  ) if $*verbose-output;
+}}
+
   my $root-text =
     (?$root-dir and $*multiple-roots) ?? "Root path $root-dir, " !! '';
   my Str $title = "Puzzle Table Display: {$root-text}Container $container, Category $category";
@@ -404,20 +411,21 @@ method update-sidebar ( Str:D $container, Str:D $root-title ) {
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
 #  $!sidebar-grid = self.get-child;
-note "$?LINE ", $!sidebar-grid.gist;
-note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
+#note "$?LINE ", $!sidebar-grid.gist;
+#note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
   # Get the expander of the particular root
   my Int $row-count = $!config.get-root-nbr($root-title);
   my Gnome::Gtk4::Expander() $root-expander =
     $!sidebar-grid.get-child-at( 0, $row-count);
 
   # Find the container where the categories need to be updated.
-note "$?LINE $row-count, $root-title, ", $root-expander.gist;
+#note "$?LINE $row-count, $root-title, ", $root-expander.gist;
   my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
   my $c-count = 0;
   my Str $root-dir = $!config.get-root-path($root-title);
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
+#note "$?LINE $root-dir, container $c";
     if $c eq $container {
       my Gnome::Gtk4::Expander() $container-expander =
         $container-grid.get-child-at( 0, $c-count);
@@ -432,6 +440,12 @@ note "$?LINE $row-count, $root-title, ", $root-expander.gist;
     $c-count++;
   }
 
+#`{{
+  $*log-file.spurt(
+    "end update, Current roots: $!config.get-roots()\n",
+    :append
+  ) if $*verbose-output;
+}}
   $*log-file.spurt(
     "Time to update sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append

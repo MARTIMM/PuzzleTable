@@ -140,6 +140,11 @@ Select from menu to rename a category. First select a category from the sidebar.
 
 method category-rename ( N-Object $parameter ) {
 
+  $*log-file.spurt(
+    "Start rename, Current roots: $!config.get-roots()\n",
+    :append
+  ) if $*verbose-output;
+
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
   my Str $select-root-dir = $!config.get-current-root;
@@ -223,6 +228,12 @@ method do-category-rename (
   PuzzleTable::Gui::DropDown :$new-roots-dd,
   Gnome::Gtk4::Entry :$new-cat-entry,
 ) {
+
+  $*log-file.spurt(
+    "Do rename, Current roots: $!config.get-roots()\n",
+    :append
+  ) if $*verbose-output;
+
   my Bool $sts-ok = False;
    my Str $new-category = $new-cat-entry.get-text;
 
@@ -240,13 +251,14 @@ method do-category-rename (
 
   else {
     # Move members to other category and container
-    my Str $oroot = $old-roots-dd.get-dropdown-text;
-    my Str $nroot = $new-roots-dd.get-dropdown-text;
-    my Str $oroot-path = $!config.get-root-path($oroot);
-    my Str $nroot-path = $!config.get-root-path($nroot);
+    my Str $oroot-title = $old-roots-dd.get-dropdown-text;
+    my Str $nroot-title = $new-roots-dd.get-dropdown-text;
+    my Str $oroot-path = $!config.get-root-path($oroot-title);
+    my Str $nroot-path = $!config.get-root-path($nroot-title);
     my Str $ocat = $old-category-dd.get-dropdown-text;
     my Str $ocont = $old-container-dd.get-dropdown-text;
     my Str $ncont = $new-container-dd.get-dropdown-text;
+
     my Str $message = $!config.move-category(
       $ocat, $ocont, $oroot-path, $new-category, $ncont, $nroot-path
     );
@@ -256,22 +268,29 @@ method do-category-rename (
     }
 
     else {
-      $*main-window.sidebar.update-sidebar( $ncont, $nroot);
-      $*main-window.sidebar.update-sidebar( $ocont, $oroot)
-        if $ncont ne $ocont or $nroot ne $oroot;
+      $*main-window.sidebar.update-sidebar( $ncont, $nroot-title);
+      $*main-window.sidebar.update-sidebar( $ocont, $oroot-title)
+        if $ncont ne $ocont or $nroot-path ne $oroot-path;
 
 #      $*main-window.sidebar.fill-sidebar;
 #      if $ocat eq $!config.get-current-category and
 #         $ocont eq $!config.get-current-container
 #      {
         $*main-window.sidebar.select-category(
-          :category($new-category), :container($ncont), :root-dir($nroot)
+          :category($new-category), :container($ncont), :root-dir($nroot-path)
         );
 #      }
 
       $sts-ok = True;
     }
   }
+
+#`{{
+  $*log-file.spurt(
+    "end rename, Current roots: $!config.get-roots()\n",
+    :append
+  ) if $*verbose-output;
+}}
 
   $dialog.destroy-dialog if $sts-ok;
 }
