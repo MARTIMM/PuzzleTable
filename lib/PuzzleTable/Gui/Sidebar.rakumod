@@ -377,9 +377,8 @@ method select-category (
   ) if $*verbose-output;
 }}
 
-  my $root-text =
-    (?$root-dir and $*multiple-roots) ?? "Root path $root-dir, " !! '';
-  my Str $title = "Puzzle Table Display: {$root-text}Container $container, Category $category";
+  my Str $root-title = $!config.get-root-title($root-dir);
+  my Str $title = "Category $category in $container at $root-title";
   $*main-window.application.application-window.set-title($title)
     if ?$*main-window.application.application-window;
 
@@ -392,6 +391,11 @@ method select-category (
 
   # Fill the puzzle table with new puzzles
   $*main-window.table.add-puzzles-to-table($puzzles);
+
+  $*log-file.spurt(
+    "Select ategory: $category - $container - $root-title\n",
+    :append
+  ) if $*verbose-output;
 }
 
 #-------------------------------------------------------------------------------
@@ -447,7 +451,8 @@ method update-sidebar ( Str:D $container, Str:D $root-title ) {
   ) if $*verbose-output;
 }}
   $*log-file.spurt(
-    "Time to update sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
+    "Time to update sidebar for $container at $root-title: " ~
+    (now - $t0).fmt('%.1f sec.') ~ ".\n",
     :append
   ) if $*verbose-output;
 }
