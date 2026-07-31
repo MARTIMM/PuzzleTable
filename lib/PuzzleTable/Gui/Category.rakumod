@@ -228,12 +228,12 @@ method do-category-rename (
   PuzzleTable::Gui::DropDown :$new-roots-dd,
   Gnome::Gtk4::Entry :$new-cat-entry,
 ) {
-
+#`{{
   $*log-file.spurt(
     "Do rename, Current roots: $!config.get-roots()\n",
     :append
   ) if $*verbose-output;
-
+}}
   my Bool $sts-ok = False;
    my Str $new-category = $new-cat-entry.get-text;
 
