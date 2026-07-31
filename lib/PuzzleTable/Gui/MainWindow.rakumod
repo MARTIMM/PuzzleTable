@@ -235,9 +235,9 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
     $config.add-category( $opt-category, $opt-container, :$lockable);
   }
 
-  $config.select-category(
-    $opt-category, $config.get-current-container, $config.get-current-root
-  );
+#  $config.select-category(
+#    $opt-category, $config.get-current-container, $config.get-current-root
+#  );
   $!sidebar.set-category(
     $opt-category, $opt-container, :root-dir($config.get-current-root)
   );
