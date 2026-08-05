@@ -60,14 +60,14 @@ method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 #`{{
 Construction of the sidebar:
 
-  The view is a ScrolledWindow with a grid as its child
+  The view is a ScrolledWindow with a grid as its child.
     The grid has rows for expanders holding a puzzle root. At the start, there
-    is only one at '~/.config/io.github.martimm.puzzle-table/'.
+    is only one root at '~/.config/io.github.martimm.puzzle-table/'.
     Each expander has a grid.
-      The grid has rows for expanders holding category containers
-      Each grid row has 5 columns for each category in the container
-        a button to show the puzzles in the category
-        and 4 numbers; nbr puzzles, nbr unplayed, nbr unfinished, nbr finished
+      The grid has rows for expanders holding category containers.
+      Each grid row has 5 columns for each category in the container.
+        a button to show the puzzles in the category.
+        and 4 numbers; nbr puzzles, nbr unplayed, nbr unfinished, nbr finished.
 }}
 
   my $t0 = now;
@@ -376,6 +376,7 @@ method select-category (
     :append
   ) if $*verbose-output;
 }}
+  my $t0 = now;
 
   my Str $root-title = $!config.get-root-title($root-dir);
   my Str $title = "Category $category in $container at $root-title";
@@ -393,7 +394,8 @@ method select-category (
   $*main-window.table.add-puzzles-to-table($puzzles);
 
   $*log-file.spurt(
-    "Select ategory: $category - $container - $root-title\n",
+    "Select category: $category - $container - $root-title: " ~
+    (now - $t0).fmt('%.1f sec.') ~ ".\n",
     :append
   ) if $*verbose-output;
 }
