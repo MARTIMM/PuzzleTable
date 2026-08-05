@@ -35,13 +35,11 @@ method container-add ( N-Object $parameter ) {
    :dialog-header('Add container Dialog')
   ) {
     my PuzzleTable::Gui::DropDown $roots-dd;
-    if $*multiple-roots {
-      $roots-dd .= new;
-      $roots-dd.fill-roots($!config.get-current-root);
 
-      # Show dropdown
-      .add-content( 'Select a root', $roots-dd);
-    }
+    # Root dropdown and add to content
+    $roots-dd .= new;
+    $roots-dd.fill-roots($!config.get-current-root);
+    .add-content( 'Select a root', $roots-dd);
 
     # Show entry for input
     .add-content(
@@ -65,10 +63,8 @@ method do-container-add (
   PuzzleTable::Gui::DropDown :$roots-dd
 ) {
   my Bool $sts-ok = False;
-  my Str $root-dir;
-  if $*multiple-roots {
-    $root-dir = $roots-dd.get-dropdown-text;
-  }
+  my Str $root-title = $roots-dd.get-dropdown-text;
+  my Str $root-dir = $!config.get-root-path($root-title);
 
   my Str $container = $entry.get-text.tc;
   if ! $container {
@@ -80,7 +76,10 @@ method do-container-add (
   }
 
   else {
+    # NOTE: cannot use update-sidebar because there isn't yet
+    # an entry in the expander for containers.
     $*main-window.sidebar.fill-sidebar;
+#    $*main-window.sidebar.update-sidebar( $container, $root-title);
     $sts-ok = True;
   }
 
