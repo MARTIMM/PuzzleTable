@@ -66,7 +66,7 @@ method category-add ( N-Object $parameter ) {
     $entry.set-text($!config.get-current-category);
     .add-content( 'Specify a new category', $entry);
 
-    # Show checkbutton to make the category locakbel
+    # Show checkbutton to make the category lockable
     .add-content(
       '', my Gnome::Gtk4::CheckButton $check-button .= new-with-label(
         'Lockable Category'
