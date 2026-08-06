@@ -14,6 +14,12 @@ use v6.d;
 
 use PuzzleTable::Config;
 
+use GnomeTools::Gtk::DND;
+
+use Gnome::GObject::T-value:api<2>;
+
+use Gnome::Gdk4::T-enums:api<2>;
+
 use Gnome::Gtk4::Picture:api<2>;
 use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::Button:api<2>;
@@ -22,13 +28,17 @@ use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::Expander:api<2>;
 use Gnome::Gtk4::T-enums:api<2>;
 use Gnome::Gtk4::ScrolledWindow:api<2>;
+use Gnome::Gtk4::DropTarget:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
 #-------------------------------------------------------------------------------
 unit class PuzzleTable::Gui::Sidebar:auth<github:MARTIMM>;
-also is Gnome::Gtk4::ScrolledWindow;
+#also is Gnome::Gtk4::ScrolledWindow;
+
+# Make readable because the mainwindow wants to put it in a grid
+has Gnome::Gtk4::ScrolledWindow $.scrolled-window;
 
 has PuzzleTable::Config $!config;
 
@@ -41,15 +51,15 @@ has Gnome::Gtk4::Grid() $!sidebar-grid;
 submethod BUILD ( ) {
   $!config .= instance;
 
-$*log-file.spurt( "$?LINE BUILD sidebar.\n", :append);
+#$*log-file.spurt( "$?LINE BUILD sidebar.\n", :append);
+  $!scrolled-window .= new-scrolledwindow;
+#  $!scrolled-window.set-halign(GTK_ALIGN_FILL);
+  $!scrolled-window.set-valign(GTK_ALIGN_FILL);
+#  $!scrolled-window.set-vexpand(True);
+  $!scrolled-window.set-propagate-natural-width(True);
 
-#  self.set-halign(GTK_ALIGN_FILL);
-  self.set-valign(GTK_ALIGN_FILL);
-#  self.set-vexpand(True);
-  self.set-propagate-natural-width(True);
-
-#  self.set-min-content-width(200);
-  self.set-max-content-width(450);
+#  $!scrolled-window.set-min-content-width(200);
+  $!scrolled-window.set-max-content-width(450);
 
   self.fill-sidebar(:init);
 }
@@ -133,9 +143,9 @@ note "$?LINE $nbr-roots, $root-nbr, $root-dir";
 
   # The scroll window widget will always cleanup the child if there was
   # a grid installed before
-  self.set-child($!sidebar-grid);
-#note "$?LINE $!sidebar-grid.gist(), ", self.get-child.gist;
-my Gnome::Gtk4::Grid() $sg = self.get-child;
+  $!scrolled-window.set-child($!sidebar-grid);
+#note "$?LINE $!sidebar-grid.gist(), ", $!scrolled-window.get-child.gist;
+my Gnome::Gtk4::Grid() $sg = $!scrolled-window.get-child;
 note "$?LINE ", $sg.gist;
 note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
 my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
@@ -164,11 +174,17 @@ method set-category-grid (
   # In each expander the categories are placed
   my @categories = $!config.get-categories( $container, $root-dir);
   for @categories -> $category {
+    # Each category is a button. When clicked, it shows the puzzles
+    # of this category on the puzzle table
     my Gnome::Gtk4::Button $category-button = self!category-button(
       $category, $container, $root-dir, $expander-color-count
     );
 
     $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
+
+    # Setup DND tae=rget on the button
+    my GnomeTools::Gtk::DND $dnd .= new;
+    $dnd.set-droptarget( self, $category-button, :$dnd);
 
     # Get information of each subcategory
     self.sidebar-status(
@@ -184,6 +200,39 @@ method set-category-grid (
 }
 
 #-------------------------------------------------------------------------------
+method drop-accept (
+  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
+) {
+  my Bool $accept = $dnd.check-accept( $drop, 'text');
+note "\nDrop can be accepted:" if $accept;
+  $accept
+}
+
+#-------------------------------------------------------------------------------
+method drop (
+  N-Value() $n-value, Rat() $x, Rat() $y,
+  Gnome::Gtk4::DropTarget() :_native-object($dt),
+  GnomeTools::Gtk::DND :$dnd
+  --> Bool
+) {
+note "\n$?LINE drop, x, y = $x, $y";
+  my ( Bool $internal, Str $value );
+  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
+
+note "Internal drop: $internal\nDropped value(s):";
+note '  ', $value.split("\n").join("\n  ");
+
+  True
+}
+
+#-------------------------------------------------------------------------------
+method drop-enter ( Rat() $x, Rat() $y --> UInt ) {
+note "Enter dropzone at $x, $y";
+  GDK_ACTION_COPY;# +| GDK_ACTION_MOVE +| GDK_ACTION_LINK
+}
+
+#-------------------------------------------------------------------------------
+# Make a category button to display the puzzles in this category
 method !category-button (
   Str:D $category, Str:D $container, Str:D $root-dir, Int $expander-color-count
   --> Gnome::Gtk4::Button
@@ -416,7 +465,7 @@ method update-sidebar ( Str:D $container, Str:D $root-title ) {
 
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
-#  $!sidebar-grid = self.get-child;
+#  $!sidebar-grid = $!scrolled-window.get-child;
 #note "$?LINE ", $!sidebar-grid.gist;
 #note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
   # Get the expander of the particular root
