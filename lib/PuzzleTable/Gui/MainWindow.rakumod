@@ -217,7 +217,7 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   # We need the table and category management here already
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
   $!table .= new-scrolledwindow unless ?$!table;
-  $!sidebar .= new-scrolledwindow unless $!sidebar;
+  $!sidebar .= new unless $!sidebar;
 
   # Process container option. It is set to 'Default' otherwise.
   my Str $opt-container = 'Default';
@@ -330,7 +330,7 @@ method window-content ( --> Gnome::Gtk4::Widget ) {
     .set-margin-end(10);
 
     .attach( $!toolbar, 0, 0, 2, 1);
-    .attach( $!sidebar, 0, 1, 1, 3);
+    .attach( $!sidebar.scrolled-window, 0, 1, 1, 3);
     .attach( $!table, 1, 2, 1, 1);
     .attach( $!statusbar, 1, 3, 1, 1);
 
