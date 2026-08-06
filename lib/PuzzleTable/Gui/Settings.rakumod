@@ -3,7 +3,6 @@ use v6.d;
 
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Table;
-#use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Dialog;
 
 use Gnome::Gtk4::PasswordEntry:api<2>;
