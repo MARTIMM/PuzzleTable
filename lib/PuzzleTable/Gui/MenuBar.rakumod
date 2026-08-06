@@ -9,7 +9,6 @@ use PuzzleTable::Config;
 use PuzzleTable::Gui::Container;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Puzzle;
-#use PuzzleTable::Gui::Sidebar;
 use PuzzleTable::Gui::Settings;
 use PuzzleTable::Gui::IconButton;
 use PuzzleTable::Gui::Help;
