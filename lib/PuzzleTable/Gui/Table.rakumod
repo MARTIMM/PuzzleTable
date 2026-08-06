@@ -98,7 +98,7 @@ method clear-table ( Bool :$init = False ) {
     .set-factory($!signal-factory);
     .set-min-columns(3);
     .set-max-columns(10);
-    .set-enable-rubberband(True);
+    .set-enable-rubberband(False);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
@@ -149,6 +149,7 @@ multi method add-puzzle-to-table ( Str $category, Str $puzzle-id ) {
 
   # Coming from MainWindow.remote-options() it needs some more fields
   if ?$puzzle {
+    # A puzzle id given as an argument. Unique per category.
     $puzzle<PuzzleID> = $puzzle-id;
     $puzzle<Category> = $category;
     $puzzle<Image> = PUZZLE_TABLE_DATA ~ "$category/$puzzle-id/image400.jpg";
