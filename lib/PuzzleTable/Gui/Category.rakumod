@@ -121,6 +121,9 @@ method do-category-add (
       $*main-window.sidebar.update-sidebar( $container, $root-title);
       $sts-ok = True;
     }
+
+    # Do not go to the new category because there is nothing to look at.
+    # Probably want to move puzzles to the new category from the current one.
   }
 
   $dialog.destroy-dialog if $sts-ok;
