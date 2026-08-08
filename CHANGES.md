@@ -1,9 +1,11 @@
+* 2026 08 08 0.9.0
+  * Add DND to move puzzles from one category to another. For this, an icon is placed on the toolbar. After selecting the puzzles, this icon can be dragged to a category. After the drop, the puzzles are moved, the sidebar updated and the puzzletable refreshed.
+
 * 2026 06 28 0.8.2
   * Inhibit use of `Control-C`.
   * Add logging to file `/tmp/puzzle-table.log` when `-v` or `--verbose` is used.
   * Add timing code and log to logfile. Done to find out where time is spent.
   * Do not always save category data to file. Done at least at the end.
-  * Add DND to move puzzles from one category to another. For this, an icon is placed on the toolbar. After selecting the puzzles, this icon can be dragged to a category. After the drop, the puzzles are moved, the sidebar updated and the puzzletable refreshed.
 
 * 2026 06 21 0.8.1
   * Make use of **GnomeTools::Gtk::Application** and **GnomeTools::Gio::Menu**.
