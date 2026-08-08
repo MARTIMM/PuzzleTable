@@ -3,6 +3,7 @@ use NativeCall;
 
 use PuzzleTable::Types;
 use PuzzleTable::Config;
+use PuzzleTable::Config::DragInfo;
 use PuzzleTable::Gui::TableItem;
 
 use Gnome::Gtk4::GridView:api<2>;
@@ -39,6 +40,7 @@ also is Gnome::Gtk4::ScrolledWindow;
 
 
 has PuzzleTable::Config $!config;
+has PuzzleTable::Config::DragInfo $!drag-info;
 
 has Gnome::Gtk4::StringList $.puzzle-objects;
 has Gnome::Gtk4::MultiSelection $.multi-select;
@@ -61,6 +63,7 @@ submethod BUILD ( ) {
   );
 
   $!config .= instance;
+  $!drag-info .= instance;
 
   self.set-halign(GTK_ALIGN_FILL);
   self.set-vexpand(True);
@@ -98,7 +101,7 @@ method clear-table ( Bool :$init = False ) {
     .set-factory($!signal-factory);
     .set-min-columns(3);
     .set-max-columns(10);
-    .set-enable-rubberband(False);
+    .set-enable-rubberband(True);
 
     $!config.set-css( .get-style-context, :css-class<puzzle-grid>);
   }
@@ -225,4 +228,5 @@ method selection-changed ( guint $position, guint $n-items ) {
 
   $*main-window.statusbar.remove-message;
   $*main-window.statusbar.set-status($msg);
+#  $!drag-info.set-puzzles($msg);
 }
