@@ -1,79 +1,9 @@
-
----
-
-### TODO
-* menu and toolbox for some menu entries
-  * file
-    * [ ] quit, add dialog in between
-    * [ ] refresh sidebar
-  * container
-    * [x] add
-    * [x] delete, only when empty
-  * category
-    * [x] add
-    * [x] rename
-    * [x] delete, only when empty
-    * [ ] move a category
-    * [x] lock
-  * puzzle
-    * [x] move selected puzzles
-    * [x] archive selected puzzles
-  * help
-    * [x] about
-    * [x] shortcut keys overview
-    * [ ] user defined shortcuts
-
-* command line
-  * [x] add `--restore=<name>` option to restore an archive.
-  * [ ] add `--palapeli=<type>` option to select preferred program.
-  * [x] By default the location where everything is to be found is `~/.config/io.github.martimm.puzzle-table`. The following files and directories are;
-      * `global-config.yaml`: Global configuration. Can be changed with `--root-global`.
-      * `puzzle-data.css`: The css file.
-      * `images/`: The images for buttons.
-      * `puzzle-table-data/`: Directory for puzzles. This can be changed with `--root-tables` option.
-      * `puzzle-trash/`: Directory for removed puzzles.
-  * [ ] add `--root-global=<path>` 
-  * [ ] add `--root-tables=<path>[,<path>, …]` option to specify a preferred puzzle table location.
-  * [ ] generating palapeli puzzles from commandline -> C++ hook into Palapeli.
-
-* shortcut keys
-  * [x] `<CTRL>Q` to quit program
-
-* program methods
-  * [x] rename and move archiving operations into one module
-  * [ ] drag and drop.
-  * [x] remember state of an opened (expanded) container
-  * [x] need to add key `<categories>` in containers to add other keys
-  * [ ] add state info to containers to sum up states of contained categories
-  * [x] importing puzzles should be shown in table and counts updated
-  * update dialogs
-    * [ ] work with focus and return chars in entries.
-    * [x] show more space in a dialog. css font size.
-    * [x] filled in values if possible on entries and drop down lists.
-    * [x] extra dialogs to delete empty containers and categories
-  * [x] puzzle table display update
-  * [ ] fix needed; sometimes quit does not end program
-
-* storage
-  * [ ] When growing too large, configurations should be divided over several locations. Current default location is at `/home/marcel/.config/io.github.martimm.puzzle-table/` and has following files and directories
-    * `images`. Not duplicated.
-    * `puzzle-data.css`. Not duplicated.
-    * `puzzle-table-data`. Here is the puzzle data stored, so it must be duplicated.
-    * `puzzle-trash`. Here is the puzzle trash stored, so it must also be duplicated.
-    The module **PuzzleTable::Config::Categories** gets the root already from an argument to BUILD() so we can maintain several instances of different roots. Also, the config file `categories.yaml` must be split because only the _containers_ key is different for the several roots.
-    * [x] Split fixed portion in `categories.yaml` into `<root>/global-config.yaml`.
-    * [x] Because of this, the top level key in `categories.yaml` can be removed because we have moved the other toplevel keys to the `global-config.yaml`.
-    * [ ] The instance of **PuzzleTable::Config::Categories** is saved in **PuzzleTable::Config**. Because of using handles on the class we cannot have an array to store several **::Categories** classes. So the solution to this is to maintain it in the **::Categories** class.
-    * The program is fixed to a location in `~/.config`. This must now be controlled by new options. When options are absent the program defaults to the default location. The statement `has Hash $.categories-config;` found the module, can be extended holding a root path in its top level key while the the second level becomes the container name keys. The paths are unique. where the 
-      * [ ] --root-global=\<path>. Option to set the location for all global data like the `<root>/config.yaml` and images. By default in the `~/.config` directory. This can be set only once when the first instance of the program starts.
-      * [ ] --root-table=\<path>,\<path>,…. This points to the directory where the table data and trash archive is stored. This can be set multiple times and defaults to the path set by the --root-global option.
-
----
 * 2026 06 28 0.8.2
   * Inhibit use of `Control-C`.
   * Add logging to file `/tmp/puzzle-table.log` when `-v` or `--verbose` is used.
   * Add timing code and log to logfile. Done to find out where time is spent.
   * Do not always save category data to file. Done at least at the end.
+  * Add DND to move puzzles from one category to another. For this, an icon is placed on the toolbar. After selecting the puzzles, this icon can be dragged to a category. After the drop, the puzzles are moved, the sidebar updated and the puzzletable refreshed.
 
 * 2026 06 21 0.8.1
   * Make use of **GnomeTools::Gtk::Application** and **GnomeTools::Gio::Menu**.
