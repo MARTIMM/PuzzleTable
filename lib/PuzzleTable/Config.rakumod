@@ -58,7 +58,7 @@ submethod BUILD ( Str:D :$root-global ) {
   for <start-puzzle-64.png edit-puzzle-64.png
        add-cat-64.png add-cont-64.png ren-cat-64.png rem-cat-64.png
        move-64.png remove-64.png archive-64.png config-64.png
-       icons8-padlock-64.png icons8-lock-64.png
+       icons8-padlock-64.png icons8-lock-64.png icons8-drag-64.png
       > -> $i {
     $png-file = [~] DATA_DIR, 'images/', $i;
     %?RESOURCES{$i}.copy($png-file) unless $png-file.IO.e;
