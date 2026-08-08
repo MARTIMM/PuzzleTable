@@ -6,6 +6,7 @@ use GnomeTools::Gio::Menu;
 
 use PuzzleTable::Types;
 use PuzzleTable::Config;
+use PuzzleTable::Config::DragInfo;
 use PuzzleTable::Gui::Container;
 use PuzzleTable::Gui::Category;
 use PuzzleTable::Gui::Puzzle;
@@ -25,6 +26,7 @@ has PuzzleTable::Gui::Category $!cat;
 has PuzzleTable::Gui::Container $!cont;
 has PuzzleTable::Gui::Settings $!set;
 has PuzzleTable::Gui::Help $!help;
+has PuzzleTable::Config::DragInfo $!drag-info;
 
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
@@ -33,7 +35,6 @@ submethod BUILD ( ) {
   $!help .= new;
   $!cat .= new;
   $!cont .= new;
-
 }
 
 #-------------------------------------------------------------------------------
@@ -104,6 +105,10 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   $help-menu.item(
     'Show Shortcuts Window', $!help, 'help-show-shortcuts-window'
   );
+
+  # Special case. Not in menu but is used to place an icon on the toolbar.
+  $!drag-info .= instance;
+  $!drag-info.setup-drag;
 
   $bar
 }
