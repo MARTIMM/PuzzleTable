@@ -115,7 +115,7 @@ note "$?LINE $nbr-roots, $root-nbr, $root-dir";
     # Loop through all containers and make expanders for each of them
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
-      # Fill a grid with category rows in $container and $root-dir
+      # Fill a grid with categories in $container and $root-dir
       my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
         $container, $root-dir, $expander-color-count
       );
@@ -150,10 +150,10 @@ note "$?LINE $nbr-roots, $root-nbr, $root-dir";
   $!scrolled-window.set-child($!sidebar-grid);
 #note "$?LINE $!sidebar-grid.gist(), ", $!scrolled-window.get-child.gist;
 my Gnome::Gtk4::Grid() $sg = $!scrolled-window.get-child;
-note "$?LINE ", $sg.gist;
-note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
+#note "$?LINE ", $sg.gist;
+#note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
 my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
-note "$?LINE ", $ex.gist;
+#note "$?LINE ", $ex.gist;
 
   if $init {
 #    my Str $root-dir = @roots[0];
@@ -175,7 +175,7 @@ method set-category-grid (
   my Int $cat-row-count = 0;
   my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
-  # In each expander the categories are placed
+  # Get categories in for $container and $root-dir.
   my @categories = $!config.get-categories( $container, $root-dir);
   for @categories -> $category {
     # Each category is a button. When clicked, it shows the puzzles
@@ -188,8 +188,11 @@ method set-category-grid (
 
     # Setup DND tae=rget on the button
     my GnomeTools::Gtk::DND $dnd .= new;
-    $dnd.set-droptarget(
-      self, $category-button, :$dnd, :$category, :$container, :$root-dir
+    $dnd.set-droptarget( Any, $category-button);
+    $dnd.set-droptarget-event( self, 'category-drop-accept', 'accept', :$dnd);
+    $dnd.set-droptarget-event(
+      self, 'category-drop', 'drop',
+      :$dnd, :$category, :$container, :$root-dir
     );
 
     # Get information of each subcategory
@@ -206,7 +209,7 @@ method set-category-grid (
 }
 
 #-------------------------------------------------------------------------------
-method drop-accept (
+method category-drop-accept (
   Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
 ) {
   my Bool $accept = $dnd.check-accept( $drop, 'text');
@@ -215,7 +218,7 @@ method drop-accept (
 }
 
 #-------------------------------------------------------------------------------
-method drop (
+method category-drop (
   N-Value() $n-value, Rat() $x, Rat() $y,
   Gnome::Gtk4::DropTarget() :_native-object($dt),
   GnomeTools::Gtk::DND :$dnd, Str :$category, Str :$container, Str :$root-dir
