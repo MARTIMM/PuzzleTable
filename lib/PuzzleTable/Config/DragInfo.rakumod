@@ -52,8 +52,10 @@ method setup-drag ( ) {
     .set-size-request( 64, 64);
   }
 
+  # Append the icon on the toolbar
   $*main-window.toolbar.append($image);
 
+  # Make the icon a dragsource.
   $!dnd.set-dragsource( self, $image, '');
 }
 
@@ -93,8 +95,7 @@ note "\ndrag-begin: $x, $y";
     ( $root, $container, $category, $puzzles.join(' ') ).join('_||_')
     if ?$puzzles;
 
-  # Set content. Can use multiple strings. Interface has variable list solved
-  # by providing pairs of type/value. In this case gchar-ptr/$!drag-content
+  # Set content.
   my Gnome::Gdk4::ContentProvider $cp .= new-typed(
     G_TYPE_STRING, gchar-ptr, $!drag-content
   );
@@ -110,7 +111,8 @@ method drag-begin (
   Gnome::Gtk4::Picture :$pic,
 ) {
   note "\ndrag-begin";
-#    $ds.set-icon( $pic.get-paintable, -20, 20);
+#    $source.set-icon( $pic.get-paintable, -20, 20);
+
 
   # Set content. Can use multiple strings. Interface has variable list solved
   # by providing pairs of type/value. In this case gchar-ptr/$!drag-content
