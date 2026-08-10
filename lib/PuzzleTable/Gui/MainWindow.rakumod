@@ -43,6 +43,7 @@ unit class PuzzleTable::Gui::MainWindow:auth<github:MARTIMM>;
 has GnomeTools::Gtk::Application $.application handles <add-action>;
 has Int $.exit-code = 0;
 
+has PuzzleTable::Config $!config;
 
 
 #has Gnome::Gtk4::Application $.application;
@@ -115,9 +116,9 @@ method local-options ( --> Int ) {
   # All faulty and wrong arguments thrown by Getopt::Long are caught here.
   CATCH {
     default {
+      # The only place where $!config cannot be used yet
       $*log-file.spurt( .message, :append);
       $*log-file.spurt( Backtrace.new.nice, :append);
-
       self.usage;
 
       $exit-code = 1;
@@ -129,9 +130,6 @@ method local-options ( --> Int ) {
 
   # Test verbosity option
   $*verbose-output = ?$o<v>;
-
-  # Clear logfile if verbose is True
-  $*log-file.spurt('');
 
 #`{{TODO info must come from global-config.yaml
   # This option is a comma separated list of paths
@@ -151,7 +149,10 @@ method local-options ( --> Int ) {
   # First time will initialize $config using the arguments
   my PuzzleTable::Config $config;
 #  $config .= instance( $root-global, $root-tables);
-  $config .= instance($root-global);
+  $!config .= instance($root-global);
+
+  # Clear logfile
+  $!config.clear-log;
 
   # Handle the simple options here which do not require the primary instance
   if $o<version> {
@@ -182,8 +183,8 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   # Whenever a crash happens, it is caught here.
   CATCH {
     default {
-      $*log-file.spurt( .message, :append);
-      $*log-file.spurt( Backtrace.new.nice, :append);
+      $!config.log(.message);
+      $!config.log(Backtrace.new.nice);
       $!application.quit;
 
 #      $exit-code = 1;

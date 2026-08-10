@@ -55,7 +55,6 @@ submethod BUILD ( ) {
   $!config .= instance;
   $!drag-info .= instance;
 
-#$*log-file.spurt( "$?LINE BUILD sidebar.\n", :append);
   $!scrolled-window .= new-scrolledwindow;
 #  $!scrolled-window.set-halign(GTK_ALIGN_FILL);
   $!scrolled-window.set-valign(GTK_ALIGN_FILL);
@@ -124,6 +123,16 @@ note "$?LINE $nbr-roots, $root-nbr, $root-dir";
         $container, $root-dir, $expander-color-count, $category-grid
       );
 
+      # Setup DND tae=rget on the button
+      my GnomeTools::Gtk::DND $dnd .= new;
+      $dnd.set-droptarget( Any, $cat-expander);
+      $dnd.set-droptarget-event(
+        self, 'cat-expander-drop-accept', 'accept', :$dnd
+      );
+      $dnd.set-droptarget-event(
+        self, 'cat-expander-drop', 'drop', :$dnd, :$container, :$root-dir
+      );
+
       $container-grid.attach( $cat-expander, 0, $row-count, 5, 1);
       $row-count++;
     }
@@ -161,10 +170,79 @@ my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
     self.select-category( :category<Default>, :container<Default>, :$root-dir);
   }
 
-  $*log-file.spurt(
-    "Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.\n",
-    :append
-  ) if $*verbose-output;
+  $!config.log("Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.");
+}
+
+#-------------------------------------------------------------------------------
+method cat-expander-drop-accept (
+  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
+) {
+  my Bool $accept = $dnd.check-accept( $drop, 'text');
+  $!config.log("Drop on category expander can be accepted: $accept");
+  $accept
+}
+
+#-------------------------------------------------------------------------------
+method cat-category-drop (
+  N-Value() $n-value, Rat() $x, Rat() $y,
+  Gnome::Gtk4::DropTarget() :_native-object($dt),
+  GnomeTools::Gtk::DND :$dnd, Str :$category, Str :$container, Str :$root-dir
+  --> Bool
+) {
+
+
+note "\n$?LINE drop, x, y = $x, $y";
+  my ( Bool $internal, Str $value );
+  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
+
+  my Bool $drop-ok = False;
+  if $internal {
+    my ( $from-root, $from-container, $from-category, $from-puzzles ) =
+       $value.split("_||_");
+    $drop-ok = ?$from-puzzles;
+
+note "Internal drop: $internal\nDropped value:";
+note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
+
+note $from-puzzles.split(/\s+/).gist;
+    my @puzzles = ();
+    for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
+      @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
+    }
+
+    for @puzzles -> $puzzle-id {
+note "move puzzle $puzzle-id";
+
+      my PuzzleTable::Config::Category $from-config-category .= new(
+        :category-name($from-category),
+        :container($from-container),
+        :root-dir($from-root)
+      );
+
+      $!config.move-puzzle(
+        $from-config-category, $category, $container, $root-dir, $puzzle-id
+      );
+
+      $*main-window.sidebar.update-sidebar(
+        $from-container, $!config.get-root-title($from-root)
+      );
+      $*main-window.sidebar.update-sidebar(
+        $container, $!config.get-root-title($root-dir)
+      );
+
+      # Select the source category again to display the changes
+      $*main-window.sidebar.select-category(
+        :category($from-category), :container($from-container),
+        :root-dir($from-root)
+      );
+    }
+  }
+
+  else {
+    note "Dropping $value not accepted";
+  }
+
+  $drop-ok
 }
 
 #-------------------------------------------------------------------------------
@@ -279,6 +357,7 @@ note "move puzzle $puzzle-id";
 }
 
 #-------------------------------------------------------------------------------
+# Notion for all drop targets
 method drop-enter ( Rat() $x, Rat() $y --> UInt ) {
 note "Enter dropzone at $x, $y";
   GDK_ACTION_MOVE;
@@ -472,12 +551,6 @@ method select-category (
   Str:D :$category, Str:D :$container, Str:D :$root-dir
 ) {
 #  $!current-category = $category;
-#`{{
-  $*log-file.spurt(
-    "end update, Current roots: $!config.get-roots()\n",
-    :append
-  ) if $*verbose-output;
-}}
   my $t0 = now;
 
   my Str $root-title = $!config.get-root-title($root-dir);
@@ -495,11 +568,7 @@ method select-category (
   # Fill the puzzle table with new puzzles
   $*main-window.table.add-puzzles-to-table($puzzles);
 
-  $*log-file.spurt(
-    "Select category: $category - $container - $root-title: " ~
-    (now - $t0).fmt('%.1f sec.') ~ ".\n",
-    :append
-  ) if $*verbose-output;
+  $!config.log( "Select category: $category - $container - $root-title", :$t0);
 }
 
 #-------------------------------------------------------------------------------
@@ -546,16 +615,5 @@ method update-sidebar ( Str:D $container, Str:D $root-title ) {
 
     $c-count++;
   }
-
-#`{{
-  $*log-file.spurt(
-    "end update, Current roots: $!config.get-roots()\n",
-    :append
-  ) if $*verbose-output;
-}}
-  $*log-file.spurt(
-    "Time to update sidebar for $container at $root-title: " ~
-    (now - $t0).fmt('%.1f sec.') ~ ".\n",
-    :append
-  ) if $*verbose-output;
+  $!config.log( "Time to update sidebar for $container at $root-title", :$t0);
 }

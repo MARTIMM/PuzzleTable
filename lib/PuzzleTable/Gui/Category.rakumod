@@ -143,10 +143,7 @@ Select from menu to rename a category. First select a category from the sidebar.
 
 method category-rename ( N-Object $parameter ) {
 
-  $*log-file.spurt(
-    "Start rename, Current roots: $!config.get-roots()\n",
-    :append
-  ) if $*verbose-output;
+  $!config.log("Start rename, Current roots: $!config.get-roots()");
 
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
@@ -231,12 +228,7 @@ method do-category-rename (
   PuzzleTable::Gui::DropDown :$new-roots-dd,
   Gnome::Gtk4::Entry :$new-cat-entry,
 ) {
-#`{{
-  $*log-file.spurt(
-    "Do rename, Current roots: $!config.get-roots()\n",
-    :append
-  ) if $*verbose-output;
-}}
+
   my Bool $sts-ok = False;
    my Str $new-category = $new-cat-entry.get-text;
 
@@ -287,13 +279,6 @@ method do-category-rename (
       $sts-ok = True;
     }
   }
-
-#`{{
-  $*log-file.spurt(
-    "end rename, Current roots: $!config.get-roots()\n",
-    :append
-  ) if $*verbose-output;
-}}
 
   $dialog.destroy-dialog if $sts-ok;
 }
