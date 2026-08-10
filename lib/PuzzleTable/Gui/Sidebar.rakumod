@@ -125,10 +125,14 @@ note "$?LINE $nbr-roots, $root-nbr, $root-dir";
 
       # Setup DND tae=rget on the button
       my GnomeTools::Gtk::DND $dnd .= new;
-      $dnd.set-droptarget( Any, $cat-expander);
+      $dnd.set-droptarget(
+        self, $cat-expander, :$dnd, :type<category-expander>
+      );
+#`{{
       $dnd.set-droptarget-event(
         self, 'cat-expander-drop-accept', 'accept', :$dnd
       );
+}}
       $dnd.set-droptarget-event(
         self, 'cat-expander-drop', 'drop', :$dnd, :$container, :$root-dir
       );
@@ -173,6 +177,7 @@ my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
   $!config.log("Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.");
 }
 
+#`{{
 #-------------------------------------------------------------------------------
 method cat-expander-drop-accept (
   Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
@@ -181,15 +186,15 @@ method cat-expander-drop-accept (
   $!config.log("Drop on category expander can be accepted: $accept");
   $accept
 }
+}}
 
 #-------------------------------------------------------------------------------
-method cat-category-drop (
+method cat-expander-drop (
   N-Value() $n-value, Rat() $x, Rat() $y,
   Gnome::Gtk4::DropTarget() :_native-object($dt),
-  GnomeTools::Gtk::DND :$dnd, Str :$category, Str :$container, Str :$root-dir
+  GnomeTools::Gtk::DND :$dnd, Str :$container, Str :$root-dir
   --> Bool
 ) {
-
 
 note "\n$?LINE drop, x, y = $x, $y";
   my ( Bool $internal, Str $value );
@@ -204,12 +209,26 @@ note "\n$?LINE drop, x, y = $x, $y";
 note "Internal drop: $internal\nDropped value:";
 note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
 
+    # Add category to list. The category is a used to drop puzzles in.
+    # Message gets defined if something is wrong.
+    my Str $category = 'Drop';
+    my Str $msg = $!config.add-category(
+      $category, $container, :$root-dir,
+      :lockable(
+        $!config.is-category-lockable(
+          $from-category, $from-container, $from-root
+        )
+      )
+    );
+
 note $from-puzzles.split(/\s+/).gist;
+    # Convert indices to puzzle ids
     my @puzzles = ();
     for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
       @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
     }
 
+    # Move puzzle to new category
     for @puzzles -> $puzzle-id {
 note "move puzzle $puzzle-id";
 
@@ -266,11 +285,10 @@ method set-category-grid (
 
     # Setup DND tae=rget on the button
     my GnomeTools::Gtk::DND $dnd .= new;
-    $dnd.set-droptarget( Any, $category-button);
-    $dnd.set-droptarget-event( self, 'category-drop-accept', 'accept', :$dnd);
+    $dnd.set-droptarget( self, $category-button, :$dnd, :type<category>);
+#    $dnd.set-droptarget-event( self, 'category-drop-accept', 'accept', :$dnd);
     $dnd.set-droptarget-event(
-      self, 'category-drop', 'drop',
-      :$dnd, :$category, :$container, :$root-dir
+      self, 'category-drop', 'drop', :$dnd, :$category, :$container, :$root-dir
     );
 
     # Get information of each subcategory
@@ -284,15 +302,6 @@ method set-category-grid (
   }
 
   $category-grid
-}
-
-#-------------------------------------------------------------------------------
-method category-drop-accept (
-  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
-) {
-  my Bool $accept = $dnd.check-accept( $drop, 'text');
-#note "\nDrop can be accepted:" if $accept;
-  $accept
 }
 
 #-------------------------------------------------------------------------------
@@ -354,6 +363,16 @@ note "move puzzle $puzzle-id";
   }
 
   $drop-ok
+}
+
+#-------------------------------------------------------------------------------
+method drop-accept (
+  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd, Str :$type --> Bool
+) {
+  my Bool $accept = $dnd.check-accept( $drop, 'text');
+  $!config.log("Drop on $type can be accepted: $accept");
+note "\nDrop can be accepted:" if $accept;
+  $accept
 }
 
 #-------------------------------------------------------------------------------

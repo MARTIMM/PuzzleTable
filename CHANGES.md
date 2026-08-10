@@ -1,5 +1,6 @@
 * 2026 08 08 0.9.0
   * Add DND to move puzzles from one category to another. For this, an icon is placed on the toolbar. After selecting the puzzles, this icon can be dragged to a category. After the drop, the puzzles are moved, the sidebar updated and the puzzletable refreshed.
+  * Add DND to drop on a category expander. This creates a 'Drop' category which can be renamed afterwards.
 
 * 2026 06 28 0.8.2
   * Inhibit use of `Control-C`.
