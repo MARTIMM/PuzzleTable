@@ -122,3 +122,18 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
   );
   $style-context.add-class($css-class);
 }
+
+#-------------------------------------------------------------------------------
+method log ( Str:D $msg, :$t0 ) {
+  if $*verbose-output {
+    $*log-file.spurt( "$msg.", :append);
+    $*log-file.spurt( " Spent: " ~ (now - $t0).fmt('%.1f sec.'), :append)
+      if ?$t0;
+    $*log-file.spurt( "\n", :append);
+  }
+}
+
+#-------------------------------------------------------------------------------
+method clear-log ( ) {
+  $*log-file.spurt('');
+}
