@@ -16,6 +16,8 @@ use PuzzleTable::Config;
 use PuzzleTable::Config::DragInfo;
 use PuzzleTable::Config::Category;
 
+use PuzzleTable::Gui::Category;
+
 use GnomeTools::Gtk::DND;
 
 use Gnome::GObject::T-value:api<2>;
@@ -255,6 +257,9 @@ note "move puzzle $puzzle-id";
         :root-dir($from-root)
       );
     }
+
+    my PuzzleTable::Gui::Category $category-menu .= new;
+    $category-menu.category-rename2( $category, $container, $root-dir);
   }
 
   else {

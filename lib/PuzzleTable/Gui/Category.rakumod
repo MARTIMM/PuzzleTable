@@ -141,13 +141,20 @@ Select from menu to rename a category. First select a category from the sidebar.
 
 =end pod
 
+# Note multi methods cannot be used when called from native libraries
 method category-rename ( N-Object $parameter ) {
-
-  $!config.log("Start rename, Current roots: $!config.get-roots()");
-
   my Str $select-category = $!config.get-current-category;
   my Str $select-container = $!config.get-current-container;
   my Str $select-root-dir = $!config.get-current-root;
+  self.category-rename2(
+    $select-category, $select-container, $select-root-dir
+  );
+}
+
+method category-rename2 (
+  Str:D $select-category, Str:D $select-container, Str:D $select-root-dir
+) {
+  $!config.log("Start rename, Current roots: $!config.get-roots()");
 
   # Prepare dialog entries.
   # An entry to change the name of the selected category, prefilled with
