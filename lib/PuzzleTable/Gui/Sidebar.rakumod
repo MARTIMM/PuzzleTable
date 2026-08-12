@@ -447,7 +447,7 @@ method sidebar-root-expander (
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
       $!config.set-css(
-        .get-style-context, :css-class<sidebar-expander-label>
+        .get-style-context, :css-class<sidebar-root-expander-label>
       );
     }
 
@@ -457,6 +457,8 @@ method sidebar-root-expander (
 
     .set-expanded($!config.is-root-expanded($root-nbr));
     .set-child($container-grid);
+
+#    $!config.set-css( .get-style-context, :css-class<root-expander>);
 
     .register-signal( self, 'expand-root', 'activate', :$root-nbr);
   }
@@ -493,9 +495,9 @@ method sidebar-category-expander (
       .set-text($container);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
-      $!config.set-css(
-        .get-style-context, :css-class<sidebar-expander-label>
-      );
+#      $!config.set-css(
+#        .get-style-context, :css-class<sidebar-container-expander-label>
+#      );
     }
 
     .set-label-widget($l);
@@ -505,9 +507,11 @@ method sidebar-category-expander (
     .set-child($category-grid);
     .set-expanded($!config.is-expanded( $container, $root-dir));
 
+    $!config.set-css( .get-style-context, :css-class<category-expander>);
+
     .register-signal( self, 'expand-category-container', 'activate', :$container, :$root-dir);
   }
-  
+
   $expander
 }
 
