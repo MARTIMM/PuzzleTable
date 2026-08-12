@@ -243,20 +243,20 @@ note "move puzzle $puzzle-id";
       $!config.move-puzzle(
         $from-config-category, $category, $container, $root-dir, $puzzle-id
       );
-
-      $*main-window.sidebar.update-sidebar(
-        $from-container, $!config.get-root-title($from-root)
-      );
-      $*main-window.sidebar.update-sidebar(
-        $container, $!config.get-root-title($root-dir)
-      );
-
-      # Select the source category again to display the changes
-      $*main-window.sidebar.select-category(
-        :category($from-category), :container($from-container),
-        :root-dir($from-root)
-      );
     }
+
+    $*main-window.sidebar.update-sidebar(
+      $from-container, $!config.get-root-title($from-root)
+    );
+    $*main-window.sidebar.update-sidebar(
+      $container, $!config.get-root-title($root-dir)
+    );
+
+    # Select the source category again to display the changes
+    $*main-window.sidebar.select-category(
+      :category($from-category), :container($from-container),
+      :root-dir($from-root)
+    );
 
     my PuzzleTable::Gui::Category $category-menu .= new;
     $category-menu.category-rename2( $category, $container, $root-dir);
@@ -347,20 +347,20 @@ note "move puzzle $puzzle-id";
       $!config.move-puzzle(
         $from-config-category, $category, $container, $root-dir, $puzzle-id
       );
-
-      $*main-window.sidebar.update-sidebar(
-        $from-container, $!config.get-root-title($from-root)
-      );
-      $*main-window.sidebar.update-sidebar(
-        $container, $!config.get-root-title($root-dir)
-      );
-
-      # Select the source category again to display the changes
-      $*main-window.sidebar.select-category(
-        :category($from-category), :container($from-container),
-        :root-dir($from-root)
-      );
     }
+
+    $*main-window.sidebar.update-sidebar(
+      $from-container, $!config.get-root-title($from-root)
+    );
+    $*main-window.sidebar.update-sidebar(
+      $container, $!config.get-root-title($root-dir)
+    );
+
+    # Select the source category again to display the changes
+    $*main-window.sidebar.select-category(
+      :category($from-category), :container($from-container),
+      :root-dir($from-root)
+    );
   }
 
   else {
