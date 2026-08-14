@@ -44,7 +44,8 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   my GnomeTools::Gio::Menu $file-menu .= new( :parent-menu($bar), :name<File>);
   my Str $actionname = $file-menu.item( 'Quit', self, 'file-quit');
   self.set-toolbar-icon(
-    :icon<application-exit>, :tooltip('Quit application'), :$actionname
+    :path(DATA_DIR ~ 'images/icons8-exit-50W.png'),
+    :tooltip('Quit application'), :$actionname
   );
 
   my GnomeTools::Gio::Menu $container-menu .= new(
@@ -52,7 +53,7 @@ method make-menu ( --> GnomeTools::Gio::Menu ) {
   );
   $actionname = $container-menu.item( 'Add', $!cont, 'container-add');
   self.set-toolbar-icon(
-    :path(DATA_DIR ~ 'images/add-cont-64.png'),
+    :path(DATA_DIR ~ 'images/icons8-container-48W.png'),
     :tooltip('Add a container'), :$actionname
   );
   $container-menu.item( 'Rename', $!cont, 'container-rename');

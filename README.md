@@ -157,6 +157,9 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
   * ['FlatIcon - paonkz'](https://www.flaticon.com/free-icons/files-and-folders)
   * ['Freepik - Icon by judanna](https://www.freepik.com/icon/add_10110024#fromView=keyword&page=1&position=14&uuid=d07d88e3-b3e7-48da-9f3b-f1fc0703d53c)
   * ['icons8 - drag icons'](https://icons8.com/icons/set/drag--white)
+  * ['icons8 - exit icons'](https://icons8.com/icon/24337/logout-rounded)
+  * ['icons8 - shipping-container icons'](https://icons8.com/icon/8TmbOsXq2uIe)
+
 
 
 <!--
