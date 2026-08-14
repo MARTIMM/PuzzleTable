@@ -9,8 +9,6 @@ use Gnome::Gtk4::T-enums:api<2>;
 unit class PuzzleTable::Gui::TableItemLabel:auth<github:MARTIMM>;
 also is Gnome::Gtk4::Label;
 
-constant \TableItemLabel is export = PuzzleTable::Gui::TableItemLabel;
-
 #-------------------------------------------------------------------------------
 #method new ( |c ) {
 #  self.new-label( Str, |c);

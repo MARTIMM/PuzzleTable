@@ -27,6 +27,8 @@ unit class PuzzleTable::Gui::TableItem:auth<github:MARTIMM>;
 
 has PuzzleTable::Config $!config;
 
+constant TableItemLabel = PuzzleTable::Gui::TableItemLabel;
+
 #-------------------------------------------------------------------------------
 submethod BUILD ( ) {
   $!config .= instance;
@@ -96,7 +98,7 @@ method create-grid ( --> Gnome::Gtk4::Grid ) {
     .set-valign(GTK_ALIGN_FILL);
   }
 
-  my TableItemLabel $label-comment .= new-label( :!align, :css<comment>);
+  my TableItemLabel $label-comment .= new-label( :!align, :css-class<comment>);
   my TableItemLabel $label-size .= new-label;
   my TableItemLabel $label-npieces .= new-label;
   my TableItemLabel $label-source .= new-label;
