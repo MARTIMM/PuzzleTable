@@ -85,9 +85,6 @@ submethod BUILD ( Str:D :$!root-dir ) {
   # Always lock at start
   $!global-config<locked> = True;
 
-note "$?LINE $!puzzle-dirextories<by-dir>.gist()";
-note "\n$?LINE $!puzzle-dirextories<by-title>.gist()";
-
   $*log-file.spurt(
     "Time load root config: {(now - $t0).fmt('%.1f sec.')}.\n",
     :append
