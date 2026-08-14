@@ -5,8 +5,12 @@ use PuzzleTable::Config::Global;
 use PuzzleTable::Config::Categories;
 
 use Gnome::Gtk4::CssProvider:api<2>;
+use Gnome::Gtk4::N-CssSection:api<2>;
 use Gnome::Gtk4::StyleContext:api<2>;
 use Gnome::Gtk4::T-styleprovider:api<2>;
+
+use Gnome::Glib::N-Error:api<2>;
+use Gnome::Glib::T-error:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
@@ -69,6 +73,9 @@ submethod BUILD ( Str:D :$root-global ) {
   my Str $css-file = DATA_DIR ~ 'puzzle-data.css';
   %?RESOURCES<puzzle-data.css>.copy($css-file);
   $!css-provider .= new-cssprovider;
+  $!css-provider.register-signal(
+    self, 'log-css-parsing', 'parsing-error'
+  );
   $!css-provider.load-from-path($css-file);
 
   # Load the global and default categories configuraton
@@ -133,6 +140,13 @@ method log ( Str:D $msg, :$t0 ) {
     $*log-file.spurt( "\n", :append);
   }
 }
+
+#-------------------------------------------------------------------------------
+method log-css-parsing ( Gnome::Gtk4::N-CssSection() $section, N-Error() $e ) {
+note "CSS error $e.message()";
+#note "> $section.get-start-location() - $section.get-end-location()";
+}
+
 
 #-------------------------------------------------------------------------------
 method clear-log ( ) {
