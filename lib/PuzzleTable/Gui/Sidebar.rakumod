@@ -495,9 +495,9 @@ method sidebar-category-expander (
       .set-text($container);
       .set-hexpand(True);
       .set-halign(GTK_ALIGN_START);
-#      $!config.set-css(
-#        .get-style-context, :css-class<sidebar-container-expander-label>
-#      );
+      $!config.set-css(
+        .get-style-context, :css-class<sidebar-container-expander-label>
+      );
     }
 
     .set-label-widget($l);
