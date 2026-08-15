@@ -22,16 +22,16 @@ progressbar trough {
 }
 */
 
+/*  linear-gradient(alpha(@theme_button_decoration_hover_breeze,0.5),alpha(@theme_button_decoration_hover_breeze,0.5)), linear-gradient(@theme_bg_color_breeze,@theme_bg_color_breeze);
 progressbar progress {
   border: 1px solid;
   margin: -1px;
   border-radius: 0.75mm;
   box-shadow: none;
   color: cyan;
-/*  linear-gradient(alpha(@theme_button_decoration_hover_breeze,0.5),alpha(@theme_button_decoration_hover_breeze,0.5)), linear-gradient(@theme_bg_color_breeze,@theme_bg_color_breeze);
 border: 1px solid @theme_button_decoration_hover_breeze;
-*/
 }
+*/
 
 /*
 progressbar:backdrop progress {
@@ -52,10 +52,11 @@ progressbar.osd {
   --puzzle-bg-clr: #232a31;
   --puzzle-bg-hover-clr: #393f44;
 /*  --puzzle-bg-select-clr: #2f4153;*/
-  --puzzle-grid-brdr-clr: #09667d;
-  --puzzle-grid-brdr-clr-slctd: #2344b1;
-  --puzzle-grid-bg-clr: #0a2c32;
-  --puzzle-grid-bg-clr-slctd: #3091ac;
+  --puzzle-grid-brdr-clr: #075062;
+  --puzzle-grid-brdr-clr-slctd: #2399b1;
+  --puzzle-grid-bg-clr: lighter(#2a2e32);
+  --puzzle-grid-bg-clr-slctd: lighter(var(--puzzle-grid-bg-clr));
+  --puzzle-image-bg-clr: #031528;
 }
 
 
@@ -105,14 +106,17 @@ progressbar.osd {
 }
 */
 
-.pt-sidebar-expander-ptr1 {
+expander-widget box title label {
   background-image: none;
+  font-size: 1.3em;
+}
+
+.pt-sidebar-expander-ptr1 {
   background-color: #002411;
   color: #02ff35;
 }
 
 .pt-sidebar-expander-ptr2 {
-  background-image: none;
   background-color: #451300;
   color: #ff8827;
 }
@@ -150,26 +154,12 @@ progressbar.osd {
 
 /* The label in the expander */
 .sidebar-root-expander-label {
-  font-size: 1.5em;
-  
+  font-size: 1.4em;
+
   background-image: none;
   background-color: #090049;
   color: #bac6f8;
 }
-
-.expander-widget box title label {
-  font-size: 1.5em;
-}
-
-/*
-.sidebar-container-expander-label {
-  font-size: 1.5em;
-  
-  background-image: none;
-  background-color: #4f0054;
-  color: #ef9fff;
-}
-*/
 
 .pt-sidebar-container-button {
   background-image: none;
@@ -180,6 +170,9 @@ progressbar.osd {
   color: #dea9ff;
   margin-left: 17px;  
 }
+
+
+
 
 .puzzle-dialog {
   /*padding: 15px;*/
@@ -239,13 +232,8 @@ windowcontrols image.icon {
 }
 */
 
-/*
-.puzzle-progress trough progress {
-  color: red;
-  background-color: rgba(0, 0, 0, 0);
-  font-weight: bold;
-}
-*/
+
+
 
 .puzzle-table {
   padding: 10px;
@@ -260,12 +248,24 @@ windowcontrols image.icon {
   /*border-color: var(--puzzle-grid-brdr-clr);*/
 }
   
-.puzzle-grid child:selected {
-  background-color: inherit;
-  /*border-color: lighter(var(--puzzle-grid-brdr-clr));*/
+.puzzle-grid child grid {
+  background-color: var(--puzzle-grid-bg-clr);
+  border-color: lighter(var(--puzzle-grid-brdr-clr));
 }
 /*
 */
+
+.puzzle-grid child:selected grid {
+  border: 4px solid lighter(var(--puzzle-grid-brdr-clr-slctd));
+  background-color: var(--puzzle-grid-bg-clr-slctd);
+  /*
+  background-color: 
+  border-top-color: var(--puzzle-grid-brdr-clr-slctd);
+  border-right-color:var(--puzzle-grid-brdr-clr-slctd);
+  border-left-color:var(--puzzle-grid-brdr-clr-slctd);
+  border-bottom-color:var(--puzzle-grid-brdr-clr-slctd);
+*/
+}
 
 .puzzle-object {
   padding: 3px;
@@ -288,17 +288,6 @@ windowcontrols image.icon {
   border-right-color: var(--puzzle-grid-brdr-clr);
   border-left-color: var(--puzzle-grid-brdr-clr);
   border-bottom-color: var(--puzzle-grid-brdr-clr);
-*/
-}
-
-.puzzle-grid child:selected grid {
-  border: 4px solid lighter(var(--puzzle-grid-bg-clr-slctd));
-/*
-  background-color: 
-  border-top-color: var(--puzzle-grid-brdr-clr-slctd);
-  border-right-color:var(--puzzle-grid-brdr-clr-slctd);
-  border-left-color:var(--puzzle-grid-brdr-clr-slctd);
-  border-bottom-color:var(--puzzle-grid-brdr-clr-slctd);
 */
 }
 
@@ -334,11 +323,24 @@ windowcontrols image.icon {
   font-weight:bold;
 }
 
-#puzzle-image {
-  background-color: #680000;
-  }
-  /*
-  */
+.puzzle-image {
+  background-color: var(--puzzle-image-bg-clr);
+  padding: 3px;
+  border-radius: 3%;
+}
+
+progressbar.horizontal progress {
+  min-height: 5px;
+}
+
+.puzzle-progress trough {
+  color: cyan;
+  background: cyan;
+/*
+  font-weight: bold;
+*/
+}
+
 
 /*
 .sidebar-label:activated {
