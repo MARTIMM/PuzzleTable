@@ -83,7 +83,8 @@ method create-grid ( --> Gnome::Gtk4::Grid ) {
 
   with my Gnome::Gtk4::Picture $image .= new-picture {
     .set-size-request(| $!config.get-palapeli-image-size);
-    .set-name('puzzle-image');
+#    .set-name('puzzle-image');
+    $!config.set-css( .get-style-context, :css-class<puzzle-image>);
     .set-margin-top(3);
     .set-margin-bottom(3);
     .set-margin-start(3);
