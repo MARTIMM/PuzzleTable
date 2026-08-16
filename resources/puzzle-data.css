@@ -315,6 +315,7 @@ windowcontrols image.icon {
 }
 
 .table-item-comment {
+  background-image: none;
   background-color: cyan;
   color: var(--program-bg-clr);
   padding: 0px;
@@ -329,14 +330,13 @@ windowcontrols image.icon {
   border-radius: 3%;
 }
 
-progressbar.horizontal progress {
+.puzzle-progress > trough, .puzzle-progress > trough > progress {
   min-height: 5px;
-}
-
-.puzzle-progress trough {
+  min-width: 5px;
+  background-image: none;
+  background-color: cyan;
+  /*
   color: cyan;
-  background: cyan;
-/*
   font-weight: bold;
 */
 }
