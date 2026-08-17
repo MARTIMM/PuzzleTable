@@ -166,4 +166,9 @@ Working on the Linux OS the use of the programs and libraries are oriented to th
 * Icon from set ['Run icons created by Smashicons'](https://www.flaticon.com/free-icons/run).
 
 * Icon from [Icons8](https://icons8.com/icon/ddoMPxn5moeM/girl-running).
+
+
+
+<a target="_blank" href="https://icons8.com/icon/5271/add-properties">Add properties</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a>
+
 -->
