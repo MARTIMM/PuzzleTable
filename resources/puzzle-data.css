@@ -330,16 +330,32 @@ windowcontrols image.icon {
   border-radius: 3%;
 }
 
-.puzzle-progress > trough, .puzzle-progress > trough > progress {
-  min-height: 5px;
-  min-width: 5px;
-  background-image: none;
-  background-color: cyan;
-  /*
-  color: cyan;
-  font-weight: bold;
-*/
+progressbar {
+  color: rgb(19, 70, 70);
 }
+
+progressbar.horizontal {
+  border:rgb(54, 0, 46) solid 3px;
+}
+
+progressbar > trough {
+  height: 10px;
+}
+
+/*
+progressbar trough progress {
+  background-color: cyan;
+  color: cyan;
+  background-color: rgb(234, 0, 255);
+  padding: 3px 0px 3px 0px;
+  text-decoration-color:#2399b1;
+  caret-color: rgb(18, 210, 60);
+  min-width: 5px;
+  min-height: 15px;
+  background-image: none;
+  font-weight: bold;
+}
+*/
 
 
 /*
