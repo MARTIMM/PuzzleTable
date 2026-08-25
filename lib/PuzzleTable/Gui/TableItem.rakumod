@@ -206,10 +206,16 @@ method run-palapeli (
   Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
   Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
+note "Puzzle data: $puzzle.gist()";
+
   my Str $progress = $!config.run-palapeli($puzzle);
   $label-progress.set-text("Progress: $progress \%");
   $progress-bar.set-fraction($progress.Num / 100e0);
-  $*main-window.sidebar.fill-sidebar;
+  #$*main-window.sidebar.fill-sidebar;
+  $*main-window.sidebar.update-sidebar(
+    $puzzle<Category-Container>,
+    $!config.get-root-title($!config.get-current-root)
+  );
 }
 
 #-------------------------------------------------------------------------------
