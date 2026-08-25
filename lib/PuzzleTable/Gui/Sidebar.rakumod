@@ -609,8 +609,21 @@ method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
 }
 
 #-------------------------------------------------------------------------------
-method update-sidebar ( Str:D $container, Str:D $root-title ) {
+method update-sidebar (
+  Str:D $container, Str:D $root, Bool :$root-is-title = True
+) {
   my $t0 = now;
+  my Str $root-title;
+  my Str $root-dir;
+  if $root-is-title {
+    $root-title = $root;
+    $root-dir = $!config.get-root-path($root-title);
+  }
+
+  else {
+    $root-title = $!config.get-root-title($root);
+    $root-dir = $root;
+  }
 
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
@@ -626,7 +639,6 @@ method update-sidebar ( Str:D $container, Str:D $root-title ) {
 #note "$?LINE $row-count, $root-title, ", $root-expander.gist;
   my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
   my $c-count = 0;
-  my Str $root-dir = $!config.get-root-path($root-title);
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
 #note "$?LINE $root-dir, container $c";
