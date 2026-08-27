@@ -78,7 +78,7 @@ method drag-prepare (
   Gnome::Gtk4::DragSource() :_native-object($source),
   --> N-Object
 ) {
-note "\ndrag-begin: $x, $y";
+#note "\ndrag-begin: $x, $y";
   my Gnome::Gtk4::N-Bitset $bitset .=
     new(:native-object($*main-window.table.multi-select.get-selection));
 
