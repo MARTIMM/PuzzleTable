@@ -379,7 +379,10 @@ method do-category-delete (
           :category('Default'), :container('Default'), :$root-dir
         );
       }
-      $*main-window.sidebar.fill-sidebar;
+      $*main-window.sidebar.update-sidebar(
+        $container, $root-dir, :!root-is-title
+      );
+#      $*main-window.sidebar.fill-sidebar;
       $sts-ok = True;
     }
   }
