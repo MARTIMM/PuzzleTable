@@ -155,7 +155,20 @@ method archive-puzzles (
     # But don't do it when path is absolute!
     my Str $puzzle-path = $puzzles{$puzzle-id}<puzzle-path>;
     $puzzle-path = "$cwd/$puzzle-path" unless $puzzle-path ~~ m/^ \/ /;
-    $puzzle-path.IO.rename("./$puzzle-id");
+    
+    try {
+      $puzzle-path.IO.rename("./$puzzle-id");
+      CATCH {
+        # When rename is done over different mount points, it will
+        # throw an error, then try a move.
+        default {
+          mkdir "./$puzzle-id", 0o700 unless "./$puzzle-id".IO.e;
+          for dir($puzzle-path) -> $f {
+            $f.move("./$puzzle-id/$f.basename()");
+          }
+        }
+      }
+    }
 
     # Save config into a yaml file in the archive dir
     my Hash $puzzle-data = $puzzles{$puzzle-id}<puzzle-data>;
