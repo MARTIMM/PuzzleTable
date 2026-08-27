@@ -610,7 +610,12 @@ method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
 }
 
 #-------------------------------------------------------------------------------
-method update-sidebar (
+multi method update-sidebar ( Str:D $container ) {
+  self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
+}
+
+#-------------------------------------------------------------------------------
+multi method update-sidebar (
   Str:D $container, Str:D $root, Bool :$root-is-title = True
 ) {
   my $t0 = now;
