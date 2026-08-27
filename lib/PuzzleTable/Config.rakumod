@@ -6,6 +6,8 @@ use PuzzleTable::Config::Categories;
 
 use Gnome::Gtk4::CssProvider:api<2>;
 use Gnome::Gtk4::N-CssSection:api<2>;
+use Gnome::Gtk4::T-csssection:api<2>;
+use Gnome::Gtk4::T-csslocation:api<2>;
 use Gnome::Gtk4::StyleContext:api<2>;
 use Gnome::Gtk4::T-styleprovider:api<2>;
 
@@ -143,7 +145,14 @@ method log ( Str:D $msg, :$t0 ) {
 
 #-------------------------------------------------------------------------------
 method log-css-parsing ( Gnome::Gtk4::N-CssSection() $section, N-Error() $e ) {
-note "CSS error $e.message()";
+
+my N-CssLocation() $start-location = $section.get-start-location();
+my N-CssLocation() $end-location = $section.get-end-location();
+self.log(
+  "CSS error $e.message() starting at line $start-location.lines() " ~
+  "and ends at $end-location.lines()"
+);
+
 #note "> $section.get-start-location() - $section.get-end-location()";
 }
 
