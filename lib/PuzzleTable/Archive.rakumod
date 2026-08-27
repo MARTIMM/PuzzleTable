@@ -122,6 +122,8 @@ method archive-puzzles (
 
   --> Str
 ) {
+  my $t0 = now;
+
   # Drop the container marker if any
   $container ~~ s/ '_EX_' $//;
 
@@ -160,7 +162,7 @@ method archive-puzzles (
       $puzzle-path.IO.rename("./$puzzle-id");
       CATCH {
         # When rename is done over different mount points, it will
-        # throw an error, then try a move.
+        # throw an error, then we must try a move.
         default {
           mkdir "./$puzzle-id", 0o700 unless "./$puzzle-id".IO.e;
           for dir($puzzle-path) -> $f {
@@ -194,6 +196,16 @@ method archive-puzzles (
 
   # Return to dir where we started
   chdir($cwd);
+
+  $*main-window.sidebar.update-sidebar($container);
+
+  # Cannot use logging from config bcause of circular dependency
+  my Str $msg = "Time to archive $archive-trashbin$archive-name.tbz2";
+  if $*verbose-output {
+    $*log-file.spurt( "$msg.", :append);
+    $*log-file.spurt( " Spent: " ~ (now - $t0).fmt('%.1f sec.'), :append);
+    $*log-file.spurt( "\n", :append);
+  }
 
   "$archive-name.tbz2"
 }
