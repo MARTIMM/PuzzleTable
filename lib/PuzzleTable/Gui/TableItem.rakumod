@@ -206,7 +206,7 @@ method run-palapeli (
   Hash :$puzzle, Gnome::Gtk4::Label :$label-progress,
   Gnome::Gtk4::ProgressBar :$progress-bar
 ) {
-note "Puzzle data: $puzzle.gist()";
+#note "Puzzle data: $puzzle.gist()";
 
   my Str $progress = $!config.run-palapeli($puzzle);
   $label-progress.set-text("Progress: $progress \%");
