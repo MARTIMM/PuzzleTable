@@ -254,6 +254,10 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
       my Str $puzzle-id = $config.add-puzzle($puzzle-path);
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id);
     }
+    
+    $!sidebar.update-sidebar(
+      $opt-container, $config.get-current-root, :!root-is-title
+    );
 
     $!sidebar.set-category(
       $opt-category, $opt-container, :root-dir($config.get-current-root)
