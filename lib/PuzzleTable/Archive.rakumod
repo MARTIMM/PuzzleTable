@@ -200,7 +200,7 @@ method archive-puzzles (
   $*main-window.sidebar.update-sidebar($container);
 
   # Cannot use logging from config bcause of circular dependency
-  my Str $msg = "Time to archive $archive-trashbin$archive-name.tbz2";
+  my Str $msg = "Time to archive $archive-name.tbz2";
   if $*verbose-output {
     $*log-file.spurt( "$msg.", :append);
     $*log-file.spurt( " Spent: " ~ (now - $t0).fmt('%.1f sec.'), :append);
