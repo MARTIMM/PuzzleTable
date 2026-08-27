@@ -338,10 +338,11 @@ progressbar.horizontal {
   border:rgb(54, 0, 46) solid 3px;
 }
 
+/*
 progressbar > trough {
   height: 10px;
 }
-
+*/
 /*
 progressbar trough progress {
   background-color: cyan;
