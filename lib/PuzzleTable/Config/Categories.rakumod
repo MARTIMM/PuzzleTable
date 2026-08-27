@@ -664,7 +664,7 @@ method move-puzzle (
 
 #-------------------------------------------------------------------------------
 method archive-puzzles ( Array:D $puzzle-ids --> List ) {
-  my $t0 = now;
+#  my $t0 = now;
 
   my Str $message = '';
 
@@ -681,7 +681,7 @@ method archive-puzzles ( Array:D $puzzle-ids --> List ) {
     $message = 'One of the puzzle ids is wrong and/or puzzle store not found';
   }
 
-  $!config.log( "Time to archive puzzles $puzzle-ids.gist()", :$t0);
+#  $!config.log( "Time to archive puzzles $puzzle-ids.gist()", :$t0);
 
   ( $message, @ap[1])
 }
