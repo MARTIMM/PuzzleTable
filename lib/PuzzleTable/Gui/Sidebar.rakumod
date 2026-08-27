@@ -104,7 +104,7 @@ Construction of the sidebar:
   my $nbr-roots = $!config.get-nbr-roots;
   for ^$nbr-roots -> $root-nbr {
     my Str $root-dir = $!config.get-root-path($root-nbr);
-note "$?LINE $nbr-roots, $root-nbr, $root-dir";
+#note "$?LINE $nbr-roots, $root-nbr, $root-dir";
 
     my $row-count = 0;
     my Gnome::Gtk4::Grid $container-grid .= new-grid;
@@ -198,7 +198,7 @@ method cat-expander-drop (
   --> Bool
 ) {
 
-note "\n$?LINE drop, x, y = $x, $y";
+#note "\n$?LINE drop, x, y = $x, $y";
   my ( Bool $internal, Str $value );
   ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
 
@@ -208,8 +208,8 @@ note "\n$?LINE drop, x, y = $x, $y";
        $value.split("_||_");
     $drop-ok = ?$from-puzzles;
 
-note "Internal drop: $internal\nDropped value:";
-note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
+#note "Internal drop: $internal\nDropped value:";
+#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
 
     # Add category to list. The category is a used to drop puzzles in.
     # Message gets defined if something is wrong.
@@ -223,7 +223,7 @@ note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
       )
     );
 
-note $from-puzzles.split(/\s+/).gist;
+#note $from-puzzles.split(/\s+/).gist;
     # Convert indices to puzzle ids
     my @puzzles = ();
     for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
@@ -232,7 +232,7 @@ note $from-puzzles.split(/\s+/).gist;
 
     # Move puzzle to new category
     for @puzzles -> $puzzle-id {
-note "move puzzle $puzzle-id";
+#note "move puzzle $puzzle-id";
 
       my PuzzleTable::Config::Category $from-config-category .= new(
         :category-name($from-category),
@@ -316,7 +316,7 @@ method category-drop (
   GnomeTools::Gtk::DND :$dnd, Str :$category, Str :$container, Str :$root-dir
   --> Bool
 ) {
-note "\n$?LINE drop, x, y = $x, $y";
+#note "\n$?LINE drop, x, y = $x, $y";
   my ( Bool $internal, Str $value );
   ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
 
@@ -326,17 +326,17 @@ note "\n$?LINE drop, x, y = $x, $y";
        $value.split("_||_");
     $drop-ok = ?$from-puzzles;
 
-note "Internal drop: $internal\nDropped value:";
-note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
+#note "Internal drop: $internal\nDropped value:";
+#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
 
-note $from-puzzles.split(/\s+/).gist;
+#note $from-puzzles.split(/\s+/).gist;
     my @puzzles = ();
     for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
       @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
     }
 
     for @puzzles -> $puzzle-id {
-note "move puzzle $puzzle-id";
+#note "move puzzle $puzzle-id";
 
       my PuzzleTable::Config::Category $from-config-category .= new(
         :category-name($from-category),
@@ -376,7 +376,7 @@ method drop-accept (
 ) {
   my Bool $accept = $dnd.check-accept( $drop, 'text');
   $!config.log("Drop on $type can be accepted: $accept");
-note "\nDrop can be accepted:" if $accept;
+#note "\nDrop can be accepted:" if $accept;
   $accept
 }
 
@@ -536,6 +536,7 @@ method sidebar-status (
   my Array $cat-status = $!config.get-category-status(
     $category, $container, $root-dir, :$recalculate
   );
+#note "$?LINE $row-count, $cat-status.gist()";
 
   $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
@@ -628,26 +629,27 @@ method update-sidebar (
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
 #  $!sidebar-grid = $!scrolled-window.get-child;
-#note "$?LINE ", $!sidebar-grid.gist;
-#note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
+note "$?LINE ", $!sidebar-grid.gist;
+note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
   # Get the expander of the particular root
   my Int $row-count = $!config.get-root-nbr($root-title);
   my Gnome::Gtk4::Expander() $root-expander =
     $!sidebar-grid.get-child-at( 0, $row-count);
 
   # Find the container where the categories need to be updated.
-#note "$?LINE $row-count, $root-title, ", $root-expander.gist;
+note "$?LINE $row-count, $root-title, ", $root-expander.gist;
   my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
   my $c-count = 0;
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
-#note "$?LINE $root-dir, container $c";
-    if $c eq $container {
+note "$?LINE $root-dir, container $c ~~ $container";
+    if $c ~~ m/^ $container '_EX_'? $/ {
       my Gnome::Gtk4::Expander() $container-expander =
         $container-grid.get-child-at( 0, $c-count);
       my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
         $container, $root-dir, $row-count
       );
+
       $container-expander.set-child($category-grid);
 
       last;
