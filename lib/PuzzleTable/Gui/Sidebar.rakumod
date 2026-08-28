@@ -376,7 +376,6 @@ method drop-accept (
 ) {
   my Bool $accept = $dnd.check-accept( $drop, 'text');
   $!config.log("Drop on $type can be accepted: $accept");
-#note "\nDrop can be accepted:" if $accept;
   $accept
 }
 
