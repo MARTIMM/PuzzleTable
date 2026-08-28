@@ -634,7 +634,6 @@ multi method update-sidebar (
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
 #  $!sidebar-grid = $!scrolled-window.get-child;
-note "$?LINE ", $!sidebar-grid.gist;
 note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
   # Get the expander of the particular root
   my Int $row-count = $!config.get-root-nbr($root-title);
@@ -648,7 +647,7 @@ note "$?LINE $row-count, $root-title, ", $root-expander.gist;
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
 note "$?LINE $root-dir, container $c ~~ $container";
-    if $c ~~ m/^ $container '_EX_'? $/ {
+    if $container ~~ m/^ $c '_EX_'? $/ {
       my Gnome::Gtk4::Expander() $container-expander =
         $container-grid.get-child-at( 0, $c-count);
       my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
