@@ -364,6 +364,7 @@ method category-drop (
   }
 
   else {
+    # Puzzles from disk
     note "Dropping $value not accepted";
   }
 
