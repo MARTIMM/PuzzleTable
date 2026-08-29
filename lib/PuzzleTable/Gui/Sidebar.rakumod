@@ -365,7 +365,24 @@ method category-drop (
 
   else {
     # Puzzles from disk
-    note "Dropping $value not accepted";
+    $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
+
+#    note "Dropping $value not accepted to store in $category, $container, $root-dir";
+    my regex puzzle-regex { $<puzzle-path> = ['/' .*? '.puzzle'] };
+    while $value ~~ m/ <puzzle-regex> / {
+      my Str $puzzle-path = $/<puzzle-regex><puzzle-path>.Str;
+      note "$?LINE $puzzle-path";
+      $value ~~ s/$puzzle-path//;
+
+      my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
+      $*main-window.table.add-puzzle-to-table( $category, $puzzle-id);
+    }
+
+    $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
+    $*main-window.sidebar.update-sidebar(
+      $container, $root-dir, :!root-is-title
+    );
+    $drop-ok = True;
   }
 
   $drop-ok
@@ -611,6 +628,7 @@ method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
 
 #-------------------------------------------------------------------------------
 multi method update-sidebar ( Str:D $container ) {
+note "$?LINE $container, ", $!config.get-current-root;
   self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
 }
 
@@ -634,20 +652,20 @@ multi method update-sidebar (
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
 #  $!sidebar-grid = $!scrolled-window.get-child;
-note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
   # Get the expander of the particular root
   my Int $row-count = $!config.get-root-nbr($root-title);
   my Gnome::Gtk4::Expander() $root-expander =
     $!sidebar-grid.get-child-at( 0, $row-count);
 
   # Find the container where the categories need to be updated.
-note "$?LINE $row-count, $root-title, ", $root-expander.gist;
+note "$?LINE $row-count, $root-title";
   my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
   my $c-count = 0;
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
 note "$?LINE $root-dir, container $c ~~ $container";
     if $container ~~ m/^ $c '_EX_'? $/ {
+note "$?LINE update $c";
       my Gnome::Gtk4::Expander() $container-expander =
         $container-grid.get-child-at( 0, $c-count);
       my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
