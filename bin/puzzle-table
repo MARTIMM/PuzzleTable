@@ -15,7 +15,7 @@ my Bool $*verbose-output = False;
 my Bool $*multiple-roots = False; #TODO remove this var
 
 # Logfile when verbosity is in order
-my IO::Path $*log-file = '/tmp/puzzle-table.log'.IO;
+my IO::Path $*log-file = $*TMPDIR ~ '/puzzle-table.log'.IO;
 
 # Main window is set in the Application startup. After that it is usable
 # to change title on the application window or set actions in the Application.
