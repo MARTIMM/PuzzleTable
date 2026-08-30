@@ -364,8 +364,8 @@ method category-drop (
   }
 
   else {
-    # Puzzles from disk
-    $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
+    # Importing puzzles from disk using DND
+    $!config.select-category( $category, $container, $root-dir);
 
 #    note "Dropping $value not accepted to store in $category, $container, $root-dir";
     my regex puzzle-regex { $<puzzle-path> = ['/' .*? '.puzzle'] };
