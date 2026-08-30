@@ -445,7 +445,8 @@ method !category-button (
       self, 'show-tooltip', 'query-tooltip', :$category, :$container, :$root-dir
     );
     .register-signal(
-      self, 'select-category', 'clicked', :$category, :$container, :$root-dir
+      self, 'select-category', 'clicked',
+      :$category, :$container, :$root-dir, :$cat-button
     );
   }
 
@@ -593,10 +594,15 @@ method show-tooltip (
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category (
-  Str:D :$category, Str:D :$container, Str:D :$root-dir
+  Str:D :$category, Str:D :$container, Str:D :$root-dir,
+  Gnome::Gtk4::Button :$cat-button
 ) {
 #  $!current-category = $category;
   my $t0 = now;
+
+  if ?$cat-button {
+    $!config.set-css( $cat-button.get-style-context, :css-class('cat-select'));
+  }
 
   my Str $root-title = $!config.get-root-title($root-dir);
   my Str $title = "Category $category in $container at $root-title";
@@ -630,6 +636,46 @@ multi method update-sidebar ( Str:D $container ) {
 note "$?LINE $container, ", $!config.get-current-root;
   self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
 }
+
+#`{{
+#-------------------------------------------------------------------------------
+multi method find-category-button (
+  --> Gnome::Gtk4::Button
+) {
+  my Gnome::Gtk4::Button $cat-button;
+  my Str $category = $!config.get-current-container;
+  my Str $container = $!config.get-current-container;
+  my Str $root-dir = $!config.get-current-root;
+  
+  my Int $row-count = $!config.get-root-nbr($root-title);
+  my @containers = $!config.get-containers($root-dir);
+  for @containers -> $c {
+note "$?LINE $root-dir, container $c ~~ $container";
+    if $container ~~ m/^ $c '_EX_'? $/ {
+note "$?LINE found container $c";
+      my Gnome::Gtk4::Expander() $container-expander =
+        $container-grid.get-child-at( 0, $c-count);
+
+      my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
+        $container, $root-dir, $row-count
+      );
+
+      # Get categories in for $container and $root-dir.
+      my 
+      my @categories = $!config.get-categories( $container, $root-dir);
+      for @categories -> $category {
+        # Each category is a button. When clicked, it shows the puzzles
+        # of this category on the puzzle table
+        my Gnome::Gtk4::Button() $category-button =
+          $category-grid.get-child-at(( 0, 
+
+
+      last;
+    }
+
+  $cat-button
+}
+}}
 
 #-------------------------------------------------------------------------------
 multi method update-sidebar (
@@ -678,5 +724,6 @@ note "$?LINE update $c";
 
     $c-count++;
   }
+
   $!config.log( "Time to update sidebar for $container at $root-title", :$t0);
 }
