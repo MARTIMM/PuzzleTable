@@ -206,6 +206,8 @@ method do-archive-puzzles (
   my Bool $sts-ok = False;
 
   if $check-button.get-active.Bool {
+    my $t0 = now;
+
     my Str $current-cat = $!config.get-current-category;
     my Str $current-cont = $!config.get-current-container;
     my Str $current-root = $!config.get-current-root;
@@ -220,7 +222,13 @@ method do-archive-puzzles (
     }
 
     # Archive the puzzles and remove from configuration
-    $!config.archive-puzzles($puzzle-ids);
+    my Str ( $msg, $archive-name) = $!config.archive-puzzles($puzzle-ids);
+    $!config.log( "Time to archive $archive-name", :$t0);
+
+    $*main-window.sidebar.update-sidebar(
+      $current-cont, $current-root, :!root-is-title
+    );
+
 
     # Update puzzle table
     $*main-window.sidebar.select-category(
