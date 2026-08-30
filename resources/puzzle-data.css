@@ -68,10 +68,11 @@ progressbar.osd {
 
 /* Sidebar button.
    prefix .pt (for puzzle table) is needed because above button.sidebar is used
+   .pt-sidebar-category-button {
 */
-.pt-sidebar-category-button {
+.pt-sidebar .cat-select {
   background-image: none;
-  background-color: #010531;
+  border-color: #ffdeaa;
 }
 
 /* Label of the sidebar button */
