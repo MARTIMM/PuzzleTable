@@ -122,8 +122,6 @@ method archive-puzzles (
 
   --> Str
 ) {
-  my $t0 = now;
-
   # Drop the container marker if any
   $container ~~ s/ '_EX_' $//;
 
@@ -196,16 +194,6 @@ method archive-puzzles (
 
   # Return to dir where we started
   chdir($cwd);
-
-  $*main-window.sidebar.update-sidebar($container);
-
-  # Cannot use logging from config bcause of circular dependency
-  my Str $msg = "Time to archive $archive-name.tbz2";
-  if $*verbose-output {
-    $*log-file.spurt( "$msg.", :append);
-    $*log-file.spurt( " Spent: " ~ (now - $t0).fmt('%.1f sec.'), :append);
-    $*log-file.spurt( "\n", :append);
-  }
 
   "$archive-name.tbz2"
 }
