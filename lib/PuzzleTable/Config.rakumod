@@ -134,14 +134,12 @@ method set-css ( N-Object $context, Str :$css-class = '' ) {
 }
 
 #-------------------------------------------------------------------------------
-method unset-css ( N-Object $context, Str :$css-class = '' ) {
-  return unless ?$css-class;
-
+method unset-css-class ( N-Object $context, Str:D $class ) {
   my Gnome::Gtk4::StyleContext $style-context .= new(:native-object($context));
   $style-context.add-provider(
     $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
   );
-  $style-context.remove-class($css-class);
+  $style-context.remove-class($class);
 }
 
 #-------------------------------------------------------------------------------
