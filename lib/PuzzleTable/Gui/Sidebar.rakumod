@@ -591,18 +591,30 @@ method show-tooltip (
   True
 }
 
+#`{{
+#-------------------------------------------------------------------------------
+# Method to handle a category selection
+method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
+
+#  # Fill the sidebar in case there is a new entry
+#  self.fill-sidebar;
+  self.select-category( :$category, :$container, :$root-dir);
+}
+}}
+
 #-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category (
   Str:D :$category, Str:D :$container, Str:D :$root-dir,
-  Gnome::Gtk4::Button :$cat-button
+  Gnome::Gtk4::Button :$cat-button is copy
 ) {
 #  $!current-category = $category;
   my $t0 = now;
 
-  if ?$cat-button {
-    $!config.set-css( $cat-button.get-style-context, :css-class('cat-select'));
-  }
+  # Find the previous category
+  my Gnome::Gtk4::Button $button = self.find-category-button;
+
+  $!config.set-css( $cat-button.get-style-context, :css-class('cat-select'));
 
   my Str $root-title = $!config.get-root-title($root-dir);
   my Str $title = "Category $category in $container at $root-title";
@@ -623,21 +635,12 @@ method select-category (
 }
 
 #-------------------------------------------------------------------------------
-# Method to handle a category selection
-method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
-
-#  # Fill the sidebar in case there is a new entry
-#  self.fill-sidebar;
-  self.select-category( :$category, :$container, :$root-dir);
-}
-
-#-------------------------------------------------------------------------------
 multi method update-sidebar ( Str:D $container ) {
 note "$?LINE $container, ", $!config.get-current-root;
   self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
 }
 
-#`{{
+##`{{
 #-------------------------------------------------------------------------------
 multi method find-category-button (
   --> Gnome::Gtk4::Button
@@ -675,7 +678,7 @@ note "$?LINE found container $c";
 
   $cat-button
 }
-}}
+#}}
 
 #-------------------------------------------------------------------------------
 multi method update-sidebar (
