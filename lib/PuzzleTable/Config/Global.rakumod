@@ -244,8 +244,14 @@ multi method get-root-title ( Str $path --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-root-nbr ( Str $title --> Int ) {
-  $!puzzle-dirextories<by-title>{$title}<root-count>;
+method get-root-nbr ( Str $title, Bool :$title-is-path = False --> Int ) {
+  if $title-is-path {
+    $!puzzle-dirextories<by-dir>{$title}<root-count>;
+  }
+
+  else {
+    $!puzzle-dirextories<by-title>{$title}<root-count>;
+  }
 }
 
 #-------------------------------------------------------------------------------
