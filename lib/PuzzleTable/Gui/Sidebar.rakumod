@@ -611,10 +611,9 @@ method select-category (
 #  $!current-category = $category;
   my $t0 = now;
 
-  # Find the previous category
-  my Gnome::Gtk4::Button $button = self.find-category-button;
-
-  $!config.set-css( $cat-button.get-style-context, :css-class('cat-select'));
+  # Find the previous category to unselect its selected state.
+  my Gnome::Gtk4::Button $button = self.find-current-category-button;
+  $!config.unset-css-class( $button.get-style-context, 'cat-select');
 
   my Str $root-title = $!config.get-root-title($root-dir);
   my Str $title = "Category $category in $container at $root-title";
@@ -628,6 +627,12 @@ method select-category (
   $!config.select-category( $category, $container, $root-dir);
   my Seq $puzzles = $!config.get-puzzles;
 
+  # When button is pressed, this method is called and the button is
+  # available. Otherwise, the button is undefined and must be searched for.
+  $button = $cat-button // self.find-current-category-button;
+  $!config.set-css( $button.get-style-context, :css-class('cat-select'))
+    if ?$button;
+
   # Fill the puzzle table with new puzzles
   $*main-window.table.add-puzzles-to-table($puzzles);
 
@@ -636,49 +641,50 @@ method select-category (
 
 #-------------------------------------------------------------------------------
 multi method update-sidebar ( Str:D $container ) {
-note "$?LINE $container, ", $!config.get-current-root;
   self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
 }
 
-##`{{
 #-------------------------------------------------------------------------------
-multi method find-category-button (
+multi method find-current-category-button (
   --> Gnome::Gtk4::Button
 ) {
-  my Gnome::Gtk4::Button $cat-button;
-  my Str $category = $!config.get-current-container;
+  my Gnome::Gtk4::Button() $cat-button;
+  my Str $category = $!config.get-current-category;
   my Str $container = $!config.get-current-container;
   my Str $root-dir = $!config.get-current-root;
-  
-  my Int $row-count = $!config.get-root-nbr($root-title);
+
+  my Int $row-count = $!config.get-root-nbr( $root-dir, :title-is-path);
+  my Gnome::Gtk4::Expander() $root-expander =
+    $!sidebar-grid.get-child-at( 0, $row-count);
+
+  my Int $c-count = 0;
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
-note "$?LINE $root-dir, container $c ~~ $container";
     if $container ~~ m/^ $c '_EX_'? $/ {
-note "$?LINE found container $c";
+      my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
       my Gnome::Gtk4::Expander() $container-expander =
         $container-grid.get-child-at( 0, $c-count);
 
-      my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
-        $container, $root-dir, $row-count
-      );
+      my Gnome::Gtk4::Grid() $category-grid = $container-expander.get-child;
 
       # Get categories in for $container and $root-dir.
-      my 
+      my $cat-count = 0;
       my @categories = $!config.get-categories( $container, $root-dir);
-      for @categories -> $category {
-        # Each category is a button. When clicked, it shows the puzzles
-        # of this category on the puzzle table
-        my Gnome::Gtk4::Button() $category-button =
-          $category-grid.get-child-at(( 0, 
+      for @categories -> $cat {
+        if $cat eq $category {
+          $cat-button = $category-grid.get-child-at( 0, $cat-count);
+          return $cat-button;
+        }
 
-
-      last;
+        $cat-count++;
+      }
     }
+
+    $c-count++;
+  }
 
   $cat-button
 }
-#}}
 
 #-------------------------------------------------------------------------------
 multi method update-sidebar (
@@ -700,20 +706,18 @@ multi method update-sidebar (
   # Get the child from the scrolled window which is a grid holding expanders
   # for the root directories.
 #  $!sidebar-grid = $!scrolled-window.get-child;
+
   # Get the expander of the particular root
   my Int $row-count = $!config.get-root-nbr($root-title);
   my Gnome::Gtk4::Expander() $root-expander =
     $!sidebar-grid.get-child-at( 0, $row-count);
 
   # Find the container where the categories need to be updated.
-note "$?LINE $row-count, $root-title";
   my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
   my $c-count = 0;
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
-note "$?LINE $root-dir, container $c ~~ $container";
     if $container ~~ m/^ $c '_EX_'? $/ {
-note "$?LINE update $c";
       my Gnome::Gtk4::Expander() $container-expander =
         $container-grid.get-child-at( 0, $c-count);
       my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
