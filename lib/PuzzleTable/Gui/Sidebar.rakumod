@@ -603,17 +603,23 @@ method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
 }}
 
 #-------------------------------------------------------------------------------
+method clear-button-highlight ( ) {
+  # Find the previous category to unselect its selected state.
+  my Gnome::Gtk4::Button $button = self.find-current-category-button;
+  $!config.unset-css-class( $button.get-style-context, 'cat-select');
+}
+
+#-------------------------------------------------------------------------------
 # Method to handle a category selection
 method select-category (
   Str:D :$category, Str:D :$container, Str:D :$root-dir,
-  Gnome::Gtk4::Button :$cat-button is copy
+  Gnome::Gtk4::Button :$cat-button
 ) {
 #  $!current-category = $category;
   my $t0 = now;
 
-  # Find the previous category to unselect its selected state.
-  my Gnome::Gtk4::Button $button = self.find-current-category-button;
-  $!config.unset-css-class( $button.get-style-context, 'cat-select');
+  # if button is defined, then we can safely clear the previous selected button
+  self.clear-button-highlight if ?$cat-button;
 
   my Str $root-title = $!config.get-root-title($root-dir);
   my Str $title = "Category $category in $container at $root-title";
@@ -629,7 +635,8 @@ method select-category (
 
   # When button is pressed, this method is called and the button is
   # available. Otherwise, the button is undefined and must be searched for.
-  $button = $cat-button // self.find-current-category-button;
+  my Gnome::Gtk4::Button $button =
+    $cat-button // self.find-current-category-button;
   $!config.set-css( $button.get-style-context, :css-class('cat-select'))
     if ?$button;
 
