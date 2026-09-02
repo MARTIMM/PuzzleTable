@@ -141,9 +141,11 @@ method do-container-rename (
 ) {
   my Bool $sts-ok = False;
   my Str $root-dir;
-  if $*multiple-roots {
+#  if $*multiple-roots {
     $root-dir = $roots-dd.get-dropdown-text;
-  }
+#  }
+
+  $*main-window.sidebar.clear-button-highlight;
 
   my Str $container = $entry.get-text.tc;
   if ! $container {
@@ -157,7 +159,8 @@ method do-container-rename (
   }
 
   else {
-    $*main-window.sidebar.fill-sidebar;
+#    $*main-window.sidebar.fill-sidebar;
+    $*main-window.sidebar.update-sidebar($container);
     $sts-ok = True;
   }
 

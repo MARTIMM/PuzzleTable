@@ -261,6 +261,7 @@ method do-category-rename (
     my Str $ocont = $old-container-dd.get-dropdown-text;
     my Str $ncont = $new-container-dd.get-dropdown-text;
 
+    $*main-window.sidebar.clear-button-highlight;
     my Str $message = $!config.move-category(
       $ocat, $ocont, $oroot-path, $new-category, $ncont, $nroot-path
     );
@@ -362,6 +363,7 @@ method do-category-delete (
   }
 
   else {
+    $*main-window.sidebar.clear-button-highlight;
     my Str $message = $!config.delete-category(
       $category, $container, $root-dir
     );
