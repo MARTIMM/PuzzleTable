@@ -237,7 +237,8 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   }
 
   $!sidebar.select-category(
-    $opt-category, $opt-container, :root-dir($config.get-current-root)
+    :category($opt-category), :container($opt-container),
+    :root-dir($config.get-current-root)
   );
 
   if $o<puzzles>:exists {
@@ -257,7 +258,8 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
     );
 
     $!sidebar.select-category(
-      $opt-category, $opt-container, :root-dir($config.get-current-root)
+      :category($opt-category), :container($opt-container),
+      :root-dir($config.get-current-root)
     );
   }
 
@@ -276,7 +278,7 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
 
     else {
       $!sidebar.select-category(
-        $category, $container, :root-dir($config.get-current-root)
+        :$category, :$container, :root-dir($config.get-current-root)
       );
     }
   }
