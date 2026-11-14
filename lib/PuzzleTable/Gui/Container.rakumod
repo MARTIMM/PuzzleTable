@@ -140,9 +140,11 @@ method do-container-rename (
   PuzzleTable::Gui::DropDown :$container-dd
 ) {
   my Bool $sts-ok = False;
-  my Str $root-dir;
+#  my Str $root-dir;
 #  if $*multiple-roots {
-    $root-dir = $roots-dd.get-dropdown-text;
+#    $root-dir = $roots-dd.get-dropdown-text;
+  my Str $root-title = $roots-dd.get-dropdown-text;
+  my Str $root-dir = $!config.get-root-path($root-title);
 #  }
 
   $*main-window.sidebar.clear-button-highlight;
@@ -159,8 +161,8 @@ method do-container-rename (
   }
 
   else {
-#    $*main-window.sidebar.fill-sidebar;
-    $*main-window.sidebar.update-sidebar($container);
+    $*main-window.sidebar.fill-sidebar;
+#    $*main-window.sidebar.update-sidebar($container);
     $sts-ok = True;
   }
 
@@ -264,14 +266,16 @@ method do-container-delete (
   PuzzleTable::Gui::DropDown :$roots-dd
 ) {
   my Bool $sts-ok = False;
-  my Str $root-dir;
-  if $*multiple-roots {
-    $root-dir = $roots-dd.get-dropdown-text;
-  }
+#  my Str $root-dir;
+#  if $*multiple-roots {
+#    $root-dir = $roots-dd.get-dropdown-text;
+  my Str $root-title = $roots-dd.get-dropdown-text;
+  my Str $root-dir = $!config.get-root-path($root-title);
+#  }
 
-  else {
-    $root-dir = $!config.get-current-root;
-  }
+#  else {
+#    $root-dir = $!config.get-current-root;
+#  }
 
   my Str $container = $container-dd.get-dropdown-text;
   if not $!config.delete-container( $container, $root-dir) {
@@ -280,6 +284,7 @@ method do-container-delete (
 
   else {
     $*main-window.sidebar.fill-sidebar;
+    $*main-window.sidebar.update-sidebar($container);
     $sts-ok = True;
   }
 

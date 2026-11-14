@@ -70,7 +70,7 @@ submethod BUILD ( ) {
 }
 
 #-------------------------------------------------------------------------------
-# TODO $recalculate is not used ==> sidebar-status() not called with True for it
+#TODO $recalculate is not used? ==> sidebar-status() not called with True for it
 method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
 #`{{
 Construction of the sidebar:
@@ -364,6 +364,11 @@ method category-drop (
   }
 
   else {
+    # Recalculate the status because there are added puzzles
+    my Array $status-before = $!config.get-category-status(
+      $category, $container, $root-dir, :recalculate
+    );
+
     # Importing puzzles from disk using DND
     $!config.select-category( $category, $container, $root-dir);
 
@@ -377,10 +382,20 @@ method category-drop (
       $*main-window.table.add-puzzle-to-table( $category, $puzzle-id);
     }
 
+    # Recalculate the status because there are added puzzles
+    my Array $status-after = $!config.get-category-status(
+      $category, $container, $root-dir, :recalculate
+    );
+
+note "$?LINE update DND: $category, $container, $root-dir";
     $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
     $*main-window.sidebar.update-sidebar(
       $container, $root-dir, :!root-is-title
     );
+
+note "$?LINE $status-before[0] -> $status-after[0]";
+    $!totals[0] += $status-after[0] - $status-before[0];
+
     $drop-ok = True;
   }
 
@@ -647,11 +662,6 @@ method select-category (
 }
 
 #-------------------------------------------------------------------------------
-multi method update-sidebar ( Str:D $container ) {
-  self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
-}
-
-#-------------------------------------------------------------------------------
 multi method find-current-category-button (
   --> Gnome::Gtk4::Button
 ) {
@@ -691,6 +701,11 @@ multi method find-current-category-button (
   }
 
   $cat-button
+}
+
+#-------------------------------------------------------------------------------
+multi method update-sidebar ( Str:D $container ) {
+  self.update-sidebar( $container, $!config.get-current-root, :!root-is-title);
 }
 
 #-------------------------------------------------------------------------------
