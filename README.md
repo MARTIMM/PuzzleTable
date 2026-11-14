@@ -20,7 +20,7 @@ Nothing which works fine with Palapeli;
 And a small list of things to change in the puzzle table program;
 
 * The puzzle table of Palapeli has a large field of all puzzles in it. You can order it by name or by the number of pieces.
-* The picture of the puzzle is small.
+* The picture of the puzzle is small on high resolution screens.
 * There is no information about the progress of a puzzle. The only way to get this info is by starting the puzzle.
 
 What the new program should do is shown here in a TODO list.
@@ -28,8 +28,7 @@ What the new program should do is shown here in a TODO list.
 ### TODO
 * menu and toolbox for some menu entries
   * file
-    * [ ] quit, add dialog in between
-    * [ ] refresh sidebar
+    * [x] quit, add dialog in between
   * container
     * [x] add container
     * [x] rename container
@@ -38,7 +37,7 @@ What the new program should do is shown here in a TODO list.
     * [x] add category
     * [x] rename category, also 'rename' (=move) to different container
     * [x] delete category, only when empty
-    * [x] (un)lock a category
+    * [x] (un)lock a category to protect your puzzle from being finished by other players.
   * puzzle
     * [x] move selected puzzles
     * [x] archive selected puzzles
