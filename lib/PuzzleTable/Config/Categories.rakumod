@@ -373,7 +373,7 @@ method get-category-status (
 
     $categories{$category-name}<status> = $cat-status;
 
-    $!config.log( "get status for $category-name", :$t0);
+    $!config.log( "get status for $category-name, $cat-status.raku()", :$t0);
 
     # Only save when program stops
     # self.save-categories-config;
@@ -463,6 +463,10 @@ method rename-container (
   my Bool $rename-ok = False;
   my Str $container-from = $!current-category.set-container-name($cont-from);
   my Str $container-to = $!current-category.set-container-name($cont-to);
+
+$!config.log("$?LINE $root-dir, $container-from, $cont-to");
+$!config.log("$?LINE " ~ ($!categories-config{$root-dir}{$container-from}:exists).Bool);
+$!config.log("$?LINE $!categories-config{$root-dir}.keys.raku()");
 
   if $!categories-config{$root-dir}{$container-from}:exists {
     my $t0 = now;
