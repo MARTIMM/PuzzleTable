@@ -252,7 +252,7 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
       my Str $puzzle-id = $config.add-puzzle($puzzle-path);
       $!table.add-puzzle-to-table( $opt-category, $puzzle-id);
     }
-    
+
     $!sidebar.update-sidebar(
       $opt-container, $config.get-current-root, :!root-is-title
     );
@@ -282,7 +282,6 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
       );
     }
   }
-note $?LINE;
 
 #`{{
   # Activate unless table is already displayed
