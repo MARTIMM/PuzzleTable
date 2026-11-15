@@ -4,20 +4,53 @@ use Test;
 use PuzzleTable::Types;
 use PuzzleTable::Config::Totals;
 
+#-------------------------------------------------------------------------------
+# Setup in PuzzleTable::Config
 my Supplier $supplier .= new;
 my Supply $supply = $supplier.Supply;
 
 my PuzzleTable::Config::Totals $t .= new(:$supply);
 
-$supplier.emit( %(
-  :code(DO_TOTALS),
-  :data( %(
-    :add, :n(2), :type(TOTAL_PUZZLES)
-  ))
-));
+#-------------------------------------------------------------------------------
+# Use in other classes to update totals with supplier from PuzzleTable::Config
+my $v;
 
-is $t.get(TOTAL_PUZZLES), 2, 'totals now 2';
+# send command to add a value to TOTAL_PUZZLES
+do-totals(%( :add, :n(4), :type(TOTAL_PUZZLES)));
+$v = do-totals( %( :get, :type(TOTAL_PUZZLES)), :receive),
+is $v, 4, [~] 'totals of ', TOTAL_PUZZLES.Str, " $v";
 
+do-totals(%( :substract, :n(2), :type(TOTAL_PUZZLES)));
+$v = do-totals( %( :get, :type(TOTAL_PUZZLES)), :receive),
+is $v, 2, [~] 'totals of ', TOTAL_PUZZLES.Str, " $v";
+
+do-totals(%( :add, :n(4), :type(UNTOUCHED_PUZZLES)));
+$v = do-totals( %( :get, :type(UNTOUCHED_PUZZLES)), :receive),
+is $v, 4, [~] 'totals of ', UNTOUCHED_PUZZLES.Str, " $v";
+
+$v = do-totals(%(:report), :receive);
+like $v, /'[ 2, 4, 0, 0 ]' /, "report\n$v";
 
 done-testing;
 exit;
+
+#-------------------------------------------------------------------------------
+sub do-totals ( Hash $data, Bool :$receive = False --> Mu ) {
+  my Channel $channel;
+  my Mu $v;
+
+  if $receive {
+    $channel .= new;
+    $data<channel> = $channel;
+    $supplier.emit( %( :code(PROCESS_TOTALS), :$data, :$channel));
+
+    $v = $channel.receive;
+    $channel.close;
+  }
+
+  else {
+    $supplier.emit( %( :code(PROCESS_TOTALS), :$data));
+  }
+
+  $v
+}
