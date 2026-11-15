@@ -393,6 +393,7 @@ note "$?LINE update DND: $category, $container, $root-dir";
       $container, $root-dir, :!root-is-title
     );
 
+#TODO what about status when one was (un)finished?
 note "$?LINE $status-before[0] -> $status-after[0]";
     $!totals[0] += $status-after[0] - $status-before[0];
 
