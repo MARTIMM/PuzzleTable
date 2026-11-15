@@ -26,7 +26,7 @@ enum TotalType is export <
 # A Supply is read by several clients. These are codes the clients must
 # test to check the rest of the data in a given hash.
 enum SupplyCode is export <
-  DO_TOTALS
+  PROCESS_TOTALS
   >;
 
 # Create directories in the default location. When other locations are
