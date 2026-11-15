@@ -18,6 +18,17 @@ constant PUZZLE_TRASH is export = DATA_DIR ~ 'puzzle-trash/';
 
 enum InstallType is export < FlatPak Snap Standard >;
 
+# Names the entries in the totals array
+enum TotalType is export <
+  TOTAL_PUZZLES UNTOUCHED_PUZZLES UNFINISHED_PUZZLES FINISHED_PUZZLES
+  >;
+
+# A Supply is read by several clients. These are codes the clients must
+# test to check the rest of the data in a given hash.
+enum SupplyCode is export <
+  DO_TOTALS
+  >;
+
 # Create directories in the default location. When other locations are
 # added, only a location for the new table data and trash are added using
 # a provided root.
