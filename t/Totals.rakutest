@@ -1,0 +1,23 @@
+use v6.d;
+use Test;
+
+use PuzzleTable::Types;
+use PuzzleTable::Config::Totals;
+
+my Supplier $supplier .= new;
+my Supply $supply = $supplier.Supply;
+
+my PuzzleTable::Config::Totals $t .= new(:$supply);
+
+$supplier.emit( %(
+  :code(DO_TOTALS),
+  :data( %(
+    :add, :n(2), :type(TOTAL_PUZZLES)
+  ))
+));
+
+is $t.get(TOTAL_PUZZLES), 2, 'totals now 2';
+
+
+done-testing;
+exit;
