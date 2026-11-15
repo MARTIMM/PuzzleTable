@@ -29,10 +29,11 @@
     "PuzzleTable::Gui::TableItemLabel": "lib/PuzzleTable/Gui/TableItemLabel.rakumod",
     "PuzzleTable::Config": "lib/PuzzleTable/Config.rakumod",
     "PuzzleTable::Config::Categories": "lib/PuzzleTable/Config/Categories.rakumod",
-    "PuzzleTable::Config::DragInfo": "lib/PuzzleTable/Config/DragInfo.rakumod",
     "PuzzleTable::Config::Category": "lib/PuzzleTable/Config/Category.rakumod",
+    "PuzzleTable::Config::DragInfo": "lib/PuzzleTable/Config/DragInfo.rakumod",
     "PuzzleTable::Config::Global": "lib/PuzzleTable/Config/Global.rakumod",
     "PuzzleTable::Config::Puzzle": "lib/PuzzleTable/Config/Puzzle.rakumod",
+    "PuzzleTable::Config::Totals": "lib/PuzzleTable/Totals.rakumod",
     "PuzzleTable::Archive": "lib/PuzzleTable/Archive.rakumod",
     "PuzzleTable::Types": "lib/PuzzleTable/Types.rakumod"
   },
