@@ -18,10 +18,11 @@ submethod BUILD ( Supply :$!supply ) {
       # It's for us only when the code is PROCESS_TOTALS
       next unless $command<code> ~~ PROCESS_TOTALS;
 
-      # With it, there must be a data hash. The operations are
-      # add, substract, get, report. Get and report returns answers
-      # using a provided channel.
-      with $command<data> {
+      # With it, there other keys at the same level for the operations.
+      # The operations are add, substract, get, report. Get and report
+      # returns answers using a provided channel. The code throws an error
+      # if there is not a channel to return an answer.
+      with $command {
         when .<add>:exists {
           self!add( .<n>, .<type>);
         }
