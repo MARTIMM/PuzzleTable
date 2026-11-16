@@ -3,6 +3,7 @@ use v6.d;
 use PuzzleTable::Types;
 use PuzzleTable::Config::Global;
 use PuzzleTable::Config::Categories;
+use PuzzleTable::Config::Totals;
 
 use Gnome::Gtk4::CssProvider:api<2>;
 use Gnome::Gtk4::N-CssSection:api<2>;
@@ -28,6 +29,11 @@ our $options = [<
   category=s container=s pala-collection=s puzzles lock h|help version v|verbose
   restore=s unlock=s root-global=s root-tables=s q|quit
 >];
+
+has Supplier $!supplier;
+has Supply $!supply;
+
+has PuzzleTable::Config::Totals $!puzzle-totals;
 
 has PuzzleTable::Config::Global $!global-settings handles( <
       get-password check-password set-password
@@ -58,6 +64,12 @@ has PuzzleTable::Config::Categories $!categories handles( <
 #TODO $root-tables must come from global-config
 #submethod BUILD ( Str:D :$root-global, Str:D :$root-tables ) {
 submethod BUILD ( Str:D :$root-global ) {
+
+  # Start totals. It waits for commands on the supply to arrive.
+  $!supplier .= new;
+  $!supply = $!supplier.Supply;
+  $!puzzle-totals .= new(:$!supply);
+note "$?LINE";
 
   # Copy images to the data directory
   my Str $png-file;
@@ -102,6 +114,7 @@ submethod BUILD ( Str:D :$root-global ) {
   }
   $*multiple-roots = @tables.elems > 1;
 }}
+note "$?LINE";
 
 }
 
@@ -140,6 +153,11 @@ method unset-css-class ( N-Object $context, Str:D $class ) {
     $!css-provider, GTK_STYLE_PROVIDER_PRIORITY_USER
   );
   $style-context.remove-class($class);
+}
+
+#-------------------------------------------------------------------------------
+method get-supplier ( --> Supplier ) {
+  $!supplier
 }
 
 #-------------------------------------------------------------------------------

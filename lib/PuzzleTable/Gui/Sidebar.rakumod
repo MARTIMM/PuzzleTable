@@ -12,10 +12,10 @@ page.
 
 use v6.d;
 
+use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Config::DragInfo;
 use PuzzleTable::Config::Category;
-
 use PuzzleTable::Gui::Category;
 
 use GnomeTools::Gtk::DND;
@@ -46,16 +46,19 @@ has Gnome::Gtk4::ScrolledWindow $.scrolled-window;
 
 has PuzzleTable::Config $!config;
 
-has Array $!totals;
+#has Array $!totals;
 has Bool $!done-totals;
 has Gnome::Gtk4::Grid() $!sidebar-grid;
 has PuzzleTable::Config::DragInfo $!drag-info;
+
+has Supplier $!supplier;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( ) {
   $!config .= instance;
   $!drag-info .= instance;
+  $!supplier = $!config.get-supplier;
 
   $!scrolled-window .= new-scrolledwindow;
 #  $!scrolled-window.set-halign(GTK_ALIGN_FILL);
@@ -87,7 +90,7 @@ Construction of the sidebar:
 
   my $t0 = now;
 
-  $!totals = [ 0, 0, 0, 0];
+  #$!totals = [ 0, 0, 0, 0];
   $!done-totals = False;
 
 #  my Gnome::Gtk4::Label $l;
@@ -150,6 +153,8 @@ Construction of the sidebar:
 
   # Display gathered information in a tooltip
   $!done-totals = True;
+  $!sidebar-grid.set-tooltip-text(self.process-totals( :report, :receive));
+#`{{
   $!sidebar-grid.set-tooltip-text(Q:qq:to/EOTT/);
     Number of puzzles
     Untouched puzzles
@@ -159,6 +164,7 @@ Construction of the sidebar:
     Totals
     [ $!totals.join(', ') ]
     EOTT
+}}
 
   # The scroll window widget will always cleanup the child if there was
   # a grid installed before
@@ -321,6 +327,8 @@ method category-drop (
   ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
 
   my Bool $drop-ok = False;
+
+  # Are we moving puzzles around?
   if $internal {
     my ( $from-root, $from-container, $from-category, $from-puzzles ) =
        $value.split("_||_");
@@ -363,10 +371,11 @@ method category-drop (
     );
   }
 
+  # Or are they from abroad, i.e. imported puzzles?
   else {
     # Recalculate the status because there are added puzzles
     my Array $status-before = $!config.get-category-status(
-      $category, $container, $root-dir, :recalculate
+      $category, $container, $root-dir
     );
 
     # Importing puzzles from disk using DND
@@ -384,18 +393,22 @@ method category-drop (
 
     # Recalculate the status because there are added puzzles
     my Array $status-after = $!config.get-category-status(
-      $category, $container, $root-dir, :recalculate
+      $category, $container, $root-dir
     );
+
+    # The images come from outside so only the total and untouched puzzles
+    # must be updated
+note "$?LINE $status-before[0] -> $status-after[0]";
+
+    my UInt $t = $status-after[0] - $status-before[0];
+    my Bool $v = self.process-totals( :set, :a( $t, $t, 0, 0), :receive);
+    note "$?LINE Totals check after set: $v";
 
 note "$?LINE update DND: $category, $container, $root-dir";
     $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
     $*main-window.sidebar.update-sidebar(
       $container, $root-dir, :!root-is-title
     );
-
-#TODO what about status when one was (un)finished?
-note "$?LINE $status-before[0] -> $status-after[0]";
-    $!totals[0] += $status-after[0] - $status-before[0];
 
     $drop-ok = True;
   }
@@ -566,27 +579,27 @@ method sidebar-status (
 ) {
   my Gnome::Gtk4::Label $l;
 
-  my Array $cat-status = $!config.get-category-status(
-    $category, $container, $root-dir, :$recalculate
+  my @cat-status = $!config.get-category-status(
+    $category, $container, $root-dir
   );
-#note "$?LINE $row-count, $cat-status.gist()";
+note "$?LINE $row-count, @cat-status.raku()";
 
-  $l .= new-label; $l.set-text($cat-status[0].fmt('%3d'));
+  $l .= new-label; $l.set-text(@cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
-  $!totals[0] += $cat-status[0] unless $!done-totals;
 
-  $l .= new-label; $l.set-text($cat-status[1].fmt('%3d'));
+  $l .= new-label; $l.set-text(@cat-status[1].fmt('%3d'));
   $grid.attach( $l, 2, $row-count, 1, 1);
-  $!totals[1] += $cat-status[1] unless $!done-totals;
 
-  $l .= new-label; $l.set-text($cat-status[2].fmt('%3d'));
+  $l .= new-label; $l.set-text(@cat-status[2].fmt('%3d'));
   $grid.attach( $l, 3, $row-count, 1, 1);
-  $!totals[2] += $cat-status[2] unless $!done-totals;
 
-  $l .= new-label; $l.set-text($cat-status[3].fmt('%3d'));
+  $l .= new-label; $l.set-text(@cat-status[3].fmt('%3d'));
   $l.set-margin-end(10);
   $grid.attach( $l, 4, $row-count, 1, 1);
-  $!totals[3] += $cat-status[3] unless $!done-totals;
+
+  my Bool $v = self.process-totals( :set, :a(|@cat-status), :receive)
+    unless $!done-totals;
+  note "$?LINE Totals check after set: $v";
 }
 
 #-------------------------------------------------------------------------------
@@ -756,4 +769,23 @@ multi method update-sidebar (
   }
 
   $!config.log( "Time to update sidebar for $container at $root-title", :$t0);
+}
+
+#-------------------------------------------------------------------------------
+multi method process-totals ( *%data ) {
+  $!supplier.emit( %( :code(PROCESS_TOTALS), |%data));
+}
+
+#-------------------------------------------------------------------------------
+multi method process-totals ( Bool :$receive!, *%data --> Mu ) {
+  my Channel $channel;
+  my Mu $v;
+
+  $channel .= new;
+  $!supplier.emit( %( :code(PROCESS_TOTALS), |%data, :$channel));
+
+  $v = $channel.receive;
+  $channel.close;
+
+  $v
 }

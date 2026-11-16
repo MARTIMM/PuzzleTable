@@ -308,12 +308,9 @@ method get-current-root ( --> Str ) {
 }
 
 #-------------------------------------------------------------------------------
-# TODO $recalculate is not used ==> method not called with True for it
-# ==> only update-category-status() called.
 method get-category-status (
-  Str:D $category-name, Str:D $container is copy, Str:D $root-dir,
-  Bool :$recalculate = False
-  --> Array
+  Str:D $category-name, Str:D $container is copy, Str:D $root-dir
+  --> List
 ) {
   my $t0 = now;
 
@@ -321,29 +318,19 @@ method get-category-status (
   $container = $!current-category.set-container-name($container);
 
   # Store 4 numbers: total nbr puzlles, not started, started, finished
-  my Array $cat-status = [ 0, 0, 0, 0];
+  my @cat-status = 0, 0, 0, 0;
 
   # initialize if not yet available
-  $!categories-config{$root-dir}{$container}<categories> = %()
-    if $!categories-config{$root-dir}{$container}<categories>:!exists;
+#  $!categories-config{$root-dir}{$container}<categories> = %()
+#    if $!categories-config{$root-dir}{$container}<categories>:!exists;
+#
+#  my Hash $categories :=
+#     $!categories-config{$root-dir}{$container}<categories>;
+  my Hash $categories := $!categories-config{$root-dir}{$container}<categories>;
+  $categories = %() unless ?$categories;
 
-  my Hash $categories :=
-     $!categories-config{$root-dir}{$container}<categories>;
-  if !$recalculate and $categories{$category-name}<status>:exists {
-    $cat-status = $categories{$category-name}<status>;
-
-#`{{
-# TODO maybe not
-    # maybe an update needed when all is 0
-    if $cat-status.sum == 0 {
-      my PuzzleTable::Config::Category $category .= new(
-        :$category-name, :$container, :$root-dir
-      );
-
-      self.update-category-status($category);
-      $cat-status = $categories{$category-name}<status>;
-    }
-}}
+  if $categories{$category-name}<status>:exists {
+    @cat-status = $categories{$category-name}<status>;
   }
 
   else {
@@ -365,21 +352,21 @@ method get-category-status (
         $progress = $puzzle-config<Progress> // 0e0;
       }
 
-      $cat-status[0]++;                           # total nbr puzzles
-      $cat-status[1]++ if $progress == 0e0;       # puzzles not started
-      $cat-status[2]++ if 0e0 < $progress < 1e2;  # puzzles started not finished
-      $cat-status[3]++ if $progress == 1e2;       # puzzles finished
+      @cat-status[0]++;                           # total nbr puzzles
+      @cat-status[1]++ if $progress == 0e0;       # puzzles not started
+      @cat-status[2]++ if 0e0 < $progress < 1e2;  # puzzles started not finished
+      @cat-status[3]++ if $progress == 1e2;       # puzzles finished
     }
 
-    $categories{$category-name}<status> = $cat-status;
+    $categories{$category-name}<status> = @cat-status;
 
-    $!config.log( "get status for $category-name, $cat-status.raku()", :$t0);
+    $!config.log( "get status for $category-name, @cat-status.raku()", :$t0);
 
     # Only save when program stops
     # self.save-categories-config;
   }
 
-  $cat-status
+  |@cat-status
 }
 
 #-------------------------------------------------------------------------------
