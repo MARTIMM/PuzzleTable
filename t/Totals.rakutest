@@ -16,40 +16,56 @@ my PuzzleTable::Config::Totals $t .= new(:$supply);
 my $v;
 
 # send command to add a value to TOTAL_PUZZLES
-do-totals( :add, :n(4), :type(TOTAL_PUZZLES));
-$v = do-totals( :get, :type(TOTAL_PUZZLES), :receive),
+process-totals( :add, :n(4), :type(TOTAL_PUZZLES));
+$v = process-totals( :get, :type(TOTAL_PUZZLES), :receive);
 is $v, 4, [~] 'totals of ', TOTAL_PUZZLES.Str, " $v";
 
-do-totals( :substract, :n(2), :type(TOTAL_PUZZLES));
-$v = do-totals( :get, :type(TOTAL_PUZZLES), :receive),
+process-totals( :substract, :n(2), :type(TOTAL_PUZZLES));
+$v = process-totals( :get, :type(TOTAL_PUZZLES), :receive);
 is $v, 2, [~] 'totals of ', TOTAL_PUZZLES.Str, " $v";
 
-do-totals( :add, :n(4), :type(UNTOUCHED_PUZZLES));
-$v = do-totals( :get, :type(UNTOUCHED_PUZZLES), :receive),
+process-totals( :add, :n(4), :type(UNTOUCHED_PUZZLES));
+$v = process-totals( :get, :type(UNTOUCHED_PUZZLES), :receive);
 is $v, 4, [~] 'totals of ', UNTOUCHED_PUZZLES.Str, " $v";
 
-$v = do-totals( :report, :receive);
-like $v, /'[ 2, 4, 0, 0 ]' /, "report\n$v";
+$v = process-totals( :check, :receive);
+nok $v, [~] 'totals are not ok';
+
+$v = process-totals( :report, :receive);
+like $v, /'[ 2, 4, 0, 0 ]' /, "[ 2, 4, 0, 0 ]";
+
+process-totals( :add, :n(4), :type(TOTAL_PUZZLES));
+process-totals( :add, :n(1), :type(UNFINISHED_PUZZLES));
+process-totals( :add, :n(1), :type(FINISHED_PUZZLES));
+
+$v = process-totals( :check, :receive);
+ok $v, [~] 'totals are ok';
+
+$v = process-totals( :set, :a(3, 2, 0, 1), :receive);
+ok $v, [~] 'totals are ok';
+
+$v = process-totals( :report, :receive);
+like $v, /'[ 9, 6, 1, 2 ]' /, "[ 9, 6, 1, 2 ]";
+#diag $v;
 
 done-testing;
 exit;
 
 #-------------------------------------------------------------------------------
-sub do-totals ( Bool :$receive = False, *%data --> Mu ) {
+multi sub process-totals ( *%data ) {
+  $supplier.emit( %( :code(PROCESS_TOTALS), |%data));
+}
+
+#-------------------------------------------------------------------------------
+multi sub process-totals ( Bool :$receive!, *%data --> Mu ) {
   my Channel $channel;
   my Mu $v;
 
-  if $receive {
-    $channel .= new;
-    $supplier.emit( %( :code(PROCESS_TOTALS), |%data, :$channel));
+  $channel .= new;
+  $supplier.emit( %( :code(PROCESS_TOTALS), |%data, :$channel));
 
-    $v = $channel.receive;
-    $channel.close;
-  }
-
-  else {
-    $supplier.emit( %( :code(PROCESS_TOTALS), |%data));
-  }
+  $v = $channel.receive;
+  $channel.close;
 
   $v
 }
