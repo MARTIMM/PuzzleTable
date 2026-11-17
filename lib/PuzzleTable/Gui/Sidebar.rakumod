@@ -70,8 +70,7 @@ submethod BUILD ( ) {
 }
 
 #-------------------------------------------------------------------------------
-#TODO $recalculate is not used? ==> sidebar-status() not called with True for it
-method fill-sidebar ( Bool :$init = False, Bool :$recalculate = False ) {
+method fill-sidebar ( Bool :$init = False ) {
 #`{{
 Construction of the sidebar:
 
@@ -80,9 +79,11 @@ Construction of the sidebar:
     is only one root at '~/.config/io.github.martimm.puzzle-table/'.
     Each expander has a grid.
       The grid has rows for expanders holding category containers.
-      Each grid row has 5 columns for each category in the container.
-        a button to show the puzzles in the category.
-        and 4 numbers; nbr puzzles, nbr unplayed, nbr unfinished, nbr finished.
+      Each expander has a grid.
+        Each grid row has 5 columns for each category in the container.
+          a button to show the puzzles in the category.
+          and 4 numbers; nbr puzzles, nbr unplayed, nbr unfinished,
+           nbr finished.
 }}
 
   my $t0 = now;
@@ -303,7 +304,6 @@ method set-category-grid (
     self.sidebar-status(
       $category, $container, $root-dir, $category-grid,
       $cat-row-count
-      #, :$recalculate
     );
 
     $cat-row-count++;
@@ -571,8 +571,7 @@ method expand-category-container (
 #-------------------------------------------------------------------------------
 method sidebar-status (
   Str:D $category, Str:D $container, Str:D $root-dir,
-  Gnome::Gtk4::Grid $grid, Int $row-count,
-  Bool :$recalculate = False,
+  Gnome::Gtk4::Grid $grid, Int $row-count
 ) {
   my Gnome::Gtk4::Label $l;
 
