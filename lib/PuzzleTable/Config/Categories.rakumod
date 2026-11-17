@@ -330,7 +330,7 @@ method get-category-status (
   $categories = %() unless ?$categories;
 
   if $categories{$category-name}<status>:exists {
-    @cat-status = $categories{$category-name}<status>;
+    @cat-status = |$categories{$category-name}<status>;
   }
 
   else {
@@ -366,7 +366,7 @@ method get-category-status (
     # self.save-categories-config;
   }
 
-  |@cat-status
+  @cat-status
 }
 
 #-------------------------------------------------------------------------------

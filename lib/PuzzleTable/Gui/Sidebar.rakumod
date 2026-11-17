@@ -398,13 +398,13 @@ method category-drop (
 
     # The images come from outside so only the total and untouched puzzles
     # must be updated
-note "$?LINE $status-before[0] -> $status-after[0]";
+#note "$?LINE $status-before[0] -> $status-after[0]";
 
     my UInt $t = $status-after[0] - $status-before[0];
     my Bool $v = self.process-totals( :set, :a( $t, $t, 0, 0), :receive);
-    note "$?LINE Totals check after set: $v";
+    $!config.log("Totals check after set [ $t, $t, 0, 0]: $v");
 
-note "$?LINE update DND: $category, $container, $root-dir";
+#note "$?LINE update DND: $category, $container, $root-dir";
     $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
     $*main-window.sidebar.update-sidebar(
       $container, $root-dir, :!root-is-title
@@ -582,7 +582,6 @@ method sidebar-status (
   my @cat-status = $!config.get-category-status(
     $category, $container, $root-dir
   );
-note "$?LINE $row-count, @cat-status.raku()";
 
   $l .= new-label; $l.set-text(@cat-status[0].fmt('%3d'));
   $grid.attach( $l, 1, $row-count, 1, 1);
@@ -597,9 +596,10 @@ note "$?LINE $row-count, @cat-status.raku()";
   $l.set-margin-end(10);
   $grid.attach( $l, 4, $row-count, 1, 1);
 
-  my Bool $v = self.process-totals( :set, :a(|@cat-status), :receive)
-    unless $!done-totals;
-  note "$?LINE Totals check after set: $v";
+  if ! $!done-totals {
+    my Bool $v = self.process-totals( :set, :a(@cat-status), :receive);
+    $!config.log("Totals check after set @cat-status.raku(): $v");
+  }
 }
 
 #-------------------------------------------------------------------------------
@@ -772,20 +772,22 @@ multi method update-sidebar (
 }
 
 #-------------------------------------------------------------------------------
-multi method process-totals ( *%data ) {
-  $!supplier.emit( %( :code(PROCESS_TOTALS), |%data));
-}
-
-#-------------------------------------------------------------------------------
-multi method process-totals ( Bool :$receive!, *%data --> Mu ) {
-  my Channel $channel;
+method process-totals ( Bool :$receive = False, *%data --> Mu ) {
   my Mu $v;
 
-  $channel .= new;
-  $!supplier.emit( %( :code(PROCESS_TOTALS), |%data, :$channel));
+  if $receive {
+    my Channel $channel;
 
-  $v = $channel.receive;
-  $channel.close;
+    $channel .= new;
+    $!supplier.emit( %( :code(PROCESS_TOTALS), |%data, :$channel));
+
+    $v = $channel.receive;
+    $channel.close;
+  }
+
+  else {
+    $!supplier.emit( %( :code(PROCESS_TOTALS), |%data));
+  }
 
   $v
 }
