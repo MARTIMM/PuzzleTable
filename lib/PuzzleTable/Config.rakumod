@@ -188,7 +188,9 @@ method get-supplier ( --> Supplier ) {
 }
 
 #-------------------------------------------------------------------------------
-method emit-data ( SupplyCode :$code, Bool :$receive = False, *%data --> Mu ) {
+method emit-data (
+  SupplyCode:D :$code, Bool :$receive = False, *%data --> Mu
+) {
   my Mu $v;
 
   if $receive {
