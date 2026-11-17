@@ -17,6 +17,8 @@ submethod BUILD ( Supply :$!supply ) {
 
       # It's for us only when the code is PROCESS_TOTALS
       next unless $command<code> ~~ PROCESS_TOTALS;
+#note $?LINE;
+#dd $command;
 
       # With it, there are other keys at the same level for the operations.
       # The operations are add, set, substract, get, check and report. 
