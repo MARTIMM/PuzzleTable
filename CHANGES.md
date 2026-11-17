@@ -1,3 +1,21 @@
+
+* 2026 11 17 0.10.0
+  * New module **PuzzleTable::Config::Totals** to separate puzzle accounting of totals.
+  * Communication of commands to Totals is done using a supply. This separates any module from Totals. The supply is created in **PuzzleTable::Config** and the method to communicate is called `.emit-data()`;
+    ```
+    method emit-data ( SupplyCode:D :$code, Bool :$receive = False, *%data --> Mu )
+    ```
+    `$code` is defined in **PuzzleTable::Types** and is a specification for the modules to scan for when data arrives. For the Totals module, this is `PROCESS_TOTALS`. `$receive` is used to include a channel when an answer is needed with the request. `.emit-data()` creates one and and sends it along with the user data in `%data`. When there is an answer, it is returned.
+
+    `emit-data()` is always sending a hash where the key `code` is always available. The rest is defined by the module.
+    For instance in **Totals** the **Hash**
+    ```
+    %(:code(PROCESS_TOTALS), :set, :a([ $one, $two, $three, $four]), :$channel)
+    ```
+    is used to add four numbers to the totals array, then do a check and sent the result back using a channel.
+
+    The construction to get this done is more complex but no module needing the totals has knowledge about any routine in **Totals**. It is completely separated. Only the **Config** module must hand over the **Supply** to the module tapping from it.
+
 * 2026 08 08 0.9.0
   * Add DND to move puzzles from one category to another. For this, an icon is placed on the toolbar. After selecting the puzzles, this icon can be dragged to a category. After the drop, the puzzles are moved, the sidebar updated and the puzzletable refreshed.
   * Add DND to drop on a category expander. This creates a 'Drop' category which can be renamed afterwards.
