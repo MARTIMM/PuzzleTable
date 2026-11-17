@@ -290,7 +290,7 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   $command-line.done;
   $command-line.clear-object;
 }}
-note "$?LINE $exit-code";
+
   $exit-code
 }
 
