@@ -69,7 +69,6 @@ submethod BUILD ( Str:D :$root-global ) {
   $!supplier .= new;
   $!supply = $!supplier.Supply;
   $!puzzle-totals .= new(:$!supply);
-note "$?LINE";
 
   # Copy images to the data directory
   my Str $png-file;
@@ -114,7 +113,6 @@ note "$?LINE";
   }
   $*multiple-roots = @tables.elems > 1;
 }}
-note "$?LINE";
 
 }
 
@@ -156,11 +154,6 @@ method unset-css-class ( N-Object $context, Str:D $class ) {
 }
 
 #-------------------------------------------------------------------------------
-method get-supplier ( --> Supplier ) {
-  $!supplier
-}
-
-#-------------------------------------------------------------------------------
 method log ( Str:D $msg, :$t0 ) {
   if $*verbose-output {
     $*log-file.spurt( "$msg.", :append);
@@ -187,4 +180,30 @@ self.log(
 #-------------------------------------------------------------------------------
 method clear-log ( ) {
   $*log-file.spurt('');
+}
+
+#-------------------------------------------------------------------------------
+method get-supplier ( --> Supplier ) {
+  $!supplier
+}
+
+#-------------------------------------------------------------------------------
+method emit-data ( SupplyCode :$code, Bool :$receive = False, *%data --> Mu ) {
+  my Mu $v;
+
+  if $receive {
+    my Channel $channel;
+
+    $channel .= new;
+    $!supplier.emit( %( :$code, |%data, :$channel));
+
+    $v = $channel.receive;
+    $channel.close;
+  }
+
+  else {
+    $!supplier.emit( %( :$code, |%data));
+  }
+
+  $v
 }

@@ -51,14 +51,11 @@ has Bool $!done-totals;
 has Gnome::Gtk4::Grid() $!sidebar-grid;
 has PuzzleTable::Config::DragInfo $!drag-info;
 
-has Supplier $!supplier;
-
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( ) {
   $!config .= instance;
   $!drag-info .= instance;
-  $!supplier = $!config.get-supplier;
 
   $!scrolled-window .= new-scrolledwindow;
 #  $!scrolled-window.set-halign(GTK_ALIGN_FILL);
@@ -772,22 +769,6 @@ multi method update-sidebar (
 }
 
 #-------------------------------------------------------------------------------
-method process-totals ( Bool :$receive = False, *%data --> Mu ) {
-  my Mu $v;
-
-  if $receive {
-    my Channel $channel;
-
-    $channel .= new;
-    $!supplier.emit( %( :code(PROCESS_TOTALS), |%data, :$channel));
-
-    $v = $channel.receive;
-    $channel.close;
-  }
-
-  else {
-    $!supplier.emit( %( :code(PROCESS_TOTALS), |%data));
-  }
-
-  $v
+method process-totals (|c) {
+  $!config.emit-data( :code(PROCESS_TOTALS), |c);
 }
