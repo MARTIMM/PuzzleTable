@@ -14,7 +14,7 @@
     ```
     is used to add four numbers to the totals array, then do a check and sent the result back using a channel.
 
-    The construction to get this done is more complex but no module needing the totals has knowledge about any routine in **Totals**. It is completely separated. Only the **Config** module must hand over the **Supply** to the module tapping from it.
+    The construction to get this done is more complex but no module needing the totals has knowledge about any routine in **Totals**. It is completely separated. Only the **Config** module must hand over the **Supply** to the module tapping from it and the emitting code is also in **Config**.
 
 * 2026 08 08 0.9.0
   * Add DND to move puzzles from one category to another. For this, an icon is placed on the toolbar. After selecting the puzzles, this icon can be dragged to a category. After the drop, the puzzles are moved, the sidebar updated and the puzzletable refreshed.
