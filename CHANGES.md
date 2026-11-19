@@ -1,4 +1,7 @@
 
+* 2026 11 19 0.11.0
+  * Move some code from the **Sidebar** class into a new **PuzzleTable::Gui::Categories** to simplify things.
+
 * 2026 11 17 0.10.0
   * New module **PuzzleTable::Config::Totals** to separate puzzle accounting of totals.
   * Communication of commands to Totals is done using a supply. This separates any module from Totals. The supply is created in **PuzzleTable::Config** and the method to communicate is called `.emit-data()`;

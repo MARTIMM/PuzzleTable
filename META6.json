@@ -1,7 +1,7 @@
 {
   "description": "Puzzle table using Palapeli on Linux to play",
   "name": "PuzzleTable",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "auth": "cpan:MARTIMM",
   "author": "Marcel Timmerman",
   "tags": [ "Raku", "Gnome", "Gtk4", "Puzzle table", "Palapeli"],
@@ -10,6 +10,7 @@
   "license": "Artistic-2.0",
 
   "provides": {
+    "PuzzleTable::Gui::Categories": "lib/PuzzleTable/Gui/Categories.rakumod",
     "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
     "PuzzleTable::Gui::Container": "lib/PuzzleTable/Gui/Container.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
