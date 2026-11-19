@@ -1,8 +1,9 @@
 =begin pod
+=TITLE PuzzleTable::Gui::Sideba
 
-=head1 
+=head1 Description
 
-Combobox widget to display the categories of puzzles. The widget is shown on
+??? Combobox widget to display the categories of puzzles. The widget is shown on
 the main window. The actions to change the list are triggered from the
 'category' menu. All changes are directly visible in the combobox on the main
 page.
