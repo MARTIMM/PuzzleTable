@@ -535,7 +535,7 @@ method set-expand (
 
   # No need to test. All actions come from button presses on an
   # existing expander. Saving the expand state is also unnecessary
-  # because when the program finishes is will be saved.
+  # because when the program finishes it will be saved.
   $!categories-config{$root-dir}{$container}<expanded> = $expanded;
 
 
