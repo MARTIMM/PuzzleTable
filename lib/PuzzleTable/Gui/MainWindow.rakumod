@@ -216,9 +216,10 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
 
 
   # We need the table and category management here already
+  $!table .= new unless ?$!table;
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
-  $!table .= new-scrolledwindow unless ?$!table;
   $!sidebar .= new unless $!sidebar;
+  $!sidebar.fill-sidebar(:init);
 
   # Process container option. It is set to 'Default' otherwise.
   my Str $opt-container = 'Default';
