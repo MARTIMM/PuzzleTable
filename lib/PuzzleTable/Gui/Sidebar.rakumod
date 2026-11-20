@@ -15,9 +15,10 @@ use v6.d;
 
 use PuzzleTable::Types;
 use PuzzleTable::Config;
-use PuzzleTable::Config::DragInfo;
+#use PuzzleTable::Config::DragInfo;
 use PuzzleTable::Config::Category;
 use PuzzleTable::Gui::Category;
+use PuzzleTable::Gui::Categories;
 
 use GnomeTools::Gtk::DND;
 
@@ -50,13 +51,13 @@ has PuzzleTable::Config $!config;
 #has Array $!totals;
 has Bool $!done-totals;
 has Gnome::Gtk4::Grid() $!sidebar-grid;
-has PuzzleTable::Config::DragInfo $!drag-info;
+#has PuzzleTable::Config::DragInfo $!drag-info;
 
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( ) {
   $!config .= instance;
-  $!drag-info .= instance;
+#  $!drag-info .= instance;
 
   $!scrolled-window .= new-scrolledwindow;
 #  $!scrolled-window.set-halign(GTK_ALIGN_FILL);
@@ -66,8 +67,6 @@ submethod BUILD ( ) {
 
 #  $!scrolled-window.set-min-content-width(200);
   $!scrolled-window.set-max-content-width(450);
-
-  self.fill-sidebar(:init);
 }
 
 #-------------------------------------------------------------------------------
@@ -118,6 +117,11 @@ Construction of the sidebar:
     # Loop through all containers and make expanders for each of them
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
+      my PuzzleTable::Gui::Categories $cat-expander .= new(
+        :$container, :$root-dir, :$expander-color-count
+      );
+
+#`{{
       # Fill a grid with categories in $container and $root-dir
       my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
         $container, $root-dir, $expander-color-count
@@ -127,7 +131,7 @@ Construction of the sidebar:
         $container, $root-dir, $expander-color-count, $category-grid
       );
 
-      # Setup DND target on the button
+      # Setup DND target on the expander
       my GnomeTools::Gtk::DND $dnd .= new;
       $dnd.set-droptarget(
         self, $cat-expander, :$dnd, :type<category-expander>
@@ -136,6 +140,7 @@ Construction of the sidebar:
       $dnd.set-droptarget-event(
         self, 'cat-expander-drop', 'drop', :$dnd, :$container, :$root-dir
       );
+}}
 
       $container-grid.attach( $cat-expander, 0, $row-count, 5, 1);
       $row-count++;
