@@ -127,16 +127,12 @@ Construction of the sidebar:
         $container, $root-dir, $expander-color-count, $category-grid
       );
 
-      # Setup DND tae=rget on the button
+      # Setup DND target on the button
       my GnomeTools::Gtk::DND $dnd .= new;
       $dnd.set-droptarget(
         self, $cat-expander, :$dnd, :type<category-expander>
       );
-#`{{
-      $dnd.set-droptarget-event(
-        self, 'cat-expander-drop-accept', 'accept', :$dnd
-      );
-}}
+
       $dnd.set-droptarget-event(
         self, 'cat-expander-drop', 'drop', :$dnd, :$container, :$root-dir
       );
