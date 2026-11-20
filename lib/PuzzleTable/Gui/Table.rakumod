@@ -54,6 +54,11 @@ has Gnome::Glib::N-MainContext $!main-context;
 has Hash $!puzzles-playing = %();
 
 #-------------------------------------------------------------------------------
+submethod new ( |c ) {
+  self.new-scrolledwindow(|c);
+}
+
+#-------------------------------------------------------------------------------
 submethod BUILD ( ) {
 
   $!main-context .= new-maincontext(
