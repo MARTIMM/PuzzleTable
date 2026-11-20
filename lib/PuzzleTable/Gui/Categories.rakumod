@@ -1,14 +1,24 @@
 use v6.d;
 
+use Gnome::Gtk4::Tooltip:api<2>;
 use Gnome::Gtk4::Expander:api<2>;
 use Gnome::Gtk4::Label:api<2>;
 use Gnome::Gtk4::Grid:api<2>;
 use Gnome::Gtk4::DropTarget:api<2>;
+use Gnome::Gtk4::T-enums:api<2>;
+use Gnome::Gtk4::Button:api<2>;
 
 use Gnome::N::GlibToRakuTypes:api<2>;
 use Gnome::N::N-Object:api<2>;
 
+use Gnome::GObject::T-value:api<2>;
+
+use Gnome::Gdk4::T-enums:api<2>;
+
 use PuzzleTable::Config;
+use PuzzleTable::Gui::Category;
+#use PuzzleTable::Config::DragInfo;
+use PuzzleTable::Config::Category;
 
 use GnomeTools::Gtk::DND;
 
@@ -26,19 +36,22 @@ To make separate objects
 unit class PuzzleTable::Gui::Categories;
 also is Gnome::Gtk4::Expander;
 
+has Str $!container;
+has Str $!root-dir;
+has PuzzleTable::Config $!config;
+#has PuzzleTable::Config::DragInfo $!drag-info;
+
+#-------------------------------------------------------------------------------
 submethod new ( |c ) {
   self.new-expander( Str, |c);
 }
 
-has Str $!container;
-has Str $!root-dir;
-has PuzzleTable::Config $!config;
-
 #-------------------------------------------------------------------------------
-submetod BUILD (
+submethod BUILD (
   Str :$!container, Str :$!root-dir, UInt :$expander-color-count
 ) {
   $!config .= instance;
+#  $!drag-info .= instance;
 
   with self {
     # Set CSS classes for the expander
@@ -78,7 +91,13 @@ submetod BUILD (
     .register-signal( self, 'expand-category-container', 'activate');
   }
 
-  $expander
+  # Setup DND target on the expander
+  my GnomeTools::Gtk::DND $dnd .= new;
+  $dnd.set-droptarget(
+    self, self, :$dnd, :type<category-expander>
+  );
+
+  $dnd.set-droptarget-event( self, 'cat-expander-drop', 'drop', :$dnd);
 }
 
 #-------------------------------------------------------------------------------
@@ -105,16 +124,15 @@ method set-category-grid ( Int $expander-color-count --> Gnome::Gtk4::Grid ) {
 
     $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
 
-    # Setup DND tae=rget on the button
+    # Setup DND target on the button
     my GnomeTools::Gtk::DND $dnd .= new;
     $dnd.set-droptarget( self, $category-button, :$dnd, :type<category>);
-#    $dnd.set-droptarget-event( self, 'category-drop-accept', 'accept', :$dnd);
     $dnd.set-droptarget-event(
       self, 'category-drop', 'drop', :$dnd, :$category
     );
 
     # Get information of each subcategory
-    self.sidebar-status(
+    $*main-window.sidebar.sidebar-status(
       $category, $!container, $!root-dir, $category-grid,
       $cat-row-count
     );
@@ -168,8 +186,7 @@ method !category-button (
     );
 
     .register-signal(
-      self, 'select-category', 'clicked',
-      :$category, :$!container, :$root-dir, :$cat-button
+      self, 'select-category-in-sidebar', 'clicked', :$category, :$cat-button
     );
   }
 
@@ -295,33 +312,93 @@ note "Enter dropzone at $x, $y";
   GDK_ACTION_MOVE;
 }
 
+#`{{
 #-------------------------------------------------------------------------------
-method sidebar-status (
-  Str:D $category Gnome::Gtk4::Grid $grid, Int $row-count
+method cat-expander-drop-accept (
+  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
 ) {
-  my Gnome::Gtk4::Label $l;
+  my Bool $accept = $dnd.check-accept( $drop, 'text');
+  $!config.log("Drop on category expander can be accepted: $accept");
+  $accept
+}
+}}
 
-  my @cat-status = $!config.get-category-status(
-    $category, $!container, $!root-dir
-  );
+#-------------------------------------------------------------------------------
+method cat-expander-drop (
+  N-Value() $n-value, Rat() $x, Rat() $y,
+  Gnome::Gtk4::DropTarget() :_native-object($dt), GnomeTools::Gtk::DND :$dnd
+  --> Bool
+) {
 
-  $l .= new-label; $l.set-text(@cat-status[0].fmt('%3d'));
-  $grid.attach( $l, 1, $row-count, 1, 1);
+#note "\n$?LINE drop, x, y = $x, $y";
+  my ( Bool $internal, Str $value );
+  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
 
-  $l .= new-label; $l.set-text(@cat-status[1].fmt('%3d'));
-  $grid.attach( $l, 2, $row-count, 1, 1);
+  my Bool $drop-ok = False;
+  if $internal {
+    my ( $from-root, $from-container, $from-category, $from-puzzles ) =
+       $value.split("_||_");
+    $drop-ok = ?$from-puzzles;
 
-  $l .= new-label; $l.set-text(@cat-status[2].fmt('%3d'));
-  $grid.attach( $l, 3, $row-count, 1, 1);
+#note "Internal drop: $internal\nDropped value:";
+#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
 
-  $l .= new-label; $l.set-text(@cat-status[3].fmt('%3d'));
-  $l.set-margin-end(10);
-  $grid.attach( $l, 4, $row-count, 1, 1);
+    # Add category to list. The category is a used to drop puzzles in.
+    # Message gets defined if something is wrong.
+    my Str $category = 'Drop';
+    my Str $msg = $!config.add-category(
+      $category, $!container, :$!root-dir,
+      :lockable(
+        $!config.is-category-lockable(
+          $from-category, $from-container, $from-root
+        )
+      )
+    );
 
-  if ! $!done-totals {
-    my Bool $v = self.process-totals( :set, :a(@cat-status), :receive);
-    $!config.log("Totals check after set @cat-status.raku(): $v");
+#note $from-puzzles.split(/\s+/).gist;
+    # Convert indices to puzzle ids
+    my @puzzles = ();
+    for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
+      @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
+    }
+
+    # Move puzzle to new category
+    for @puzzles -> $puzzle-id {
+#note "move puzzle $puzzle-id";
+
+      my PuzzleTable::Config::Category $from-config-category .= new(
+        :category-name($from-category),
+        :container($from-container),
+        :root-dir($from-root)
+      );
+
+      $!config.move-puzzle(
+        $from-config-category, $category, $!container, $!root-dir, $puzzle-id
+      );
+    }
+
+    $*main-window.sidebar.update-sidebar(
+      $from-container, $!config.get-root-title($from-root)
+    );
+    $*main-window.sidebar.update-sidebar(
+      $!container, $!config.get-root-title($!root-dir)
+    );
+
+    # Select the source category again to display the changes
+    $*main-window.sidebar.select-category(
+      :category($from-category), :container($from-container),
+      :root-dir($from-root)
+    );
+
+    my PuzzleTable::Gui::Category $category-menu .= new;
+    $category-menu.category-rename2( $category, $!container, $!root-dir);
   }
+
+  else {
+    note "Dropping $value not accepted";
+  }
+
+  $drop-ok
 }
 
 #-------------------------------------------------------------------------------
@@ -340,4 +417,13 @@ method show-tooltip (
   }
 
   True
+}
+
+#-------------------------------------------------------------------------------
+method select-category-in-sidebar (
+  Str:D :$category, Gnome::Gtk4::Button :$cat-button
+) {
+  $*main-window.sidebar.select-category(
+    :$category, :$!container, :$!root-dir, :$cat-button
+  );
 }
