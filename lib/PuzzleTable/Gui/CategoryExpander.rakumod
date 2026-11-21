@@ -99,6 +99,7 @@ submethod BUILD (
     self, self, :$dnd, :type<category-expander>
   );
 
+#  $dnd.set-droptarget-event( self, 'cat-expander-drop-accept', 'accept', :$dnd);
   $dnd.set-droptarget-event( self, 'cat-expander-drop', 'drop', :$dnd);
 }
 
@@ -311,8 +312,8 @@ method drop-accept (
 #-------------------------------------------------------------------------------
 # Notion for all drop targets
 method drop-enter ( Rat() $x, Rat() $y --> UInt ) {
-note "Enter dropzone at $x, $y";
-  GDK_ACTION_MOVE;
+note "$?LINE Enter dropzone at $x, $y";
+  GDK_ACTION_COPY;
 }
 
 #`{{
@@ -321,6 +322,9 @@ method cat-expander-drop-accept (
   Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
 ) {
   my Bool $accept = $dnd.check-accept( $drop, 'text');
+#  my ( Bool $internal, Str $value );
+#  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
+note "$?LINE internal?: ";
   $!config.log("Drop on category expander can be accepted: $accept");
   $accept
 }
@@ -399,6 +403,7 @@ method cat-expander-drop (
 
   else {
     note "Dropping $value not accepted";
+
   }
 
   $drop-ok
