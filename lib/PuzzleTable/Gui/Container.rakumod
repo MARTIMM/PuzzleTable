@@ -226,7 +226,7 @@ method container-delete ( N-Object $parameter ) {
     );
 
     my PuzzleTable::Gui::DropDown $roots-dd;
-    if $*multiple-roots {
+#    if $*multiple-roots {
       $roots-dd .= new;
       $roots-dd.fill-roots($!config.get-current-root);
 
@@ -236,7 +236,7 @@ method container-delete ( N-Object $parameter ) {
       # Set a handler on the container list to change the category list
       # when an item is selected.
       $roots-dd.trap-root-changes( $container-dd, :skip-default);
-    }
+#    }
 
     # Show entry for input
     .add-content( 'Select container to delete', $container-dd);
