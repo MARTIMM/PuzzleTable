@@ -185,302 +185,6 @@ my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
   $!config.log("Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.");
 }
 
-#`{{
-#-------------------------------------------------------------------------------
-method cat-expander-drop-accept (
-  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
-) {
-  my Bool $accept = $dnd.check-accept( $drop, 'text');
-  $!config.log("Drop on category expander can be accepted: $accept");
-  $accept
-}
-}}
-
-#-------------------------------------------------------------------------------
-method cat-expander-drop (
-  N-Value() $n-value, Rat() $x, Rat() $y,
-  Gnome::Gtk4::DropTarget() :_native-object($dt),
-  GnomeTools::Gtk::DND :$dnd, Str :$container, Str :$root-dir
-  --> Bool
-) {
-
-#note "\n$?LINE drop, x, y = $x, $y";
-  my ( Bool $internal, Str $value );
-  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
-
-  my Bool $drop-ok = False;
-  if $internal {
-    my ( $from-root, $from-container, $from-category, $from-puzzles ) =
-       $value.split("_||_");
-    $drop-ok = ?$from-puzzles;
-
-#note "Internal drop: $internal\nDropped value:";
-#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
-
-    # Add category to list. The category is a used to drop puzzles in.
-    # Message gets defined if something is wrong.
-    my Str $category = 'Drop';
-    my Str $msg = $!config.add-category(
-      $category, $container, :$root-dir,
-      :lockable(
-        $!config.is-category-lockable(
-          $from-category, $from-container, $from-root
-        )
-      )
-    );
-
-#note $from-puzzles.split(/\s+/).gist;
-    # Convert indices to puzzle ids
-    my @puzzles = ();
-    for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
-      @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
-    }
-
-    # Move puzzle to new category
-    for @puzzles -> $puzzle-id {
-#note "move puzzle $puzzle-id";
-
-      my PuzzleTable::Config::Category $from-config-category .= new(
-        :category-name($from-category),
-        :container($from-container),
-        :root-dir($from-root)
-      );
-
-      $!config.move-puzzle(
-        $from-config-category, $category, $container, $root-dir, $puzzle-id
-      );
-    }
-
-    $*main-window.sidebar.update-sidebar(
-      $from-container, $!config.get-root-title($from-root)
-    );
-    $*main-window.sidebar.update-sidebar(
-      $container, $!config.get-root-title($root-dir)
-    );
-
-    # Select the source category again to display the changes
-    $*main-window.sidebar.select-category(
-      :category($from-category), :container($from-container),
-      :root-dir($from-root)
-    );
-
-    my PuzzleTable::Gui::Category $category-menu .= new;
-    $category-menu.category-rename2( $category, $container, $root-dir);
-  }
-
-  else {
-    note "Dropping $value not accepted";
-  }
-
-  $drop-ok
-}
-
-#-------------------------------------------------------------------------------
-method set-category-grid (
-  Str $container, Str $root-dir, Int $expander-color-count
-  --> Gnome::Gtk4::Grid
-) {
-  my Int $cat-row-count = 0;
-  my Gnome::Gtk4::Grid $category-grid .= new-grid;
-
-  # Get categories in for $container and $root-dir.
-  my @categories = $!config.get-categories( $container, $root-dir);
-  for @categories -> $category {
-    # Each category is a button. When clicked, it shows the puzzles
-    # of this category on the puzzle table
-    my Gnome::Gtk4::Button $category-button = self!category-button(
-      $category, $container, $root-dir, $expander-color-count
-    );
-
-    $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
-
-    # Setup DND tae=rget on the button
-    my GnomeTools::Gtk::DND $dnd .= new;
-    $dnd.set-droptarget( self, $category-button, :$dnd, :type<category>);
-#    $dnd.set-droptarget-event( self, 'category-drop-accept', 'accept', :$dnd);
-    $dnd.set-droptarget-event(
-      self, 'category-drop', 'drop', :$dnd, :$category, :$container, :$root-dir
-    );
-
-    # Get information of each subcategory
-    self.sidebar-status(
-      $category, $container, $root-dir, $category-grid,
-      $cat-row-count
-    );
-
-    $cat-row-count++;
-  }
-
-  $category-grid
-}
-
-#-------------------------------------------------------------------------------
-method category-drop (
-  N-Value() $n-value, Rat() $x, Rat() $y,
-  Gnome::Gtk4::DropTarget() :_native-object($dt),
-  GnomeTools::Gtk::DND :$dnd, Str :$category, Str :$container, Str :$root-dir
-  --> Bool
-) {
-#note "\n$?LINE drop, x, y = $x, $y";
-  my ( Bool $internal, Str $value );
-  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
-
-  my Bool $drop-ok = False;
-
-  # Are we moving puzzles around?
-  if $internal {
-    my ( $from-root, $from-container, $from-category, $from-puzzles ) =
-       $value.split("_||_");
-    $drop-ok = ?$from-puzzles;
-
-#note "Internal drop: $internal\nDropped value:";
-#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
-
-#note $from-puzzles.split(/\s+/).gist;
-    my @puzzles = ();
-    for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
-      @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
-    }
-
-    for @puzzles -> $puzzle-id {
-#note "move puzzle $puzzle-id";
-
-      my PuzzleTable::Config::Category $from-config-category .= new(
-        :category-name($from-category),
-        :container($from-container),
-        :root-dir($from-root)
-      );
-
-      $!config.move-puzzle(
-        $from-config-category, $category, $container, $root-dir, $puzzle-id
-      );
-    }
-
-    $*main-window.sidebar.update-sidebar(
-      $from-container, $!config.get-root-title($from-root)
-    );
-    $*main-window.sidebar.update-sidebar(
-      $container, $!config.get-root-title($root-dir)
-    );
-
-    # Select the source category again to display the changes
-    $*main-window.sidebar.select-category(
-      :category($from-category), :container($from-container),
-      :root-dir($from-root)
-    );
-  }
-
-  # Or are they from abroad, i.e. imported puzzles?
-  else {
-    # Recalculate the status because there are added puzzles
-    my Array $status-before = $!config.get-category-status(
-      $category, $container, $root-dir
-    );
-
-    # Importing puzzles from disk using DND
-    $!config.select-category( $category, $container, $root-dir);
-
-    my regex puzzle-regex { $<puzzle-path> = ['/' .*? '.puzzle'] };
-    while $value ~~ m/ <puzzle-regex> / {
-      my Str $puzzle-path = $/<puzzle-regex><puzzle-path>.Str;
-      note "$?LINE $puzzle-path";
-      $value ~~ s/$puzzle-path//;
-
-      my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
-      $*main-window.table.add-puzzle-to-table( $category, $puzzle-id);
-    }
-
-    # Recalculate the status because there are added puzzles
-    my Array $status-after = $!config.get-category-status(
-      $category, $container, $root-dir
-    );
-
-    # The images come from outside so only the total and untouched puzzles
-    # must be updated
-#note "$?LINE $status-before[0] -> $status-after[0]";
-
-    my UInt $t = $status-after[0] - $status-before[0];
-    my Bool $v = self.process-totals( :set, :a( $t, $t, 0, 0), :receive);
-    $!config.log("Totals check after set [ $t, $t, 0, 0]: $v");
-
-#note "$?LINE update DND: $category, $container, $root-dir";
-    $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
-    $*main-window.sidebar.update-sidebar(
-      $container, $root-dir, :!root-is-title
-    );
-
-    $drop-ok = True;
-  }
-
-  $drop-ok
-}
-
-#-------------------------------------------------------------------------------
-method drop-accept (
-  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd, Str :$type --> Bool
-) {
-  my Bool $accept = $dnd.check-accept( $drop, 'text');
-  $!config.log("Drop on $type can be accepted: $accept");
-  $accept
-}
-
-#-------------------------------------------------------------------------------
-# Notion for all drop targets
-method drop-enter ( Rat() $x, Rat() $y --> UInt ) {
-note "Enter dropzone at $x, $y";
-  GDK_ACTION_MOVE;
-}
-
-#-------------------------------------------------------------------------------
-# Make a category button to display the puzzles in this category
-method !category-button (
-  Str:D $category, Str:D $container, Str:D $root-dir, Int $expander-color-count
-  --> Gnome::Gtk4::Button
-) {
-#note "$?LINE $category, $category, $container, $root-dir";
-
-  with my Gnome::Gtk4::Button $cat-button .= new-button {
-    $!config.set-css(
-      .get-style-context,
-      :css-class('pt-sidebar-container-button')
-    );
-
-    with my Gnome::Gtk4::Label $l .= new-label {
-      .set-text($category);
-#      .set-halign(GTK_ALIGN_START);
-#      .set-justify(GTK_JUSTIFY_LEFT);
-      .set-hexpand(True);
-      .set-max-width-chars(25);
-#      .set-ellipsize(True);
-
-#        :css-class('pt-sidebar-category-label')
-      $!config.set-css(
-        .get-style-context,
-        :css-class("pt-sidebar-expander-ptr$expander-color-count")
-      );
-    }
-
-    .set-child($l);
-    .set-hexpand(True);
-    .set-halign(GTK_ALIGN_FILL);
-    .set-has-tooltip(True);
-
-    $!config.set-css(
-      .get-style-context, :css-class('pt-sidebar-expander-button')
-    );
-
-    .register-signal(
-      self, 'show-tooltip', 'query-tooltip', :$category, :$container, :$root-dir
-    );
-    .register-signal(
-      self, 'select-category', 'clicked',
-      :$category, :$container, :$root-dir, :$cat-button
-    );
-  }
-
-  $cat-button
-}
-
 #-------------------------------------------------------------------------------
 method sidebar-root-expander (
   Int $root-nbr, Str $root-dir, Gnome::Gtk4::Grid $container-grid
@@ -561,16 +265,6 @@ method sidebar-category-expander (
 }
 
 #-------------------------------------------------------------------------------
-method expand-category-container (
-  Gnome::Gtk4::Expander() :_native-object($expander), Str :$container,
-  Str :$root-dir
-) {
-  $!config.set-expand(
-    $container, $root-dir, $expander.get-expanded ?? False !! True
-  );
-}
-
-#-------------------------------------------------------------------------------
 method sidebar-status (
   Str:D $category, Str:D $container, Str:D $root-dir,
   Gnome::Gtk4::Grid $grid, Int $row-count
@@ -599,35 +293,6 @@ method sidebar-status (
     $!config.log("Totals check after set @cat-status.raku(): $v");
   }
 }
-
-#-------------------------------------------------------------------------------
-method show-tooltip (
-  Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip,
-  Str :$category, Str :$container, Str :$root-dir
-  --> gboolean
-) {
-  my Str $puzzle-image-name = $!config.get-puzzle-image(
-    $category, $container, $root-dir
-  );
-  if ?$puzzle-image-name {
-    my Gnome::Gtk4::Picture $p .= new-picture;
-    $p.set-filename($puzzle-image-name);
-    $tooltip.set-custom($p);
-  }
-
-  True
-}
-
-#`{{
-#-------------------------------------------------------------------------------
-# Method to handle a category selection
-method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
-
-#  # Fill the sidebar in case there is a new entry
-#  self.fill-sidebar;
-  self.select-category( :$category, :$container, :$root-dir);
-}
-}}
 
 #-------------------------------------------------------------------------------
 method clear-button-highlight ( ) {
@@ -773,3 +438,356 @@ multi method update-sidebar (
 method process-totals (|c) {
   $!config.emit-data( :code(PROCESS_TOTALS), |c);
 }
+
+
+
+
+
+
+
+=finish
+
+
+#`{{
+#-------------------------------------------------------------------------------
+method cat-expander-drop-accept (
+  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd --> Bool
+) {
+  my Bool $accept = $dnd.check-accept( $drop, 'text');
+  $!config.log("Drop on category expander can be accepted: $accept");
+  $accept
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+method cat-expander-drop (
+  N-Value() $n-value, Rat() $x, Rat() $y,
+  Gnome::Gtk4::DropTarget() :_native-object($dt),
+  GnomeTools::Gtk::DND :$dnd, Str :$container, Str :$root-dir
+  --> Bool
+) {
+
+#note "\n$?LINE drop, x, y = $x, $y";
+  my ( Bool $internal, Str $value );
+  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
+
+  my Bool $drop-ok = False;
+  if $internal {
+    my ( $from-root, $from-container, $from-category, $from-puzzles ) =
+       $value.split("_||_");
+    $drop-ok = ?$from-puzzles;
+
+#note "Internal drop: $internal\nDropped value:";
+#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
+
+    # Add category to list. The category is a used to drop puzzles in.
+    # Message gets defined if something is wrong.
+    my Str $category = 'Drop';
+    my Str $msg = $!config.add-category(
+      $category, $container, :$root-dir,
+      :lockable(
+        $!config.is-category-lockable(
+          $from-category, $from-container, $from-root
+        )
+      )
+    );
+
+#note $from-puzzles.split(/\s+/).gist;
+    # Convert indices to puzzle ids
+    my @puzzles = ();
+    for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
+      @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
+    }
+
+    # Move puzzle to new category
+    for @puzzles -> $puzzle-id {
+#note "move puzzle $puzzle-id";
+
+      my PuzzleTable::Config::Category $from-config-category .= new(
+        :category-name($from-category),
+        :container($from-container),
+        :root-dir($from-root)
+      );
+
+      $!config.move-puzzle(
+        $from-config-category, $category, $container, $root-dir, $puzzle-id
+      );
+    }
+
+    $*main-window.sidebar.update-sidebar(
+      $from-container, $!config.get-root-title($from-root)
+    );
+    $*main-window.sidebar.update-sidebar(
+      $container, $!config.get-root-title($root-dir)
+    );
+
+    # Select the source category again to display the changes
+    $*main-window.sidebar.select-category(
+      :category($from-category), :container($from-container),
+      :root-dir($from-root)
+    );
+
+    my PuzzleTable::Gui::Category $category-menu .= new;
+    $category-menu.category-rename2( $category, $container, $root-dir);
+  }
+
+  else {
+    note "Dropping $value not accepted";
+  }
+
+  $drop-ok
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+method set-category-grid (
+  Str $container, Str $root-dir, Int $expander-color-count
+  --> Gnome::Gtk4::Grid
+) {
+  my Int $cat-row-count = 0;
+  my Gnome::Gtk4::Grid $category-grid .= new-grid;
+
+  # Get categories in for $container and $root-dir.
+  my @categories = $!config.get-categories( $container, $root-dir);
+  for @categories -> $category {
+    # Each category is a button. When clicked, it shows the puzzles
+    # of this category on the puzzle table
+    my Gnome::Gtk4::Button $category-button = self!category-button(
+      $category, $container, $root-dir, $expander-color-count
+    );
+
+    $category-grid.attach( $category-button, 0, $cat-row-count, 1, 1);
+
+    # Setup DND tae=rget on the button
+    my GnomeTools::Gtk::DND $dnd .= new;
+    $dnd.set-droptarget( self, $category-button, :$dnd, :type<category>);
+#    $dnd.set-droptarget-event( self, 'category-drop-accept', 'accept', :$dnd);
+    $dnd.set-droptarget-event(
+      self, 'category-drop', 'drop', :$dnd, :$category, :$container, :$root-dir
+    );
+
+    # Get information of each subcategory
+    self.sidebar-status(
+      $category, $container, $root-dir, $category-grid,
+      $cat-row-count
+    );
+
+    $cat-row-count++;
+  }
+
+  $category-grid
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+method category-drop (
+  N-Value() $n-value, Rat() $x, Rat() $y,
+  Gnome::Gtk4::DropTarget() :_native-object($dt),
+  GnomeTools::Gtk::DND :$dnd, Str :$category, Str :$container, Str :$root-dir
+  --> Bool
+) {
+#note "\n$?LINE drop, x, y = $x, $y";
+  my ( Bool $internal, Str $value );
+  ( $internal, $value ) = $dnd.get-dropped-value( $n-value, $dt);
+
+  my Bool $drop-ok = False;
+
+  # Are we moving puzzles around?
+  if $internal {
+    my ( $from-root, $from-container, $from-category, $from-puzzles ) =
+       $value.split("_||_");
+    $drop-ok = ?$from-puzzles;
+
+#note "Internal drop: $internal\nDropped value:";
+#note "  $drop-ok, $from-root, $from-container, $from-category: $from-puzzles";
+
+#note $from-puzzles.split(/\s+/).gist;
+    my @puzzles = ();
+    for $from-puzzles.split(/\s+/)>>.Int -> $item-pos {
+      @puzzles.push: $*main-window.table.puzzle-objects.get-string($item-pos);
+    }
+
+    for @puzzles -> $puzzle-id {
+#note "move puzzle $puzzle-id";
+
+      my PuzzleTable::Config::Category $from-config-category .= new(
+        :category-name($from-category),
+        :container($from-container),
+        :root-dir($from-root)
+      );
+
+      $!config.move-puzzle(
+        $from-config-category, $category, $container, $root-dir, $puzzle-id
+      );
+    }
+
+    $*main-window.sidebar.update-sidebar(
+      $from-container, $!config.get-root-title($from-root)
+    );
+    $*main-window.sidebar.update-sidebar(
+      $container, $!config.get-root-title($root-dir)
+    );
+
+    # Select the source category again to display the changes
+    $*main-window.sidebar.select-category(
+      :category($from-category), :container($from-container),
+      :root-dir($from-root)
+    );
+  }
+
+  # Or are they from abroad, i.e. imported puzzles?
+  else {
+    # Recalculate the status because there are added puzzles
+    my Array $status-before = $!config.get-category-status(
+      $category, $container, $root-dir
+    );
+
+    # Importing puzzles from disk using DND
+    $!config.select-category( $category, $container, $root-dir);
+
+    my regex puzzle-regex { $<puzzle-path> = ['/' .*? '.puzzle'] };
+    while $value ~~ m/ <puzzle-regex> / {
+      my Str $puzzle-path = $/<puzzle-regex><puzzle-path>.Str;
+      note "$?LINE $puzzle-path";
+      $value ~~ s/$puzzle-path//;
+
+      my Str $puzzle-id = $!config.add-puzzle($puzzle-path);
+      $*main-window.table.add-puzzle-to-table( $category, $puzzle-id);
+    }
+
+    # Recalculate the status because there are added puzzles
+    my Array $status-after = $!config.get-category-status(
+      $category, $container, $root-dir
+    );
+
+    # The images come from outside so only the total and untouched puzzles
+    # must be updated
+#note "$?LINE $status-before[0] -> $status-after[0]";
+
+    my UInt $t = $status-after[0] - $status-before[0];
+    my Bool $v = self.process-totals( :set, :a( $t, $t, 0, 0), :receive);
+    $!config.log("Totals check after set [ $t, $t, 0, 0]: $v");
+
+#note "$?LINE update DND: $category, $container, $root-dir";
+    $*main-window.sidebar.select-category( :$category, :$container, :$root-dir);
+    $*main-window.sidebar.update-sidebar(
+      $container, $root-dir, :!root-is-title
+    );
+
+    $drop-ok = True;
+  }
+
+  $drop-ok
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+method drop-accept (
+  Gnome::Gdk4::Drop() $drop, GnomeTools::Gtk::DND :$dnd, Str :$type --> Bool
+) {
+  my Bool $accept = $dnd.check-accept( $drop, 'text');
+  $!config.log("Drop on $type can be accepted: $accept");
+  $accept
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+# Notion for all drop targets
+method drop-enter ( Rat() $x, Rat() $y --> UInt ) {
+note "Enter dropzone at $x, $y";
+  GDK_ACTION_MOVE;
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+# Make a category button to display the puzzles in this category
+method !category-button (
+  Str:D $category, Str:D $container, Str:D $root-dir, Int $expander-color-count
+  --> Gnome::Gtk4::Button
+) {
+#note "$?LINE $category, $category, $container, $root-dir";
+
+  with my Gnome::Gtk4::Button $cat-button .= new-button {
+    $!config.set-css(
+      .get-style-context,
+      :css-class('pt-sidebar-container-button')
+    );
+
+    with my Gnome::Gtk4::Label $l .= new-label {
+      .set-text($category);
+#      .set-halign(GTK_ALIGN_START);
+#      .set-justify(GTK_JUSTIFY_LEFT);
+      .set-hexpand(True);
+      .set-max-width-chars(25);
+#      .set-ellipsize(True);
+
+#        :css-class('pt-sidebar-category-label')
+      $!config.set-css(
+        .get-style-context,
+        :css-class("pt-sidebar-expander-ptr$expander-color-count")
+      );
+    }
+
+    .set-child($l);
+    .set-hexpand(True);
+    .set-halign(GTK_ALIGN_FILL);
+    .set-has-tooltip(True);
+
+    $!config.set-css(
+      .get-style-context, :css-class('pt-sidebar-expander-button')
+    );
+
+    .register-signal(
+      self, 'show-tooltip', 'query-tooltip', :$category, :$container, :$root-dir
+    );
+    .register-signal(
+      self, 'select-category', 'clicked',
+      :$category, :$container, :$root-dir, :$cat-button
+    );
+  }
+
+  $cat-button
+}
+}}
+
+#`{{
+#-------------------------------------------------------------------------------
+method expand-category-container (
+  Gnome::Gtk4::Expander() :_native-object($expander), Str :$container,
+  Str :$root-dir
+) {
+  $!config.set-expand(
+    $container, $root-dir, $expander.get-expanded ?? False !! True
+  );
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+method show-tooltip (
+  Int $x, Int $y, gboolean $kb-mode, Gnome::Gtk4::Tooltip() $tooltip,
+  Str :$category, Str :$container, Str :$root-dir
+  --> gboolean
+) {
+  my Str $puzzle-image-name = $!config.get-puzzle-image(
+    $category, $container, $root-dir
+  );
+  if ?$puzzle-image-name {
+    my Gnome::Gtk4::Picture $p .= new-picture;
+    $p.set-filename($puzzle-image-name);
+    $tooltip.set-custom($p);
+  }
+
+  True
+}
+}}
+#`{{
+#-------------------------------------------------------------------------------
+# Method to handle a category selection
+method set-category ( Str:D $category, Str:D $container, Str :$root-dir ) {
+
+#  # Fill the sidebar in case there is a new entry
+#  self.fill-sidebar;
+  self.select-category( :$category, :$container, :$root-dir);
+}
+}}
+
