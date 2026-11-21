@@ -1,6 +1,6 @@
 
 * 2026 11 19 0.11.0
-  * Move some code from the **Sidebar** class into a new **PuzzleTable::Gui::Categories** to simplify things.
+  * Move some code from the **Sidebar** class into a new **PuzzleTable::Gui::CategoryExpander** to simplify things.
 
 * 2026 11 17 0.10.0
   * New module **PuzzleTable::Config::Totals** to separate puzzle accounting of totals.

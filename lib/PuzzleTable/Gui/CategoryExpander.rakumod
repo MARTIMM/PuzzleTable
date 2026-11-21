@@ -23,17 +23,17 @@ use PuzzleTable::Config::Category;
 use GnomeTools::Gtk::DND;
 
 =begin pod
-=TITLE PuzzleTable::Gui::Categories
+=TITLE PuzzleTable::Gui::CategoryExpander
 
 =head1 Description
 
-Purpose is to hold the part of the categories in a container displayed in an
-Expander. Originally created in the .fill-sidebar() method of the Sidebar.
-To make separate objects
+Purpose is to hold a part of the categories from a root/container and
+displayes it in an Expander.
+
 =end pod
 
 #-------------------------------------------------------------------------------
-unit class PuzzleTable::Gui::Categories;
+unit class PuzzleTable::Gui::CategoryExpander;
 also is Gnome::Gtk4::Expander;
 
 has Str $!container;

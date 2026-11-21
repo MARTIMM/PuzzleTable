@@ -10,8 +10,8 @@
   "license": "Artistic-2.0",
 
   "provides": {
-    "PuzzleTable::Gui::Categories": "lib/PuzzleTable/Gui/Categories.rakumod",
     "PuzzleTable::Gui::Category": "lib/PuzzleTable/Gui/Category.rakumod",
+    "PuzzleTable::Gui::CategoryExpander": "lib/PuzzleTable/Gui/CategoryExpander.rakumod",
     "PuzzleTable::Gui::Container": "lib/PuzzleTable/Gui/Container.rakumod",
     "PuzzleTable::Gui::Dialog": "lib/PuzzleTable/Gui/Dialog.rakumod",
     "PuzzleTable::Gui::DropDown": "lib/PuzzleTable/Gui/DropDown.rakumod",

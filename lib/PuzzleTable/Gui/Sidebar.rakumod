@@ -1,12 +1,8 @@
 =begin pod
-=TITLE PuzzleTable::Gui::Sideba
+=TITLE PuzzleTable::Gui::Sidebar
 
 =head1 Description
 
-??? Combobox widget to display the categories of puzzles. The widget is shown on
-the main window. The actions to change the list are triggered from the
-'category' menu. All changes are directly visible in the combobox on the main
-page.
 
 =end pod
 
@@ -18,7 +14,7 @@ use PuzzleTable::Config;
 #use PuzzleTable::Config::DragInfo;
 use PuzzleTable::Config::Category;
 use PuzzleTable::Gui::Category;
-use PuzzleTable::Gui::Categories;
+use PuzzleTable::Gui::CategoryExpander;
 
 use GnomeTools::Gtk::DND;
 
@@ -117,7 +113,7 @@ Construction of the sidebar:
     # Loop through all containers and make expanders for each of them
     my @containers = $!config.get-containers($root-dir);
     for @containers -> $container {
-      my PuzzleTable::Gui::Categories $cat-expander .= new(
+      my PuzzleTable::Gui::CategoryExpander $cat-expander .= new(
         :$container, :$root-dir, :$expander-color-count
       );
 
