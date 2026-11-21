@@ -218,8 +218,16 @@ method remote-options ( Array $args, Bool :$is-remote --> Int ) {
   # We need the table and category management here already
   $!table .= new unless ?$!table;
   $!statusbar .= new-statusbar(:context<puzzle-table>) unless ?$!statusbar;
+
+  # Initialize the sidebar, fill it in with root- and category expanders, then,
+  # finally select the default container and category from the first root. All
+  # three of them are always available.
   $!sidebar .= new unless $!sidebar;
-  $!sidebar.fill-sidebar(:init);
+  $!sidebar.fill-sidebar;
+  $!sidebar.select-category(
+    :category<Default>, :container<Default>,
+    :root-dir($!config.get-root-path(0))
+  );
 
   # Process container option. It is set to 'Default' otherwise.
   my Str $opt-container = 'Default';

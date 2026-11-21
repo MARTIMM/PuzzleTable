@@ -66,7 +66,7 @@ submethod BUILD ( ) {
 }
 
 #-------------------------------------------------------------------------------
-method fill-sidebar ( Bool :$init = False ) {
+method fill-sidebar ( ) {
 #`{{
 Construction of the sidebar:
 
@@ -171,12 +171,6 @@ my Gnome::Gtk4::Grid() $sg = $!scrolled-window.get-child;
 #note "$?LINE ", $!sidebar-grid.get-child-at( 0, 0).gist;
 my Gnome::Gtk4::Expander() $ex = $!sidebar-grid.get-child-at( 0, 0);
 #note "$?LINE ", $ex.gist;
-
-  if $init {
-#    my Str $root-dir = @roots[0];
-    my Str $root-dir = $!config.get-root-path(0);
-    self.select-category( :category<Default>, :container<Default>, :$root-dir);
-  }
 
   $!config.log("Time to fill sidebar: {(now - $t0).fmt('%.1f sec.')}.");
 }
