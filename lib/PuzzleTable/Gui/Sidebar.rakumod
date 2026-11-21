@@ -49,6 +49,8 @@ has Bool $!done-totals;
 has Gnome::Gtk4::Grid() $!sidebar-grid;
 #has PuzzleTable::Config::DragInfo $!drag-info;
 
+has PuzzleTable::Gui::CategoryExpander @cat-expanders;
+
 #-------------------------------------------------------------------------------
 # Initialize from main page
 submethod BUILD ( ) {
@@ -63,6 +65,8 @@ submethod BUILD ( ) {
 
 #  $!scrolled-window.set-min-content-width(200);
   $!scrolled-window.set-max-content-width(450);
+
+  @cat-expanders = ();
 }
 
 #-------------------------------------------------------------------------------
@@ -139,6 +143,10 @@ Construction of the sidebar:
 }}
 
       $container-grid.attach( $cat-expander, 0, $row-count, 5, 1);
+
+      # Keep the object in an array because of the attributes set in the
+      # objects. The returned native object does not have that information.
+      @cat-expanders.push: $cat-expander;
       $row-count++;
     }
 
@@ -401,19 +409,23 @@ multi method update-sidebar (
   my Gnome::Gtk4::Expander() $root-expander =
     $!sidebar-grid.get-child-at( 0, $row-count);
 
-  # Find the container where the categories need to be updated.
+  # Find the container where the categories need to be updated. To fid the
+  # container we must go through all container grids 
   my Gnome::Gtk4::Grid() $container-grid = $root-expander.get-child;
   my $c-count = 0;
   my @containers = $!config.get-containers($root-dir);
   for @containers -> $c {
     if $container ~~ m/^ $c '_EX_'? $/ {
-      my Gnome::Gtk4::Expander() $container-expander =
-        $container-grid.get-child-at( 0, $c-count);
-      my Gnome::Gtk4::Grid() $category-grid = self.set-category-grid(
-        $container, $root-dir, $row-count
-      );
+#      my Gnome::Gtk4::Expander() $container-expander =
+#        $container-grid.get-child-at( 0, $c-count);
+#      my Gnome::Gtk4::Grid() $category-grid =
+#        self.set-category-grid( $container, $root-dir, $row-count);
+#      $container-expander.set-child($category-grid);
 
-      $container-expander.set-child($category-grid);
+      my Gnome::Gtk4::Expander $container-expander = @cat-expanders[$c-count];
+      $container-expander.set-category-grid($row-count);
+
+#      $container-expander.set-child($category-grid);
 
       last;
     }
