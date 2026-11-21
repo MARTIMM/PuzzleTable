@@ -15,6 +15,7 @@ use Gnome::GObject::T-value:api<2>;
 
 use Gnome::Gdk4::T-enums:api<2>;
 
+use PuzzleTable::Types;
 use PuzzleTable::Config;
 use PuzzleTable::Gui::Category;
 #use PuzzleTable::Config::DragInfo;
@@ -79,10 +80,11 @@ submethod BUILD (
     .set-halign(GTK_ALIGN_FILL);
 
     # Create and place the catagory grid in the expander
-    my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
-      $expander-color-count
-    );
-    .set-child($category-grid);
+#    my Gnome::Gtk4::Grid $category-grid = self.set-category-grid(
+#      $expander-color-count
+#    );
+#    .set-child($category-grid);
+    self.set-category-grid($expander-color-count);
 
     # Expand the widget if opened.
     .set-expanded($!config.is-expanded( $!container, $!root-dir));
@@ -108,7 +110,8 @@ method expand-category-container ( ) {
 }
 
 #-------------------------------------------------------------------------------
-method set-category-grid ( Int $expander-color-count --> Gnome::Gtk4::Grid ) {
+#method set-category-grid ( Int $expander-color-count --> Gnome::Gtk4::Grid ) {
+method set-category-grid ( Int $expander-color-count ) {
   my Int $cat-row-count = 0;
   my Gnome::Gtk4::Grid $category-grid .= new-grid;
 
@@ -140,7 +143,7 @@ method set-category-grid ( Int $expander-color-count --> Gnome::Gtk4::Grid ) {
     $cat-row-count++;
   }
 
-  $category-grid
+  self.set-child($category-grid);
 }
 
 #-------------------------------------------------------------------------------
@@ -426,4 +429,9 @@ method select-category-in-sidebar (
   $*main-window.sidebar.select-category(
     :$category, :$!container, :$!root-dir, :$cat-button
   );
+}
+
+#-------------------------------------------------------------------------------
+method process-totals (|c) {
+  $!config.emit-data( :code(PROCESS_TOTALS), |c);
 }
